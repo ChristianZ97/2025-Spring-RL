@@ -39,10 +39,7 @@ Add these lines to your `~/.zshrc` (or equivalent):
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin
 export MUJOCO_PY_MUJOCO_PATH=~/.mujoco/mujoco210
 export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/.mujoco/mujoco210/bin
-```
 
-Then run:
-```bash
 source ~/.zshrc
 conda activate d4rl-x86
 ```

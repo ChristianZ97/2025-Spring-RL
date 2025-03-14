@@ -50,7 +50,8 @@ conda activate d4rl-x86
 ## Install D4RL
 
 ```bash
-pip install gym d4rl
+pip install gym
+pip install d4rl
 ```
 
 ## Troubleshooting

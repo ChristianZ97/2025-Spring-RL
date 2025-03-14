@@ -117,3 +117,20 @@ python d4rl_sanity_check.py
 ```
 
 If it runs without errors, your D4RL setup is working correctly.
+
+## Cython.Compiler.Errors.CompileError
+```bash
+pip uninstall cython -y
+pip install Cython==3.0.0a10
+```
+
+## distutils.errors.CompileError: command '/opt/homebrew/bin/gcc-14' failed with exit code 1
+```bash
+conda install -c conda-forge glew -y
+conda install -c conda-forge mesalib -y
+conda install -c menpo glfw3 -y
+
+export CPATH=$CONDA_PREFIX/include
+source ~/.zshrc
+conda activate d4rl-x86
+```

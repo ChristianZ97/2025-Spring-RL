@@ -44,6 +44,7 @@ export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:~/.mujoco/mujoco210/bin
 Then run:
 ```bash
 source ~/.zshrc
+conda activate d4rl-x86
 ```
 
 ## Install D4RL

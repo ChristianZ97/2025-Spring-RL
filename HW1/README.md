@@ -53,18 +53,6 @@ conda activate d4rl-x86
 pip install gym
 conda install -c conda-forge pybullet -y
 pip install git+https://github.com/Farama-Foundation/d4rl@master#egg=d4rl
-
-```
-ERROR: Failed building wheel for pybullet
-
-```bash
-pip install pybullet --no-cache-dir
-pip install gym d4rl
-
-# or?
-
-pip install gymnasium
-pip install git+https://github.com/Farama-Foundation/D4RL
 ```
 
 ## Troubleshooting

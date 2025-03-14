@@ -50,6 +50,8 @@ conda activate d4rl-x86
 ## Install D4RL
 
 ```bash
+pip install gym
+pip install pybullet==3.1.0
 pip install git+https://github.com/Farama-Foundation/d4rl@master#egg=d4rl
 
 ```

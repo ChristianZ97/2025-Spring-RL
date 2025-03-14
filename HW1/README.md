@@ -80,11 +80,7 @@ conda activate d4rl-x86
 Since installing GCC for x86_64 on M2 Macs is problematic, you can modify the MuJoCo source code:
 
 ```bash
-# Find the builder.py file
-find ~/miniconda3/envs/d4rl-x86 -name "builder.py" | grep mujoco_py
-
-# Edit the file using VS Code
-code [PATH_TO_BUILDER_PY]
+code $(find ~/miniconda3/envs/d4rl-x86 -name "builder.py" | grep mujoco_py)
 ```
 
 Find the code around line 333 that checks for GCC and modify it to use clang instead:

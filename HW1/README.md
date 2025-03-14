@@ -23,7 +23,6 @@ python -c "import platform; print(platform.machine())"
 ```bash
 # Create MuJoCo directory
 mkdir -p ~/.mujoco
-cd ~/.mujoco
 
 # Download MuJoCo 2.1.0 x86_64 version
 wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-macos-x86_64.tar.gz

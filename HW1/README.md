@@ -6,7 +6,7 @@ This guide explains how to set up D4RL with MuJoCo in an x86_64 Conda environmen
 
 ```bash
 # Create a new Conda environment with x86_64 architecture
-CONDA_SUBDIR=osx-64 conda create -n d4rl-x86 python=3.8
+CONDA_SUBDIR=osx-64 conda create -n d4rl-x86 python=3.8 -y
 
 # Activate the environment
 conda activate d4rl-x86

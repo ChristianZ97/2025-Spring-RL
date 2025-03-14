@@ -52,6 +52,11 @@ conda activate d4rl-x86
 ```bash
 pip install pybullet --no-cache-dir
 pip install gym d4rl
+
+# or?
+
+pip install gymnasium
+pip install git+https://github.com/Farama-Foundation/D4RL
 ```
 
 ## Troubleshooting

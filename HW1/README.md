@@ -6,7 +6,7 @@ This guide explains how to set up D4RL with MuJoCo in an x86_64 Conda environmen
 
 ```bash
 # may fix the error
-conda create -n d4rl python=3.8 gcc=9 gxx=9 cython=3.0.0a10 -y
+conda create -n d4rl python=3.8 gcc=9 gxx=9 'cython<3' -y
 #
 CONDA_SUBDIR=osx-64 conda create -n d4rl-x86 python=3.8 -y
 conda activate d4rl-x86

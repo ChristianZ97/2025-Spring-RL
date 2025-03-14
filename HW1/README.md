@@ -60,13 +60,13 @@ pip install git+https://github.com/Farama-Foundation/d4rl@master#egg=d4rl
 If you encounter compiler-related errors, you may need to install GCC:
 
 ```bash
-brew install gcc@9
+brew install gcc
+which gcc
+gcc --version
 
-# Add to your ~/.zshrc file
-export CC=/usr/local/opt/gcc@9/bin/gcc-9
-export CXX=/usr/local/opt/gcc@9/bin/g++-9
+export CC=/opt/homebrew/bin/gcc-14
+export CXX=/opt/homebrew/bin/g++-14
 
-# Apply changes
 source ~/.zshrc
 conda activate d4rl-x86
 ```

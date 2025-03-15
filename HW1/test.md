@@ -1,7 +1,7 @@
 #trying
 
 ```bash
-conda create -n d4rl python -y
+conda create -n d4rl python=3.10 -y
 
 pip install absl-py matplotlib dm_control
 

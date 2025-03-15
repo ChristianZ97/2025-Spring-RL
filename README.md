@@ -28,4 +28,6 @@ pip install -U cython==3.0.0a10
 python -c "import mujoco_py; print(mujoco_py.__version__)"
 
 # Install D4RL
+pip install absl-py
+pip install matplotlib
 ```

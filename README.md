@@ -36,4 +36,9 @@ pip install git+https://github.com/rail-berkeley/d4rl@master#egg=d4rl
 git clone https://github.com/openai/gym.git
 cd gym
 python setup.py install
+
+# Run
+python d4rl_sanity_check.py
+
+Exception: Failed to load XML file: C:\Users\chris\AppData\Local\Temp\tmp8xwm6brj.xml. mj_loadXML error: b'XML parse error at line 0, column 0:\nFailed to open file\n'
 ```

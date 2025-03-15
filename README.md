@@ -30,4 +30,5 @@ python -c "import mujoco_py; print(mujoco_py.__version__)"
 # Install D4RL
 pip install absl-py
 pip install matplotlib
+pip install git+https://github.com/rail-berkeley/d4rl@master#egg=d4rl
 ```

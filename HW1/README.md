@@ -74,9 +74,6 @@ pip install -U cython==3.0.0a10
 ```bash
 pip install absl-py matplotlib
 pip install git+https://github.com/rail-berkeley/d4rl@master#egg=d4rl
-
-# For Windows 10, you may need to fix the PATH Conflict between Git Bash and Conda.
-export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
 ```
 
 ### Verify installations
@@ -88,6 +85,9 @@ python -c "import d4rl; print(d4rl.__version__)"
 Run sanity check to ensure everything is working:
 ```bash
 python d4rl_sanity_check.py
+
+# For Windows 10, you may need to fix the PATH Conflict between Git Bash and Conda.
+export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
 ```
 
 ## Windows-Specific Error

@@ -5,7 +5,7 @@
 ### Create conda environment
 ```bash
 conda create -n d4rl python=3.7 -y # for Windows 10
-conda create -n d4rl python=3.8 -y # for Mac M2
+conda create -n d4rl python=3.8 -y # for M2 Mac
 conda activate d4rl
 ```
 

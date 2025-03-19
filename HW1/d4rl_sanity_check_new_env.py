@@ -10,7 +10,7 @@ import gym
 import d4rl # Import required to register environments, you may need to also import the submodule
 
 # Create the environment
-env = gym.make('hopper-random')
+env = gym.make('hopper-random-v2')
 
 # d4rl abides by the OpenAI gym interface
 env.reset()

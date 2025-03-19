@@ -87,8 +87,6 @@ python -c "import d4rl; print(d4rl.__version__)"
 
 Run sanity check to ensure everything is working:
 ```bash
-git clone https://github.com/ChristianZ97/2025-Spring-RL
-cd 2025-Spring-RL
 python d4rl_sanity_check.py
 ```
 

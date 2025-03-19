@@ -4,7 +4,7 @@
 
 ### Create conda environment
 ```bash
-git clone https://github.com/ChristianZ97/2025-Spring-RL && cd 2025-Spring-RL
+git clone https://github.com/ChristianZ97/2025-Spring-RL && cd 2025-Spring-RL/HW1
 
 conda create -n d4rl python=3.7 -y # for Windows 10
 conda create -n d4rl python=3.8 -y # for M2 Mac
@@ -86,7 +86,7 @@ python -c "import d4rl; print(d4rl.__version__)"
 
 Run sanity check to ensure everything is working:
 ```bash
-cd .. && cd HW1
+cd ..
 python d4rl_sanity_check.py
 
 # For Windows 10, you may need to fix the PATH Conflict between Git Bash and Conda.

@@ -69,7 +69,7 @@ brew install gcc@11  # If not already installed
 export CC=/opt/homebrew/bin/gcc-11
 
 pip install -e .
-pip install -U cython==3.0.0a10
+pip install -U cython==3.0.0a10 # To avoid cython compiler error
 ```
 
 ### Install d4rl
@@ -168,3 +168,4 @@ sed -i 's/\([[:space:]]*\)f.seek(0)/\1f.seek(0)\n\1f.close()/' $D4RL_PATH/pointm
 - [D4RL Installation on Zhihu](https://zhuanlan.zhihu.com/p/434073300) - Original Windows installation guide
 - [Installation Guide for M1 Mac](https://github.com/openai/mujoco-py/issues/682) - Solutions for Apple Silicon
 - [Maze2D and AntMaze Issue on Windows](https://github.com/Farama-Foundation/D4RL/pull/148/commits/dcb5695f1d8919301f7c92a9c710c86d048e64fa) - Fixes for XML file handling in Windows
+- [Cython Compiler Error](https://github.com/openai/mujoco-py/issues/786) or [this one](https://github.com/openai/mujoco-py/issues/773)

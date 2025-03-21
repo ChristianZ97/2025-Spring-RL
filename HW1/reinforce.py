@@ -94,6 +94,10 @@ class Policy(nn.Module):
         
         ########## YOUR CODE HERE (3~5 lines) ##########
 
+        action_prob, state_value = self.forward(state)
+        probs = torch.softmax(action_prob, dim=-1)
+        m = Categorical(probs)
+        action = m.sample()
 
         ########## END OF YOUR CODE ##########
         

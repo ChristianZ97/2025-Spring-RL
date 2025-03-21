@@ -73,7 +73,7 @@ class Policy(nn.Module):
         ########## YOUR CODE HERE (3~5 lines) ##########
 
         observation = self.observation_layer(state)
-        observation = torch.tanh(observation)
+        observation = F.tanh(observation)
 
         action_prob = self.action_layer(observation)
         state_value = self.value_layer(observation)
@@ -95,8 +95,7 @@ class Policy(nn.Module):
         ########## YOUR CODE HERE (3~5 lines) ##########
 
         action_prob, state_value = self.forward(state)
-        probs = torch.softmax(action_prob, dim=-1)
-        m = Categorical(probs)
+        m = Categorical(F.softmax(action_prob, dim=-1))
         action = m.sample()
 
         ########## END OF YOUR CODE ##########
@@ -130,12 +129,11 @@ class Policy(nn.Module):
             returns.append(R)
         returns.reverse()
 
-        mse_loss = nn.MSELoss()
         for (log_prob_action, state_value), R in zip(saved_actions, returns):
             policy_losses.append(-log_prob_action * R)
 
             R_tensor = torch.tensor([R], device=state_value.device)
-            value_losses.append(mse_loss(state_value, R_tensor))
+            value_losses.append(F.mse_loss(state_value, R_tensor))
 
         loss = torch.stack(policy_losses).sum() + torch.stack(value_losses).sum()
 

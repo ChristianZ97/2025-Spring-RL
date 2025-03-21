@@ -133,7 +133,7 @@ class Policy(nn.Module):
         mse_loss = nn.MSELoss()
         for (log_prob_action, state_value), R in zip(saved_actions, returns):
             policy_losses.append(-log_prob_action * R)
-            
+
             R_tensor = torch.tensor([R], device=state_value.device)
             value_losses.append(mse_loss(state_value, R_tensor))
 
@@ -202,8 +202,22 @@ def train(lr=0.01):
         # For each episode, only run 9999 steps to avoid entering infinite loop during the learning process
         
         ########## YOUR CODE HERE (10-15 lines) ##########
-        
-        
+
+        done = False
+        while not done and t < 10000:
+            action = model.select_action(state)
+            next_state, reward, done, _ = env.step(action)
+            model.rewards.append(reward)
+            state = next_state
+            t += 1
+            ep_reward += reward
+
+        loss = model.calculate_loss()
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+        model.clear_memory()
+
         ########## END OF YOUR CODE ##########
             
         # update EWMA reward and log the results
@@ -212,6 +226,11 @@ def train(lr=0.01):
 
         #Try to use Tensorboard to record the behavior of your implementation 
         ########## YOUR CODE HERE (4-5 lines) ##########
+
+        writer.add_scalar('Train/Episode_Reward', ep_reward, i_episode)
+        writer.add_scalar('Train/Episode_Length', t, i_episode)
+        writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
+        writer.add_scalar('Train/Loss', loss.item(), i_episode)
 
         ########## END OF YOUR CODE ##########
 

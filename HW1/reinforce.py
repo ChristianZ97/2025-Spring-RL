@@ -182,7 +182,7 @@ def train(lr=0.01):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # Learning rate scheduler (optional)
-    # scheduler = Scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
+    scheduler = Scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
     
     # EWMA reward for tracking the learning progress
     ewma_reward = 0
@@ -195,7 +195,7 @@ def train(lr=0.01):
         t = 0
 
         # Uncomment the following line to use learning rate scheduler
-        # scheduler.step()
+        scheduler.step()
         
         # For each episode, only run 9999 steps to avoid entering infinite loop during the learning process
         
@@ -271,7 +271,7 @@ def test(name, n_episodes=10):
 if __name__ == '__main__':
     # For reproducibility, fix the random seed
     random_seed = 10  
-    lr = 0.01
+    lr = 0.008
     env = gym.make('CartPole-v0')
     env.seed(random_seed)  
     torch.manual_seed(random_seed)  

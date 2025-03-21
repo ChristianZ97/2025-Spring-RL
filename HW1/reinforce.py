@@ -158,11 +158,11 @@ class GAE:
         self.num_steps = num_steps          # set num_steps = None to adapt full batch
 
     def __call__(self, rewards, values, done):
-    """
-        Implement Generalized Advantage Estimation (GAE) for your value prediction
-        TODO (1): Pass correct corresponding inputs (rewards, values, and done) into the function arguments
-        TODO (2): Calculate the Generalized Advantage Estimation and return the obtained value
-    """
+        """
+            Implement Generalized Advantage Estimation (GAE) for your value prediction
+            TODO (1): Pass correct corresponding inputs (rewards, values, and done) into the function arguments
+            TODO (2): Calculate the Generalized Advantage Estimation and return the obtained value
+        """
 
         ########## YOUR CODE HERE (8-15 lines) ##########
 

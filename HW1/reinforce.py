@@ -125,6 +125,19 @@ class Policy(nn.Module):
 
         ########## YOUR CODE HERE (8-15 lines) ##########
 
+        for reward in reversed(self.rewards):
+            R = reward + gamma * R
+            returns.append(R)
+        returns.reverse()
+
+        mse_loss = nn.MSELoss()
+        for (log_prob_action, state_value), R in zip(saved_actions, returns):
+            policy_losses.append(-log_prob_action * R)
+            
+            R_tensor = torch.tensor([R], device=state_value.device)
+            value_losses.append(mse_loss(state_value, R_tensor))
+
+        loss = torch.stack(policy_losses).sum() + torch.stack(value_losses).sum()
 
         ########## END OF YOUR CODE ##########
         

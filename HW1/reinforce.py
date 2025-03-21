@@ -43,7 +43,18 @@ class Policy(nn.Module):
         
         ########## YOUR CODE HERE (5~10 lines) ##########
 
-        
+        self.observation_layer = nn.Linear(self.observation_dim, self.hidden_size)
+        observation_scale = 1.0 / np.sqrt(self.observation_layer.in_features)
+        self.observation_layer.weight.data = torch.randn_like(self.observation_layer.weight) * observation_scale
+
+        self.action_layer = nn.Linear(self.hidden_size, self.action_dim)
+        action_scale = 1.0 / np.sqrt(self.action_layer.in_features)
+        self.action_layer.weight.data = torch.randn_like(self.action_layer.weight) * action_scale
+
+        self.value_layer = nn.Linear(self.hidden_size, 1)
+        value_scale = 1.0 / np.sqrt(self.value_layer.in_features)
+        self.value_layer.weight.data = torch.randn_like(self.value_layer.weight) * value_scale
+
         ########## END OF YOUR CODE ##########
         
         # action & reward memory

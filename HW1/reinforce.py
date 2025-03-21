@@ -20,6 +20,8 @@ SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 
 # Define a tensorboard writer
 writer = SummaryWriter("./tb_record_1")
+
+device = torch.device("cpu")
         
 class Policy(nn.Module):
     """
@@ -61,6 +63,8 @@ class Policy(nn.Module):
         self.saved_actions = []
         self.rewards = []
 
+        self.to(device)
+
     def forward(self, state):
         """
             Forward pass of both policy and value networks
@@ -94,6 +98,7 @@ class Policy(nn.Module):
         
         ########## YOUR CODE HERE (3~5 lines) ##########
 
+        state = torch.FloatTensor(state).to(device)
         action_prob, state_value = self.forward(state)
         m = Categorical(F.softmax(action_prob, dim=-1))
         action = m.sample()
@@ -269,6 +274,17 @@ def test(name, n_episodes=10):
     
 
 if __name__ == '__main__':
+
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"Using CUDA: {torch.cuda.get_device_name(0)}")
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print("Using Apple MPS (Metal Performance Shaders)")
+    else:
+        device = torch.device("cpu")
+        print("Using CPU")
+
     # For reproducibility, fix the random seed
     random_seed = 10  
     lr = 0.008

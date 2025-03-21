@@ -72,6 +72,11 @@ class Policy(nn.Module):
         
         ########## YOUR CODE HERE (3~5 lines) ##########
 
+        observation = self.observation_layer(state)
+        observation = torch.tanh(observation)
+
+        action_prob = self.action_layer(observation)
+        state_value = self.value_layer(observation)
 
         ########## END OF YOUR CODE ##########
 

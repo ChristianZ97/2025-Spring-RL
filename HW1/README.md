@@ -65,13 +65,13 @@ export D4RL_SUPPRESS_IMPORT_ERROR=1
 brew install gcc@11  # If not already installed
 export CC=/opt/homebrew/bin/gcc-11
 
+pip install -U cython==3.0.0a10 # To avoid cython compiler error
+
 # Install mujoco-py
 pip install git+https://github.com/openai/mujoco-py.git
 
 git clone https://github.com/openai/mujoco-py.git && cd mujoco-py
 pip install -e .
-
-pip install -U cython==3.0.0a10 # To avoid cython compiler error
 ```
 
 ### Install d4rl

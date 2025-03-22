@@ -158,7 +158,7 @@ class Policy(nn.Module):
             estimate = R - state_value.item()
             policy_losses.append(-log_prob_action * estimate)
 
-            R_tensor = torch.tensor([R], device=state_value.device)
+            R_tensor = torch.tensor([R], dtype=torch.float32, device=state_value.device)
             value_losses.append(F.mse_loss(state_value, R_tensor))
 
         loss = torch.stack(policy_losses).sum() + torch.stack(value_losses).sum()

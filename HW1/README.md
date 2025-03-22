@@ -93,6 +93,9 @@ python d4rl_sanity_check.py
 
 # For Windows 10, you may need to fix the PATH Conflict between Git Bash and Conda.
 export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
+
+# For M2 Mac, you may need to fix the AttributeError when using LunarLander.
+conda install -c conda-forge box2d-py
 ```
 
 ## Windows-Specific Error

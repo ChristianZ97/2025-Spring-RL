@@ -113,6 +113,7 @@ conda install -c conda-forge box2d-py
 # Windows 10
 conda install swig -y
 pip install box2d-py
+pip install gym[box2d]
 ```
 
 ## Windows-Specific Error

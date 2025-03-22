@@ -40,23 +40,28 @@ class Policy(nn.Module):
         self.discrete = isinstance(env.action_space, gym.spaces.Discrete)
         self.observation_dim = env.observation_space.shape[0]
         self.action_dim = env.action_space.n if self.discrete else env.action_space.shape[0]
-        self.hidden_size = 1024
+        self.hidden_size = 512
         self.double()
         
         ########## YOUR CODE HERE (5~10 lines) ##########
 
-        self.observation_layer1 = nn.Linear(self.observation_dim, self.hidden_size)
-        self.observation_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.obs_layer1 = nn.Linear(self.observation_dim, self.hidden_size)
+        self.obs_bn1 = nn.BatchNorm1d(self.hidden_size)
+        self.obs_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.obs_bn2 = nn.BatchNorm1d(self.hidden_size)
 
-        self.action_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.action_layer2 = nn.Linear(self.hidden_size, self.action_dim)
 
-        self.value_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.value_layer2 = nn.Linear(self.hidden_size, 1)
+        self.act_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.act_bn1 = nn.BatchNorm1d(self.hidden_size)
+        self.act_layer2 = nn.Linear(self.hidden_size, self.action_dim)
 
-        for layer in [self.observation_layer1, self.observation_layer2,
-                     self.action_layer1, self.action_layer2,
-                     self.value_layer1, self.value_layer2]:
+        self.val_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.val_bn1 = nn.BatchNorm1d(self.hidden_size)
+        self.val_layer2 = nn.Linear(self.hidden_size, 1)
+
+        for layer in [self.obs_layer1, self.obs_layer2,
+                     self.act_layer1, self.act_layer2,
+                     self.val_layer1, self.val_layer2]:
 
             scale = 1.0 / np.sqrt(layer.in_features)
             layer.weight.data = torch.randn_like(layer.weight) * scale
@@ -80,14 +85,17 @@ class Policy(nn.Module):
         
         ########## YOUR CODE HERE (3~5 lines) ##########
 
-        obs1 = F.relu(self.observation_layer1(state))
-        obs2 = F.relu(self.observation_layer2(obs1))
+        if state.dim() == 1:
+            state = state.unsqueeze(0)
 
-        act1 = F.relu(self.action_layer1(obs2))
-        action_prob = self.action_layer2(act1)
+        obs1 = F.relu(self.obs_bn1(self.obs_layer1(state)))
+        obs2 = F.relu(self.obs_bn2(self.obs_layer2(obs1)))
 
-        val1 = F.relu(self.value_layer1(obs2))
-        state_value = self.value_layer2(val1)
+        act1 = F.relu(self.act_bn1(self.act_layer1(obs2)))
+        action_prob = self.act_layer2(act1)
+
+        val1 = F.relu(self.val_bn1(self.val_layer1(obs2)))
+        state_value = self.val_layer2(val1)
 
         ########## END OF YOUR CODE ##########
 
@@ -106,7 +114,13 @@ class Policy(nn.Module):
         ########## YOUR CODE HERE (3~5 lines) ##########
 
         state = torch.FloatTensor(state).to(device)
+        if state.dim() == 1:
+            state = state.unsqueeze(0)
+
+        self.train(False)
         action_prob, state_value = self.forward(state)
+        self.train(True)
+
         m = Categorical(F.softmax(action_prob, dim=-1))
         action = m.sample()
 

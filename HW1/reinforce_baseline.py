@@ -19,7 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_1")
+writer = SummaryWriter("./tb_record_2")
 
 device = torch.device("cpu")
         
@@ -40,22 +40,34 @@ class Policy(nn.Module):
         self.discrete = isinstance(env.action_space, gym.spaces.Discrete)
         self.observation_dim = env.observation_space.shape[0]
         self.action_dim = env.action_space.n if self.discrete else env.action_space.shape[0]
-        self.hidden_size = 128
+        self.hidden_size = 256
         self.double()
         
         ########## YOUR CODE HERE (5~10 lines) ##########
 
-        self.observation_layer = nn.Linear(self.observation_dim, self.hidden_size)
-        observation_scale = 1.0 / np.sqrt(self.observation_layer.in_features)
-        self.observation_layer.weight.data = torch.randn_like(self.observation_layer.weight) * observation_scale
+        self.observation_layer1 = nn.Linear(self.observation_dim, self.hidden_size)
+        self.observation_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
 
-        self.action_layer = nn.Linear(self.hidden_size, self.action_dim)
-        action_scale = 1.0 / np.sqrt(self.action_layer.in_features)
-        self.action_layer.weight.data = torch.randn_like(self.action_layer.weight) * action_scale
+        self.action_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.action_layer2 = nn.Linear(self.hidden_size, self.action_dim)
 
-        self.value_layer = nn.Linear(self.hidden_size, 1)
-        value_scale = 1.0 / np.sqrt(self.value_layer.in_features)
-        self.value_layer.weight.data = torch.randn_like(self.value_layer.weight) * value_scale
+        self.value_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.value_layer2 = nn.Linear(self.hidden_size, 1)
+
+        observation_scale1 = 1.0 / np.sqrt(self.observation_layer1.in_features)
+        self.observation_layer1.weight.data = torch.randn_like(self.observation_layer1.weight) * observation_scale1
+        observation_scale2 = 1.0 / np.sqrt(self.observation_layer2.in_features)
+        self.observation_layer2.weight.data = torch.randn_like(self.observation_layer2.weight) * observation_scale2
+
+        action_scale1 = 1.0 / np.sqrt(self.action_layer1.in_features)
+        self.action_layer1.weight.data = torch.randn_like(self.action_layer1.weight) * action_scale1
+        action_scale2 = 1.0 / np.sqrt(self.action_layer2.in_features)
+        self.action_layer2.weight.data = torch.randn_like(self.action_layer2.weight) * action_scale2
+
+        value_scale1 = 1.0 / np.sqrt(self.value_layer1.in_features)
+        self.value_layer1.weight.data = torch.randn_like(self.value_layer1.weight) * value_scale1
+        value_scale2 = 1.0 / np.sqrt(self.value_layer2.in_features)
+        self.value_layer2.weight.data = torch.randn_like(self.value_layer2.weight) * value_scale2
 
         ########## END OF YOUR CODE ##########
         
@@ -76,11 +88,18 @@ class Policy(nn.Module):
         
         ########## YOUR CODE HERE (3~5 lines) ##########
 
-        observation = self.observation_layer(state)
-        observation = F.tanh(observation)
+        observation = self.observation_layer1(state)
+        observation = F.relu(observation)
+        observation = self.observation_layer2(observation)
+        observation = F.relu(observation)
 
-        action_prob = self.action_layer(observation)
-        state_value = self.value_layer(observation)
+        action_prob = self.action_layer1(observation)
+        action_prob = F.relu(action_prob)
+        action_prob = self.action_layer2(action_prob)
+
+        state_value = self.value_layer1(observation)
+        state_value = F.relu(state_value)
+        state_value = self.value_layer2(state_value)
 
         ########## END OF YOUR CODE ##########
 
@@ -135,7 +154,9 @@ class Policy(nn.Module):
         returns.reverse()
 
         for (log_prob_action, state_value), R in zip(saved_actions, returns):
-            policy_losses.append(-log_prob_action * R)
+
+            estimate = R - state_value.item()
+            policy_losses.append(-log_prob_action * estimate)
 
             R_tensor = torch.tensor([R], device=state_value.device)
             value_losses.append(F.mse_loss(state_value, R_tensor))
@@ -241,7 +262,7 @@ def train(lr=0.01):
         if ewma_reward > env.spec.reward_threshold:
             if not os.path.isdir("./preTrained"):
                 os.mkdir("./preTrained")
-            torch.save(model.state_dict(), './preTrained/CartPole_{}.pth'.format(lr))
+            torch.save(model.state_dict(), './preTrained/LunarLander_{}.pth'.format(lr))
             print("Solved! Running reward is now {} and "
                   "the last episode runs to {} time steps!".format(ewma_reward, t))
             break
@@ -287,7 +308,7 @@ if __name__ == '__main__':
 
     # For reproducibility, fix the random seed
     random_seed = 10  
-    lr = 0.008
+    lr = 0.0003
     env = gym.make('LunarLander-v2')
     env.seed(random_seed)  
     torch.manual_seed(random_seed)  

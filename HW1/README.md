@@ -107,7 +107,7 @@ pip install torch torchvision torchaudio
 # Install TensorBoard
 conda install tensorboard -y
 
-# For M2 Mac, you may need to fix the AttributeError when using LunarLander.
+# May need to fix the AttributeError when using LunarLander.
 conda install -c conda-forge box2d-py
 ```
 

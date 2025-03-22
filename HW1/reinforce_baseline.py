@@ -40,7 +40,7 @@ class Policy(nn.Module):
         self.discrete = isinstance(env.action_space, gym.spaces.Discrete)
         self.observation_dim = env.observation_space.shape[0]
         self.action_dim = env.action_space.n if self.discrete else env.action_space.shape[0]
-        self.hidden_size = 256
+        self.hidden_size = 512
         self.double()
         
         ########## YOUR CODE HERE (5~10 lines) ##########
@@ -49,25 +49,19 @@ class Policy(nn.Module):
         self.observation_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
 
         self.action_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.action_layer2 = nn.Linear(self.hidden_size, self.action_dim)
+        self.action_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.action_layer3 = nn.Linear(self.hidden_size, self.action_dim)
 
         self.value_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.value_layer2 = nn.Linear(self.hidden_size, 1)
+        self.value_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.value_layer3 = nn.Linear(self.hidden_size, 1)
 
-        observation_scale1 = 1.0 / np.sqrt(self.observation_layer1.in_features)
-        self.observation_layer1.weight.data = torch.randn_like(self.observation_layer1.weight) * observation_scale1
-        observation_scale2 = 1.0 / np.sqrt(self.observation_layer2.in_features)
-        self.observation_layer2.weight.data = torch.randn_like(self.observation_layer2.weight) * observation_scale2
+        for layer in [self.observation_layer1, self.observation_layer2, 
+            self.action_layer1, self.action_layer2, self.action_layer3, 
+            self.value_layer1, self.value_layer2, self.value_layer3]:
 
-        action_scale1 = 1.0 / np.sqrt(self.action_layer1.in_features)
-        self.action_layer1.weight.data = torch.randn_like(self.action_layer1.weight) * action_scale1
-        action_scale2 = 1.0 / np.sqrt(self.action_layer2.in_features)
-        self.action_layer2.weight.data = torch.randn_like(self.action_layer2.weight) * action_scale2
-
-        value_scale1 = 1.0 / np.sqrt(self.value_layer1.in_features)
-        self.value_layer1.weight.data = torch.randn_like(self.value_layer1.weight) * value_scale1
-        value_scale2 = 1.0 / np.sqrt(self.value_layer2.in_features)
-        self.value_layer2.weight.data = torch.randn_like(self.value_layer2.weight) * value_scale2
+            scale = 1.0 / np.sqrt(layer.in_features)
+            layer.weight.data = torch.randn_like(layer.weight) * scale
 
         ########## END OF YOUR CODE ##########
         
@@ -96,10 +90,15 @@ class Policy(nn.Module):
         action_prob = self.action_layer1(observation)
         action_prob = F.relu(action_prob)
         action_prob = self.action_layer2(action_prob)
+        action_prob = F.relu(action_prob)
+        
+        action_prob = self.action_layer3(action_prob)
 
         state_value = self.value_layer1(observation)
         state_value = F.relu(state_value)
         state_value = self.value_layer2(state_value)
+        state_value = F.relu(state_value)
+        state_value = self.value_layer3(state_value)
 
         ########## END OF YOUR CODE ##########
 
@@ -208,7 +207,7 @@ def train(lr=0.01):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # Learning rate scheduler (optional)
-    scheduler = Scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
+    scheduler = Scheduler.StepLR(optimizer, step_size=200, gamma=0.95)
     
     # EWMA reward for tracking the learning progress
     ewma_reward = 0
@@ -236,8 +235,9 @@ def train(lr=0.01):
             t += 1
             ep_reward += reward
 
-        loss = model.calculate_loss()
+        loss = model.calculate_loss(0.99)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
         optimizer.zero_grad()
         model.clear_memory()
@@ -308,7 +308,7 @@ if __name__ == '__main__':
 
     # For reproducibility, fix the random seed
     random_seed = 10  
-    lr = 0.0003
+    lr = 0.0001
     env = gym.make('LunarLander-v2')
     env.seed(random_seed)  
     torch.manual_seed(random_seed)  

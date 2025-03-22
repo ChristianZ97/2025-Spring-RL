@@ -100,7 +100,7 @@ export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
 # Make sure CUDA is available
 conda install -c nvidia cuda-toolkit -y
 
-# Make PyTorch is available
+# Make sure PyTorch is available
 # https://pytorch.org/get-started/locally/
 pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
 

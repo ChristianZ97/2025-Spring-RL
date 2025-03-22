@@ -19,7 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_2")
+writer = SummaryWriter("./tb_record_baseline")
 
 device = torch.device("cpu")
         

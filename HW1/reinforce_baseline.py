@@ -81,7 +81,7 @@ class Policy(nn.Module):
         ########## YOUR CODE HERE (3~5 lines) ##########
 
         obs1 = F.relu(self.observation_layer1(state))
-        obs2 = F.relu(self.observation_layer2(obs1) + obs1)
+        obs2 = F.relu(self.observation_layer2(obs1))
 
         act1 = F.relu(self.action_layer1(obs2))
         action_prob = self.action_layer2(act1)
@@ -224,9 +224,9 @@ def train(lr=0.01):
             t += 1
             ep_reward += reward
 
-        loss = model.calculate_loss(0.995)
+        loss = model.calculate_loss(0.99)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.5)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
         optimizer.zero_grad()
         model.clear_memory()
@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
     # For reproducibility, fix the random seed
     random_seed = 10
-    lr = 0.0002
+    lr = 0.00015
     env = gym.make('LunarLander-v2')
     env.seed(random_seed)  
     torch.manual_seed(random_seed)  

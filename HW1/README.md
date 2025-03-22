@@ -108,7 +108,11 @@ pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --e
 conda install tensorboard -y
 
 # May need to fix the AttributeError when using LunarLander.
+# M2 Mac
 conda install -c conda-forge box2d-py
+# Windows 10
+conda install swig -y
+pip install box2d-py
 ```
 
 ## Windows-Specific Error

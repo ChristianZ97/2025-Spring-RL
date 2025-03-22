@@ -93,8 +93,19 @@ python d4rl_sanity_check.py
 
 # For Windows 10, you may need to fix the PATH Conflict between Git Bash and Conda.
 export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
+```
+
+### Other installations
+```bash
 # Make sure CUDA is available
 conda install -c nvidia cuda-toolkit -y
+
+# Make PyTorch is available
+# https://pytorch.org/get-started/locally/
+pip install torch torchvision torchaudio
+
+# Install TensorBoard
+conda install tensorboard -y
 
 # For M2 Mac, you may need to fix the AttributeError when using LunarLander.
 conda install -c conda-forge box2d-py

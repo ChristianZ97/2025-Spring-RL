@@ -100,15 +100,23 @@ export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
 # Make sure CUDA is available
 conda install -c nvidia cuda-toolkit -y
 
-# Make PyTorch is available
+# Make sure PyTorch is available
 # https://pytorch.org/get-started/locally/
-pip install torch torchvision torchaudio
+pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
 
 # Install TensorBoard
 conda install tensorboard -y
+pip install chardet # Fix error on Windows 10
 
 # May need to fix the AttributeError when using LunarLander.
+
+# M2 Mac
 conda install -c conda-forge box2d-py
+
+# Windows 10
+conda install swig -y
+pip install box2d-py
+pip install gym[box2d]
 ```
 
 ## Windows-Specific Error

@@ -40,7 +40,7 @@ class Policy(nn.Module):
         self.discrete = isinstance(env.action_space, gym.spaces.Discrete)
         self.observation_dim = env.observation_space.shape[0]
         self.action_dim = env.action_space.n if self.discrete else env.action_space.shape[0]
-        self.hidden_size = 512
+        self.hidden_size = 1024
         self.double()
         
         ########## YOUR CODE HERE (5~10 lines) ##########
@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
     # For reproducibility, fix the random seed
     random_seed = 10
-    lr = 0.00015
+    lr = 0.0001
     env = gym.make('LunarLander-v2')
     env.seed(random_seed)  
     torch.manual_seed(random_seed)  

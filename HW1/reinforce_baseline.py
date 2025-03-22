@@ -47,6 +47,7 @@ class Policy(nn.Module):
 
         self.observation_layer1 = nn.Linear(self.observation_dim, self.hidden_size)
         self.observation_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.observation_layer3 = nn.Linear(self.hidden_size, self.hidden_size)
 
         self.action_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
         self.action_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
@@ -56,9 +57,9 @@ class Policy(nn.Module):
         self.value_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
         self.value_layer3 = nn.Linear(self.hidden_size, 1)
 
-        for layer in [self.observation_layer1, self.observation_layer2, 
-            self.action_layer1, self.action_layer2, self.action_layer3, 
-            self.value_layer1, self.value_layer2, self.value_layer3]:
+        for layer in [self.observation_layer1, self.observation_layer2, self.observation_layer3
+                     self.action_layer1, self.action_layer2, self.action_layer3, 
+                     self.value_layer1, self.value_layer2, self.value_layer3]:
 
             scale = 1.0 / np.sqrt(layer.in_features)
             layer.weight.data = torch.randn_like(layer.weight) * scale
@@ -82,23 +83,17 @@ class Policy(nn.Module):
         
         ########## YOUR CODE HERE (3~5 lines) ##########
 
-        observation = self.observation_layer1(state)
-        observation = F.relu(observation)
-        observation = self.observation_layer2(observation)
-        observation = F.relu(observation)
+        obs1 = F.relu(self.observation_layer1(state))
+        obs2 = F.relu(self.observation_layer2(obs1) + obs1)
+        obs3 = F.relu(self.observation_layer3(obs2) + obs2)
 
-        action_prob = self.action_layer1(observation)
-        action_prob = F.relu(action_prob)
-        action_prob = self.action_layer2(action_prob)
-        action_prob = F.relu(action_prob)
-        
-        action_prob = self.action_layer3(action_prob)
+        act1 = F.relu(self.action_layer1(obs3))
+        act2 = F.relu(self.action_layer2(act1) + act1)
+        action_prob = self.action_layer3(act2)
 
-        state_value = self.value_layer1(observation)
-        state_value = F.relu(state_value)
-        state_value = self.value_layer2(state_value)
-        state_value = F.relu(state_value)
-        state_value = self.value_layer3(state_value)
+        val1 = F.relu(self.value_layer1(obs3))
+        val2 = F.relu(self.value_layer2(val1) + val1)
+        state_value = self.value_layer3(val2)
 
         ########## END OF YOUR CODE ##########
 
@@ -207,7 +202,7 @@ def train(lr=0.01):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # Learning rate scheduler (optional)
-    scheduler = Scheduler.StepLR(optimizer, step_size=200, gamma=0.95)
+    scheduler = Scheduler.StepLR(optimizer, step_size=300, gamma=0.96)
     
     # EWMA reward for tracking the learning progress
     ewma_reward = 0
@@ -235,9 +230,9 @@ def train(lr=0.01):
             t += 1
             ep_reward += reward
 
-        loss = model.calculate_loss(0.99)
+        loss = model.calculate_loss(0.995)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=3.0)
         optimizer.step()
         optimizer.zero_grad()
         model.clear_memory()
@@ -307,8 +302,8 @@ if __name__ == '__main__':
         print("Using CPU")
 
     # For reproducibility, fix the random seed
-    random_seed = 10  
-    lr = 0.0001
+    random_seed = 10
+    lr = 0.0005
     env = gym.make('LunarLander-v2')
     env.seed(random_seed)  
     torch.manual_seed(random_seed)  

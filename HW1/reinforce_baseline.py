@@ -57,7 +57,7 @@ class Policy(nn.Module):
         self.value_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
         self.value_layer3 = nn.Linear(self.hidden_size, 1)
 
-        for layer in [self.observation_layer1, self.observation_layer2, self.observation_layer3
+        for layer in [self.observation_layer1, self.observation_layer2, self.observation_layer3,
                      self.action_layer1, self.action_layer2, self.action_layer3, 
                      self.value_layer1, self.value_layer2, self.value_layer3]:
 

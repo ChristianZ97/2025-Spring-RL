@@ -259,7 +259,7 @@ def train(lr=0.01):
         ########## END OF YOUR CODE ##########
 
         # check if we have "solved" the cart pole problem, use 120 as the threshold in LunarLander-v2
-        if ewma_reward > env.spec.reward_threshold:
+        if ewma_reward > 120:
             if not os.path.isdir("./preTrained"):
                 os.mkdir("./preTrained")
             torch.save(model.state_dict(), './preTrained/LunarLander_{}.pth'.format(lr))

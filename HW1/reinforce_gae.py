@@ -328,7 +328,7 @@ if __name__ == '__main__':
         print("Using CPU")
 
     # For reproducibility, fix the random seed
-    random_seed = 10
+    random_seed = 25
     lr = 0.0001
     env = gym.make('LunarLander-v2')
 

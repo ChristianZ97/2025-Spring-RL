@@ -328,8 +328,16 @@ if __name__ == '__main__':
         print("Using CPU")
 
     # For reproducibility, fix the random seed
-    random_seed = 25
+    random_seed = 10
     env = gym.make('LunarLander-v2')
+
+    for lambda_ in [0.92, 0.95, 0.98]:
+        lr = 1e-4
+        print(f"Training with lambda = {lambda_}")
+        env.seed(random_seed)
+        torch.manual_seed(random_seed)
+        train(lr, lambda_)
+        test(f'LunarLander_{lr}_lambda_{lambda_}.pth')
 
     for lambda_ in [0.80, 0.85, 0.88]:
         lr = 1e-4

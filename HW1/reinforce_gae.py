@@ -153,7 +153,7 @@ class Policy(nn.Module):
         rewards = np.array(self.rewards)
 
         done = np.zeros_like(rewards, dtype=int)
-        if rewards: done[-1] = 1
+        if len(rewards) > 0: done[-1] = 1
 
         gae = GAE(gamma=gamma, lambda_=self.lambda_, num_steps=None)
         advantages, returns = gae(rewards, values, done)

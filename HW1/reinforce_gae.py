@@ -329,12 +329,18 @@ if __name__ == '__main__':
 
     # For reproducibility, fix the random seed
     random_seed = 25
-    lr = 0.0001
     env = gym.make('LunarLander-v2')
 
-    lambda_values = [0.9, 0.95, 0.99]
+    for lambda_ in [0.80, 0.85, 0.88]:
+        lr = 1e-4
+        print(f"Training with lambda = {lambda_}")
+        env.seed(random_seed)
+        torch.manual_seed(random_seed)
+        train(lr, lambda_)
+        test(f'LunarLander_{lr}_lambda_{lambda_}.pth')
 
-    for lambda_ in lambda_values:
+    for lambda_ in [0.85, 0.92, 0.95]:
+        lr = 5e-5
         print(f"Training with lambda = {lambda_}")
         env.seed(random_seed)
         torch.manual_seed(random_seed)

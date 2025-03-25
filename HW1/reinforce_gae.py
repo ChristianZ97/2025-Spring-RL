@@ -332,7 +332,7 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
     lr = 1e-4
 
-    for lambda_ in [0.8, 0.98, 0.92]:
+    for lambda_ in [0, 0.99, 0.8, 0.92]:
         writer = SummaryWriter(f"./tb_record_gae/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
         env.seed(random_seed)

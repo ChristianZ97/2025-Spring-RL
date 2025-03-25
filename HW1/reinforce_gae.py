@@ -330,7 +330,7 @@ if __name__ == '__main__':
     # For reproducibility, fix the random seed
     random_seed = 10
     env = gym.make('LunarLander-v2')
-    lr = 1e-4
+    lr = ((1 - 0.99) ** 3) / 8
 
     for lambda_ in [0, 0.99, 0.8, 0.92]:
         writer = SummaryWriter(f"./tb_record_gae/lambda{lambda_}")

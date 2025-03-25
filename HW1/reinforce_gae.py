@@ -330,25 +330,10 @@ if __name__ == '__main__':
     # For reproducibility, fix the random seed
     random_seed = 10
     env = gym.make('LunarLander-v2')
+    lr = 1e-4
 
-    for lambda_ in [0.92, 0.95, 0.98]:
-        lr = 1e-4
-        print(f"Training with lambda = {lambda_}")
-        env.seed(random_seed)
-        torch.manual_seed(random_seed)
-        train(lr, lambda_)
-        test(f'LunarLander_{lr}_lambda_{lambda_}.pth')
-
-    for lambda_ in [0.80, 0.85, 0.88]:
-        lr = 1e-4
-        print(f"Training with lambda = {lambda_}")
-        env.seed(random_seed)
-        torch.manual_seed(random_seed)
-        train(lr, lambda_)
-        test(f'LunarLander_{lr}_lambda_{lambda_}.pth')
-
-    for lambda_ in [0.85, 0.92, 0.95]:
-        lr = 5e-5
+    for lambda_ in [0.8, 0.98, 0.92]:
+        writer = SummaryWriter(f"./tb_record_gae/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
         env.seed(random_seed)
         torch.manual_seed(random_seed)

@@ -228,7 +228,7 @@ def train(lr=0.01, lambda_=0.95):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # Learning rate scheduler (optional)
-    scheduler = Scheduler.StepLR(optimizer, step_size=200, gamma=0.95)
+    scheduler = Scheduler.StepLR(optimizer, step_size=300, gamma=0.98)
     
     # EWMA reward for tracking the learning progress
     ewma_reward = 0

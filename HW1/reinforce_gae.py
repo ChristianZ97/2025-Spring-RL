@@ -67,6 +67,7 @@ class Policy(nn.Module):
             scale = 1.0 / np.sqrt(layer.in_features)
             layer.weight.data = torch.randn_like(layer.weight) * scale
 
+
         ########## END OF YOUR CODE ##########
         
         # action & reward memory
@@ -280,7 +281,7 @@ def train(lr=0.01, lambda_=0.95):
         ########## END OF YOUR CODE ##########
 
         # check if we have "solved" the cart pole problem, use 120 as the threshold in LunarLander-v2
-        if ewma_reward > 120:
+        if ewma_reward > env.spec.reward_threshold: # env.spec.reward_threshold
             if not os.path.isdir("./preTrained"):
                 os.mkdir("./preTrained")
             torch.save(model.state_dict(), './preTrained/LunarLander_{}_lambda_{}.pth'.format(lr, lambda_))
@@ -330,9 +331,9 @@ if __name__ == '__main__':
     # For reproducibility, fix the random seed
     random_seed = 10
     env = gym.make('LunarLander-v2')
-    lr = 0.0001
+    lr = 1e-3
 
-    for lambda_ in [0.995, 0.95, 0.92]:
+    for lambda_ in [0.96, 0.85, 0.72]:
         writer = SummaryWriter(f"./tb_record_gae/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
         env.seed(random_seed)

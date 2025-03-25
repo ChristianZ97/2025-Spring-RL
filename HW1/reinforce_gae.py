@@ -228,7 +228,7 @@ def train(lr=0.01, lambda_=0.95):
     optimizer = optim.Adam(model.parameters(), lr=lr)
     
     # Learning rate scheduler (optional)
-    scheduler = Scheduler.StepLR(optimizer, step_size=300, gamma=0.98)
+    scheduler = Scheduler.StepLR(optimizer, step_size=200, gamma=0.95)
     
     # EWMA reward for tracking the learning progress
     ewma_reward = 0
@@ -330,9 +330,9 @@ if __name__ == '__main__':
     # For reproducibility, fix the random seed
     random_seed = 10
     env = gym.make('LunarLander-v2')
-    lr = ((1 - 0.99) ** 3) / 8
+    lr = 0.0001
 
-    for lambda_ in [0, 0.99, 0.8, 0.92]:
+    for lambda_ in [0.995, 0.95, 0.92]:
         writer = SummaryWriter(f"./tb_record_gae/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
         env.seed(random_seed)

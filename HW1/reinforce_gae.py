@@ -50,19 +50,17 @@ class Policy(nn.Module):
         self.obs_bn1 = nn.BatchNorm1d(self.hidden_size)
         self.obs_layer2 = nn.Linear(self.hidden_size, self.hidden_size)
         self.obs_bn2 = nn.BatchNorm1d(self.hidden_size)
-        self.obs_layer3 = nn.Linear(self.hidden_size, self.hidden_size)
-        self.obs_bn3 = nn.BatchNorm1d(self.hidden_size)
 
 
         self.act_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
-        # self.act_bn1 = nn.BatchNorm1d(self.hidden_size)
+        self.act_bn1 = nn.BatchNorm1d(self.hidden_size)
         self.act_layer2 = nn.Linear(self.hidden_size, self.action_dim)
 
         self.val_layer1 = nn.Linear(self.hidden_size, self.hidden_size)
-        # self.val_bn1 = nn.BatchNorm1d(self.hidden_size)
+        self.val_bn1 = nn.BatchNorm1d(self.hidden_size)
         self.val_layer2 = nn.Linear(self.hidden_size, 1)
 
-        for layer in [self.obs_layer1, self.obs_layer2, self.obs_layer3,
+        for layer in [self.obs_layer1, self.obs_layer2,
                      self.act_layer1, self.act_layer2,
                      self.val_layer1, self.val_layer2]:
 
@@ -92,16 +90,13 @@ class Policy(nn.Module):
         if state.dim() == 1:
             state = state.unsqueeze(0)
 
-        obs1 = F.relu(self.obs_bn1(self.obs_layer1(state)))
-        obs2 = F.relu(self.obs_bn2(self.obs_layer2(obs1)))
-        obs3 = F.relu(self.obs_bn3(self.obs_layer3(obs2)))
+        obs1 = F.leaky_relu(self.obs_bn1(self.obs_layer1(state)))
+        obs2 = F.leaky_relu(self.obs_bn2(self.obs_layer2(obs1)))
 
-        # act1 = F.relu(self.act_bn1(self.act_layer1(obs2)))
-        act1 = F.relu(self.act_layer1(obs3))
+        act1 = F.leaky_relu(self.act_bn1(self.act_layer1(obs2)))
         action_prob = self.act_layer2(act1)
 
-        # val1 = F.relu(self.val_bn1(self.val_layer1(obs2)))
-        val1 = F.relu(self.val_layer1(obs3))
+        val1 = F.leaky_relu(self.val_bn1(self.val_layer1(obs2)))
         state_value = self.val_layer2(val1)
 
         ########## END OF YOUR CODE ##########
@@ -339,7 +334,7 @@ if __name__ == '__main__':
     lr = 1e-4
 
     for lambda_ in [0.96, 0.85, 0.72]:
-        writer = SummaryWriter(f"./tb_record_gae/lambda{lambda_}")
+        writer = SummaryWriter(f"./tb_record_gae/lr{lr}/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
         env.seed(random_seed)
         torch.manual_seed(random_seed)

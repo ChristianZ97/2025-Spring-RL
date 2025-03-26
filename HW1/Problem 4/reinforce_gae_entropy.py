@@ -298,7 +298,7 @@ def train(lr=0.01, lambda_=0.95, entropy_coef=0.01):
         if ewma_reward > env.spec.reward_threshold: # env.spec.reward_threshold
             if not os.path.isdir("./preTrained"):
                 os.mkdir("./preTrained")
-            torch.save(model.state_dict(), './preTrained/LunarLander_{}_lambda_{}.pth'.format(lr, lambda_))
+            torch.save(model.state_dict(), './preTrained/LunarLander_{}_lambda_{}_entropy.pth'.format(lr, lambda_))
             print("Solved! Running reward is now {} and "
                   "the last episode runs to {} time steps!".format(ewma_reward, t))
             break
@@ -348,7 +348,7 @@ if __name__ == '__main__':
     lr = 1e-4
 
     for lambda_ in [0.96, 0.85, 0.72]:
-        writer = SummaryWriter(f"./tb_record_gae/lr{lr}/lambda{lambda_}")
+        writer = SummaryWriter(f"./tb_record_gae/entropy/lr{lr}/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
         env.seed(random_seed)
         torch.manual_seed(random_seed)

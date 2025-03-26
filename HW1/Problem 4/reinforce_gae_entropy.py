@@ -169,7 +169,8 @@ class Policy(nn.Module):
 
             policy_losses.append(-log_prob_action * advantage)
 
-            R_tensor = torch.tensor([R], dtype=torch.float32, device=state_value.device)
+            # R_tensor = torch.tensor([R], dtype=torch.float32, device=state_value.device)
+            R_tensor = torch.tensor([R], dtype=torch.float32, device=state_value.device).view_as(state_value)
             value_losses.append(F.mse_loss(state_value, R_tensor))
 
             entropy_term += entropy
@@ -179,7 +180,8 @@ class Policy(nn.Module):
 
         ########## END OF YOUR CODE ##########
         
-        return loss
+        # return loss
+        return loss, entropy_term
 
     def clear_memory(self):
         # reset rewards and action buffer
@@ -267,7 +269,7 @@ def train(lr=0.01, lambda_=0.95, entropy_coef=0.01):
             t += 1
             ep_reward += reward
 
-        loss = model.calculate_loss(0.99)
+        loss, entropy_term = model.calculate_loss(0.99)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()

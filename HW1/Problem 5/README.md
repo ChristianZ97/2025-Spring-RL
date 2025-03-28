@@ -4,8 +4,6 @@
 
 ### Create conda environment
 ```bash
-git clone https://github.com/ChristianZ97/2025-Spring-RL && cd 2025-Spring-RL/HW1 # May 
-
 conda create -n d4rl python=3.7 -y # for Windows 10
 conda create -n d4rl python=3.8 -y # for M2 Mac
 conda activate d4rl

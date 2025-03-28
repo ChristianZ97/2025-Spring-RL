@@ -117,7 +117,12 @@ cd ..
 python d4rl_sanity_check.py
 
 # For Windows 10, you may need to fix the PATH Conflict between Git Bash and Conda.
+# Git Bash
 export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
+# PowerShell
+[System.Environment]::SetEnvironmentVariable("PATH", "$env:USERPROFILE\.mujoco\mujoco210\bin;$env:PATH", [System.EnvironmentVariableTarget]::User)
+# CMD
+setx PATH "%USERPROFILE%\.mujoco\mujoco210\bin;%PATH%"
 ```
 
 ### Other installations
@@ -180,19 +185,48 @@ with tempfile.NamedTemporaryFile(mode='w+', suffix='.xml', delete=False) as f:
 #### Quick Fix Commands
 ```bash
 # Get D4RL path
+# Git Bash
 D4RL_PATH=$(python -c "import d4rl; import os; print(os.path.dirname(d4rl.__file__))")
+# PowerShell
+$env:D4RL_PATH = python -c "import d4rl; import os; print(os.path.dirname(d4rl.__file__))"
+# CMD
+for /f "delims=" %%i in ('python -c "import d4rl; import os; print(os.path.dirname(d4rl.__file__))"') do set "D4RL_PATH=%%i"
 
 # Backup original files
+# Git Bash
 cp $D4RL_PATH/locomotion/maze_env.py $D4RL_PATH/locomotion/maze_env.py.bak
 cp $D4RL_PATH/pointmaze/dynamic_mjc.py $D4RL_PATH/pointmaze/dynamic_mjc.py.bak
+# PowerShell
+Copy-Item "$env:D4RL_PATH\locomotion\maze_env.py" -Destination "$env:D4RL_PATH\locomotion\maze_env.py.bak"
+Copy-Item "$env:D4RL_PATH\pointmaze\dynamic_mjc.py" -Destination "$env:D4RL_PATH\pointmaze\dynamic_mjc.py.bak"
+# CMD
+copy "%D4RL_PATH%\locomotion\maze_env.py" "%D4RL_PATH%\locomotion\maze_env.py.bak"
+copy "%D4RL_PATH%\pointmaze\dynamic_mjc.py" "%D4RL_PATH%\pointmaze\dynamic_mjc.py.bak"
 
 # Fix 1: maze_env.py
+# Git Bash
 sed -i 's/_, file_path = tempfile.mkstemp(text=True, suffix='"'"'\.xml'"'"')/fd, file_path = tempfile.mkstemp(text=True, suffix='"'"'\.xml'"'"')/' $D4RL_PATH/locomotion/maze_env.py
 sed -i 's/\([[:space:]]*\)tree.write(file_path)/\1tree.write(file_path)\n\1os.close(fd)/' $D4RL_PATH/locomotion/maze_env.py
+# PowerShell
+(Get-Content "$env:D4RL_PATH\locomotion\maze_env.py") -replace '_, file_path = tempfile\.mkstemp\(text=True, suffix='\''.xml'\''\)', 'fd, file_path = tempfile.mkstemp(text=True, suffix='''.xml''')' | Set-Content "$env:D4RL_PATH\locomotion\maze_env.py"
+(Get-Content "$env:D4RL_PATH\locomotion\maze_env.py") -replace '([ \t]*)tree\.write\(file_path\)', '${1}tree.write(file_path)`n${1}os.close(fd)' | Set-Content "$env:D4RL_PATH\locomotion\maze_env.py"
+# CMD
+powershell -Command "(Get-Content '%D4RL_PATH%\locomotion\maze_env.py') -replace '_, file_path = tempfile\.mkstemp$begin:math:text$text=True, suffix='\\''.xml'\\''$end:math:text$', 'fd, file_path = tempfile.mkstemp(text=True, suffix='''.xml''')' | Set-Content '%D4RL_PATH%\locomotion\maze_env.py'"
+powershell -Command "(Get-Content '%D4RL_PATH%\locomotion\maze_env.py') -replace '([ \t]*)tree\.write$begin:math:text$file_path$end:math:text$', '${1}tree.write(file_path)`n${1}os.close(fd)' | Set-Content '%D4RL_PATH%\locomotion\maze_env.py'"
+
+
+
 
 # Fix 2: dynamic_mjc.py
+# Git Bash
 sed -i 's/with tempfile.NamedTemporaryFile(mode='"'"'w+'"'"', suffix='"'"'\.xml'"'"', delete=True) as f:/with tempfile.NamedTemporaryFile(mode='"'"'w+'"'"', suffix='"'"'\.xml'"'"', delete=False) as f:/' $D4RL_PATH/pointmaze/dynamic_mjc.py
 sed -i 's/\([[:space:]]*\)f.seek(0)/\1f.seek(0)\n\1f.close()/' $D4RL_PATH/pointmaze/dynamic_mjc.py
+# PowerShell
+(Get-Content "$env:D4RL_PATH\pointmaze\dynamic_mjc.py") -replace 'with tempfile.NamedTemporaryFile\(mode='\''.w+\'', suffix='\''.xml\'', delete=True\)', 'with tempfile.NamedTemporaryFile(mode='''.w+''', suffix='''.xml''', delete=False)' | Set-Content "$env:D4RL_PATH\pointmaze\dynamic_mjc.py"
+(Get-Content "$env:D4RL_PATH\pointmaze\dynamic_mjc.py") -replace '([ \t]*)f\.seek\(0\)', '${1}f.seek(0)`n${1}f.close()' | Set-Content "$env:D4RL_PATH\pointmaze\dynamic_mjc.py"
+# CMD
+powershell -Command "(Get-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py') -replace 'with tempfile.NamedTemporaryFile$begin:math:text$mode='\\''.w+\\'', suffix='\\''.xml\\'', delete=True$end:math:text$', 'with tempfile.NamedTemporaryFile(mode='''.w+''', suffix='''.xml''', delete=False)' | Set-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py'"
+powershell -Command "(Get-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py') -replace '([ \t]*)f\.seek$begin:math:text$0$end:math:text$', '${1}f.seek(0)`n${1}f.close()' | Set-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py'"
 ```
 
 ## Troubleshooting

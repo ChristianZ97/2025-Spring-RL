@@ -28,3 +28,18 @@ pip install -r requirements.txt
 ```bash
 python reinforce_gae_orth_init.py
 ```
+
+## Using TensorBoard
+
+Training metrics are automatically saved to `./tb_record_gae` directory. To view them:
+
+```bash
+# Navigate to the project root directory
+cd /path/to/project
+
+# Start TensorBoard
+tensorboard --logdir=./tb_record_gae
+
+# Access in browser
+# Open http://localhost:6006 in your web browser
+```

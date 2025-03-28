@@ -214,9 +214,6 @@ sed -i 's/\([[:space:]]*\)tree.write(file_path)/\1tree.write(file_path)\n\1os.cl
 powershell -Command "(Get-Content '%D4RL_PATH%\locomotion\maze_env.py') -replace '_, file_path = tempfile\.mkstemp$begin:math:text$text=True, suffix='\\''.xml'\\''$end:math:text$', 'fd, file_path = tempfile.mkstemp(text=True, suffix='''.xml''')' | Set-Content '%D4RL_PATH%\locomotion\maze_env.py'"
 powershell -Command "(Get-Content '%D4RL_PATH%\locomotion\maze_env.py') -replace '([ \t]*)tree\.write$begin:math:text$file_path$end:math:text$', '${1}tree.write(file_path)`n${1}os.close(fd)' | Set-Content '%D4RL_PATH%\locomotion\maze_env.py'"
 
-
-
-
 # Fix 2: dynamic_mjc.py
 # Git Bash
 sed -i 's/with tempfile.NamedTemporaryFile(mode='"'"'w+'"'"', suffix='"'"'\.xml'"'"', delete=True) as f:/with tempfile.NamedTemporaryFile(mode='"'"'w+'"'"', suffix='"'"'\.xml'"'"', delete=False) as f:/' $D4RL_PATH/pointmaze/dynamic_mjc.py

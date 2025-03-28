@@ -290,16 +290,16 @@ sed -i 's/\([[:space:]]*\)f.seek(0)/\1f.seek(0)\n\1f.close()/' $D4RL_PATH/pointm
 
 **PowerShell**
 ```powershell
-# Fix 1: maze_env.py - Replace file reading pattern and add file descriptor close
+# Fix 1: maze_env.py
 (Get-Content "$env:D4RL_PATH\locomotion\maze_env.py") | 
     ForEach-Object {$_ -replace '_, file_path = tempfile\.mkstemp\(text=True, suffix=''\.xml''\)', 'fd, file_path = tempfile.mkstemp(text=True, suffix=''.xml'')'} |
-    ForEach-Object {$_ -replace '([ \t]*)tree\.write\(file_path\)', '$1tree.write(file_path)$1$1os.close(fd)'} |
+    ForEach-Object {$_ -replace '([ \t]*)tree\.write\(file_path\)', '$1tree.write(file_path)\n$1os.close(fd)'} |
     Set-Content "$env:D4RL_PATH\locomotion\maze_env.py"
 
-# Fix 2: dynamic_mjc.py - Set delete=False and add file close
+# Fix 2: dynamic_mjc.py
 (Get-Content "$env:D4RL_PATH\pointmaze\dynamic_mjc.py") |
     ForEach-Object {$_ -replace 'with tempfile\.NamedTemporaryFile\(mode=''w\+'', suffix=''\.xml'', delete=True\)', 'with tempfile.NamedTemporaryFile(mode=''w+'', suffix=''.xml'', delete=False)'} |
-    ForEach-Object {$_ -replace '([ \t]*)f\.seek\(0\)', '$1f.seek(0)$1$1f.close()'} |
+    ForEach-Object {$_ -replace '([ \t]*)f\.seek\(0\)', '$1f.seek(0)\n$1f.close()'} |
     Set-Content "$env:D4RL_PATH\pointmaze\dynamic_mjc.py"
 ```
 
@@ -308,10 +308,10 @@ sed -i 's/\([[:space:]]*\)f.seek(0)/\1f.seek(0)\n\1f.close()/' $D4RL_PATH/pointm
 :: It's recommended to use PowerShell for these text manipulations
 :: This will execute the PowerShell script from CMD
 powershell -Command ^
-"(Get-Content '%D4RL_PATH%\locomotion\maze_env.py') | ForEach-Object {$_ -replace '_, file_path = tempfile\.mkstemp\(text=True, suffix=''\.xml''\)', 'fd, file_path = tempfile.mkstemp(text=True, suffix=''.xml'')'} | ForEach-Object {$_ -replace '([ \t]*)tree\.write\(file_path\)', '$1tree.write(file_path)$1$1os.close(fd)'} | Set-Content '%D4RL_PATH%\locomotion\maze_env.py'"
+"(Get-Content '%D4RL_PATH%\locomotion\maze_env.py') | ForEach-Object {$_ -replace '_, file_path = tempfile\.mkstemp\(text=True, suffix=''\.xml''\)', 'fd, file_path = tempfile.mkstemp(text=True, suffix=''.xml'')'} | ForEach-Object {$_ -replace '([ \t]*)tree\.write\(file_path\)', '$1tree.write(file_path)`n$1os.close(fd)'} | Set-Content '%D4RL_PATH%\locomotion\maze_env.py'"
 
 powershell -Command ^
-"(Get-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py') | ForEach-Object {$_ -replace 'with tempfile\.NamedTemporaryFile\(mode=''w\+'', suffix=''\.xml'', delete=True\)', 'with tempfile.NamedTemporaryFile(mode=''w+'', suffix=''.xml'', delete=False)'} | ForEach-Object {$_ -replace '([ \t]*)f\.seek\(0\)', '$1f.seek(0)$1$1f.close()'} | Set-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py'"
+"(Get-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py') | ForEach-Object {$_ -replace 'with tempfile\.NamedTemporaryFile\(mode=''w\+'', suffix=''\.xml'', delete=True\)', 'with tempfile.NamedTemporaryFile(mode=''w+'', suffix=''.xml'', delete=False)'} | ForEach-Object {$_ -replace '([ \t]*)f\.seek\(0\)', '$1f.seek(0)`n$1f.close()'} | Set-Content '%D4RL_PATH%\pointmaze\dynamic_mjc.py'"
 ```
 
 ## Troubleshooting

@@ -13,9 +13,20 @@ conda activate d4rl
 
 ### Install MuJoCo on Windows 10
 ```bash
+# Git Bash
 mkdir -p ~/.mujoco
 curl -L -O https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-windows-x86_64.zip
 unzip mujoco210-windows-x86_64.zip -d ~/.mujoco
+
+# PowerShell
+New-Item -ItemType Directory -Force $env:USERPROFILE\.mujoco
+Invoke-WebRequest -Uri "https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-windows-x86_64.zip" -OutFile "$env:USERPROFILE\mujoco210-windows-x86_64.zip"
+Expand-Archive -Path "$env:USERPROFILE\mujoco210-windows-x86_64.zip" -DestinationPath "$env:USERPROFILE\.mujoco" -Force
+
+# CMD
+mkdir %USERPROFILE%\.mujoco
+curl -L -o %USERPROFILE%\mujoco210-windows-x86_64.zip https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-windows-x86_64.zip
+powershell -Command "Expand-Archive -Path '%USERPROFILE%\mujoco210-windows-x86_64.zip' -DestinationPath '%USERPROFILE%\.mujoco' -Force"
 ```
 
 ### Install MuJoCo on M2 Mac
@@ -39,13 +50,29 @@ ln -sf /opt/homebrew/lib/libglfw.3.dylib $HOME/.mujoco/mujoco210/bin/
 
 ### For Windows 10
 ```bash
+# Git Bash
 export LD_LIBRARY_PATH=~/.mujoco/mujoco210/bin${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} 
 export MUJOCO_KEY_PATH=~/.mujoco${MUJOCO_KEY_PATH}
 export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
 export D4RL_SUPPRESS_IMPORT_ERROR=1
 
-# Verify MuJoCo installation
-~/.mujoco/mujoco210/bin/simulate ~/.mujoco/mujoco210/model/humanoid.xml
+~/.mujoco/mujoco210/bin/simulate ~/.mujoco/mujoco210/model/humanoid.xml # Verify MuJoCo installation
+
+# PowerShell
+$env:LD_LIBRARY_PATH = "$env:USERPROFILE\.mujoco\mujoco210\bin" + ($(if ($env:LD_LIBRARY_PATH) {":" + $env:LD_LIBRARY_PATH} else {""}))
+$env:MUJOCO_KEY_PATH = "$env:USERPROFILE\.mujoco" + $env:MUJOCO_KEY_PATH
+$env:PATH = "$env:USERPROFILE\.mujoco\mujoco210\bin" + ";" + $env:PATH
+$env:D4RL_SUPPRESS_IMPORT_ERROR = "1"
+
+Start-Process -NoNewWindow -FilePath "$env:USERPROFILE\.mujoco\mujoco210\bin\simulate.exe" -ArgumentList "$env:USERPROFILE\.mujoco\mujoco210\model\humanoid.xml" # Verify MuJoCo installation
+
+# CMD
+set "LD_LIBRARY_PATH=%USERPROFILE%\.mujoco\mujoco210\bin;%LD_LIBRARY_PATH%"
+set "MUJOCO_KEY_PATH=%USERPROFILE%\.mujoco%MUJOCO_KEY_PATH%"
+set "PATH=%USERPROFILE%\.mujoco\mujoco210\bin;%PATH%"
+set "D4RL_SUPPRESS_IMPORT_ERROR=1"
+
+"%USERPROFILE%\.mujoco\mujoco210\bin\simulate.exe" "%USERPROFILE%\.mujoco\mujoco210\model\humanoid.xml" # Verify MuJoCo installation
 ```
 
 ### For Mac M2 

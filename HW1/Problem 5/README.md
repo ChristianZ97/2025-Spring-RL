@@ -163,7 +163,6 @@ python -c "import mujoco_py; print(mujoco_py.__version__)"
 python -c "import d4rl; print(d4rl.__version__)"
 
 # Run sanity check
-cd ..
 python d4rl_sanity_check.py
 ```
 

@@ -35,9 +35,10 @@ Training metrics are automatically saved to `./tb_record_gae` directory. To view
 
 ```bash
 # Navigate to the project root directory
-cd /path/to/project
+cd 2025-Spring-RL/HW1/Problem\ 4
 
 # Start TensorBoard
+conda activate gae
 tensorboard --logdir=./tb_record_gae
 
 # Access in browser

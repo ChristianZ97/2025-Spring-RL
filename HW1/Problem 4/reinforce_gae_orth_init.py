@@ -287,7 +287,7 @@ if __name__ == '__main__':
 
     # Train and test for each lambda
     for lambda_ in lambdas:
-        writer = SummaryWriter(f"./tb_record_gae/test_oth/lambda{lambda_}")
+        writer = SummaryWriter(f"./tb_record_gae/orth_init/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
         env.reset(seed=random_seed)
         torch.manual_seed(random_seed)

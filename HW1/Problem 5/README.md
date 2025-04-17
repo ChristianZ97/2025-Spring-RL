@@ -182,7 +182,8 @@ pip install git+https://github.com/rail-berkeley/d4rl@master#egg=d4rl
 python -c "import mujoco_py; print(mujoco_py.__version__)"
 python -c "import d4rl; print(d4rl.__version__)"
 
-# $env:PATH = "$env:USERPROFILE\.mujoco\mujoco210\bin;$env:PATH"
+# For WSL GLIBCXX_3.4.30 Error
+conda install -c conda-forge libstdcxx-ng
 
 # Run sanity check
 python d4rl_sanity_check.py

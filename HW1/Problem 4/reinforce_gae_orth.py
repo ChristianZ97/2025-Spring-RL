@@ -2,7 +2,7 @@
 # HW1: REINFORCE with baseline and GAE
 
 import os
-import gym
+import gymnasium as gym
 from itertools import count
 from collections import namedtuple
 import numpy as np

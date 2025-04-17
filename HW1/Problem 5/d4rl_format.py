@@ -40,8 +40,8 @@ def print_dataset_format(env_name):
     env.close()
 
 def main():
-    default_env = 'maze2d-umaze-v1'
-    env_names = sys.argv[1:] or [default_env]
+    default_envs = ['maze2d-umaze-v1', 'hopper-medium-v2']
+    env_names = sys.argv[1:] or default_envs
     
     for env_name in env_names:
         print_dataset_format(env_name)

@@ -33,7 +33,7 @@ conda activate d4rl
 
 ## MuJoCo Installation
 
-### Install MuJoCo on Windows 10
+### For Windows 10
 
 **Git Bash**
 ```bash
@@ -56,7 +56,7 @@ curl -L -o %USERPROFILE%\mujoco210-windows-x86_64.zip https://github.com/deepmin
 powershell -Command "Expand-Archive -Path '%USERPROFILE%\mujoco210-windows-x86_64.zip' -DestinationPath '%USERPROFILE%\.mujoco' -Force"
 ```
 
-### Install MuJoCo on M2 Mac
+### For M2 Mac
 
 1. Download and install MuJoCo.app for MacOS (the .dmg file) from [official release](https://github.com/google-deepmind/mujoco/releases)
 2. Copy the MuJoCo.app into /Applications/ folder
@@ -74,6 +74,15 @@ ln -sf /Applications/MuJoCo.app/Contents/Frameworks/MuJoCo.framework/Versions/Cu
 brew install glfw
 ln -sf /opt/homebrew/lib/libglfw.3.dylib $HOME/.mujoco/mujoco210/bin/
 ```
+
+### For WSL2 Ubuntu
+
+```bash
+mkdir -p ~/.mujoco
+curl -L -O https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz
+tar -xvzf mujoco210-linux-x86_64.tar.gz -C ~/.mujoco
+```
+
 
 ## MuJoCo Environment Variables Setup
 
@@ -125,11 +134,21 @@ set "D4RL_SUPPRESS_IMPORT_ERROR=1"
 "%USERPROFILE%\.mujoco\mujoco210\bin\simulate.exe" "%USERPROFILE%\.mujoco\mujoco210\model\humanoid.xml"
 ```
 
-### For Mac M2 
+### For M2 Mac 
 ```bash
 export LD_LIBRARY_PATH=$HOME/.mujoco/mujoco210/bin${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} 
 export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
 export D4RL_SUPPRESS_IMPORT_ERROR=1
+```
+
+### For WSL2 Ubuntu
+```bash
+export LD_LIBRARY_PATH=$HOME/.mujoco/mujoco210/bin${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+export MUJOCO_KEY_PATH=$HOME/.mujoco${MUJOCO_KEY_PATH:+:${MUJOCO_KEY_PATH}}
+export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
+export D4RL_SUPPRESS_IMPORT_ERROR=1
+
+$HOME/.mujoco/mujoco210/bin/simulate $HOME/.mujoco/mujoco210/model/humanoid.xml
 ```
 
 ## Python Dependencies

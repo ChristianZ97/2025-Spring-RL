@@ -2,7 +2,8 @@
 # HW1: REINFORCE with baseline and GAE
 
 import os
-import gymnasium as gym
+# import gymnasium as gym
+import gym
 from itertools import count
 from collections import namedtuple
 import numpy as np
@@ -239,8 +240,8 @@ def train(lr=3e-4, lambda_=0.95):
     # run inifinitely many episodes
     for i_episode in count(1):
         # reset environment and episode reward
-        # state = env.reset()
-        state, _ = env.reset(seed=random_seed)
+        state = env.reset()
+        # state, _ = env.reset(seed=random_seed)
         ep_reward = 0
         t = 0
 
@@ -254,9 +255,9 @@ def train(lr=3e-4, lambda_=0.95):
         done = False
         while not done and t < 10000:
             action = model.select_action(state)
-            # next_state, reward, done, _ = env.step(action)
-            next_state, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
+            next_state, reward, done, _ = env.step(action)
+            # next_state, reward, terminated, truncated, info = env.step(action)
+            # done = terminated or truncated
             model.rewards.append(reward)
             state = next_state
             t += 1
@@ -342,8 +343,8 @@ if __name__ == '__main__':
     for lambda_ in lambdas:
         writer = SummaryWriter(f"./tb_record_gae/test_oth/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
-        # env.seed(random_seed)
-        env.reset(seed=random_seed)
+        env.seed(random_seed)
+        # env.reset(seed=random_seed)
         torch.manual_seed(random_seed)
         train(lr=lr, lambda_=lambda_)
         test('./orth_init_LunarLander_{}_lambda_{}.pth'.format(lr, lambda_))

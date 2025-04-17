@@ -204,27 +204,6 @@ export PATH="$HOME/.mujoco/mujoco210/bin:$PATH"
 setx PATH "%USERPROFILE%\.mujoco\mujoco210\bin;%PATH%"
 ```
 
-### Other installations
-```bash
-# Make sure CUDA is available
-conda install -c nvidia cuda-toolkit -y
-
-# Install PyTorch
-pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
-
-# Install TensorBoard
-conda install tensorboard -y
-pip install chardet  # Fix error on Windows 10
-
-# Fix for LunarLander on M2 Mac
-conda install -c conda-forge box2d-py
-
-# Fix for LunarLander on Windows 10
-conda install swig -y
-pip install box2d-py
-pip install gym[box2d]
-```
-
 ## Windows-Specific Error
 
 ### Fix for maze2d-umaze-v1 error in Windows 10

@@ -239,7 +239,8 @@ def train(lr=3e-4, lambda_=0.95):
     # run inifinitely many episodes
     for i_episode in count(1):
         # reset environment and episode reward
-        state = env.reset()
+        # state = env.reset()
+        state, _ = env.reset(seed=random_seed)
         ep_reward = 0
         t = 0
 

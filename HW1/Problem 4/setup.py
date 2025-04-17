@@ -5,6 +5,7 @@ setup.py for your RL project
 Hardware Configuration:
 - GPU: NVIDIA GeForce RTX 4060
 - CUDA Version: 12.7
+- Operating System: WSL (Windows Subsystem for Linux) on Windows 11
 """
 
 from setuptools import setup, find_packages

@@ -14,6 +14,12 @@ conda install gymnasium -y
 pip install torch torchvision torchaudio
 conda install tensorboard -y
 pip install box2d pygame
+
+conda create -n gae python=3.7 -y
+# WSL2 with python=3.7 follows the d4rl env
+pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --index-url https://download.pytorch.org/whl/cu117
+conda install tensorboard -y
+pip install box2d-py box2d pygame
 ```
 
 ### Option 2: Using pip with requirements.txt

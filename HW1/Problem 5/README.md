@@ -147,7 +147,8 @@ pip install -U cython==3.0.0a10
 pip install git+https://github.com/openai/mujoco-py.git
 
 # Option 2: Clone and install
-git clone https://github.com/openai/mujoco-py.git && cd mujoco-py
+git clone https://github.com/openai/mujoco-py.git
+cd mujoco-py
 pip install -e .
 ```
 

@@ -254,7 +254,9 @@ def train(lr=3e-4, lambda_=0.95):
         done = False
         while not done and t < 10000:
             action = model.select_action(state)
-            next_state, reward, done, _ = env.step(action)
+            # next_state, reward, done, _ = env.step(action)
+            next_state, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
             model.rewards.append(reward)
             state = next_state
             t += 1

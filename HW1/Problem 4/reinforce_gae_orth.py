@@ -339,7 +339,8 @@ if __name__ == '__main__':
     for lambda_ in lambdas:
         writer = SummaryWriter(f"./tb_record_gae/test_oth/lambda{lambda_}")
         print(f"Training with lambda = {lambda_}")
-        env.seed(random_seed)
+        # env.seed(random_seed)
+        env.reset(seed=random_seed)
         torch.manual_seed(random_seed)
         train(lr=lr, lambda_=lambda_)
         test('./orth_init_LunarLander_{}_lambda_{}.pth'.format(lr, lambda_))

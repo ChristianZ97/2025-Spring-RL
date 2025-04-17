@@ -26,7 +26,7 @@ pip install -r requirements.txt
 ## Running the Code
 
 ```bash
-python reinforce_gae_orth_init.py
+python reinforce_gae_orth.py
 ```
 
 ## Using TensorBoard

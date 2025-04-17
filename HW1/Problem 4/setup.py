@@ -1,25 +1,28 @@
+# -*- coding: utf-8 -*-
+"""
+setup.py for your RL project
+
+Hardware Configuration:
+- GPU: NVIDIA GeForce RTX 4060
+- CUDA Version: 12.7
+"""
+
 from setuptools import setup, find_packages
 
 setup(
-    name="reinforce_gae",
-    version="0.1.0",
-    description="REINFORCE with baseline and GAE implementation",
-    author="Student",
-    author_email="student@university.edu",
+    name="your_project_name",
+    version="0.1",
+    description="Reinforcement Learning project with GAE and Orthogonal Initialization",
     packages=find_packages(),
     install_requires=[
-        "gymnasium>=0.28.1",
-        "torch>=2.0.0",
-        "numpy>=1.24.0",
-        "box2d-py>=2.3.5",
-        "pygame>=2.1.0",
-        "tensorboard>=2.12.0",
-        "protobuf==3.20.0",
+        'torch==1.13.1+cu117',
+        'torchvision==0.14.1+cu117',
+        'torchaudio==0.13.1',
+        'tensorboard==2.10.0',
+        'box2d-py',
+        'box2d',
+        'pygame',
+        'chardet',
     ],
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],
-    python_requires=">=3.8",
+    python_requires='>=3.7, <3.8',
 )

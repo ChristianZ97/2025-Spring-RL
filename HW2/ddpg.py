@@ -104,15 +104,21 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your actor network
 
+        device = next(self.parameters()).device
+        inputs = inputs.to(device)
+
         x = F.relu(self.fc1(inputs))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        action = torch.tanh(self.fc_out(x))
+        action = F.tanh(self.fc_out(x))
 
-        scaled_action = action * self.action_space.high
+        action_high = torch.tensor(self.action_space.high, 
+                                  dtype=action.dtype, 
+                                  device=device)
+        scaled_action = action * action_high
 
         return scaled_action
-        
+
         ########## END OF YOUR CODE ##########
 
 class Critic(nn.Module):
@@ -124,8 +130,14 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-
-
+        self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.fc2 = nn.Linear(hidden_size + num_outputs, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.fc_out = nn.Linear(hidden_size, 1)
+        
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
+            nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
+            nn.init.constant_(layer.bias, 0)
 
         ########## END OF YOUR CODE ##########
 
@@ -133,8 +145,18 @@ class Critic(nn.Module):
         
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your critic network
+
+        device = next(self.parameters()).device
+        inputs = inputs.to(device)
+        actions = actions.to(device)
         
-        
+        x = F.relu(self.fc1(inputs))
+        x = torch.cat([x, actions], 1)
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        q_value = self.fc_out(x)
+
+        return q_value
         
         ########## END OF YOUR CODE ##########        
         
@@ -168,10 +190,17 @@ class DDPG(object):
 
         ########## YOUR CODE HERE (3~5 lines) ##########
         # Add noise to your action for exploration
-        # Clipping might be needed 
+        # Clipping might be needed
 
+        if action_noise is not None:
+            noise = torch.tensor(action_noise.noise(), dtype=mu.dtype, device=mu.device)
+            mu += noise
 
+        action_low = torch.tensor(self.action_space.low, dtype=mu.dtype, device=mu.device)
+        action_high = torch.tensor(self.action_space.high, dtype=mu.dtype, device=mu.device)
+        mu = torch.clamp(mu, action_low, action_high)
 
+        return mu
 
         ########## END OF YOUR CODE ##########
 
@@ -187,8 +216,33 @@ class DDPG(object):
         # Calculate policy loss and value loss
         # Update the actor and the critic
 
+        device = next(self.actor.parameters()).device
+        state_batch = state_batch.to(device)
+        action_batch = action_batch.to(device)
+        reward_batch = reward_batch.to(device)
+        mask_batch = mask_batch.to(device)
+        next_state_batch = next_state_batch.to(device)
 
+        eval_scaled_action = self.actor.forward(inputs=state_batch)
+        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
 
+        self.actor_target.eval()
+        self.critic_target.eval()
+        with torch.no_grad():
+            target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+            target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        td_target = reward_batch + self.gamma * mask_batch * target_q_value.detach()
+
+        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+
+        self.critic_optim.zero_grad()
+        value_loss.backward()
+        self.critic_optim.step()
+
+        self.actor_optim.zero_grad()
+        policy_loss.backward()
+        self.actor_optim.step()
 
         ########## END OF YOUR CODE ########## 
 

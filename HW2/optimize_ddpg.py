@@ -33,6 +33,7 @@ from skopt.plots import plot_convergence, plot_objective
 env_name = 'Pendulum-v0'
 env = gym.make(env_name)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+random_seed = 42
 
 # Define the hyperparameter search space
 search_space = [
@@ -57,7 +58,6 @@ def objective(lr_a, lr_c, gamma, tau, hidden_size, noise_scale):
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility
-    random_seed = 42
     env.seed(random_seed)
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)

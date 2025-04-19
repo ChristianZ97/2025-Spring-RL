@@ -16,6 +16,10 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
+env_name = 'Pendulum-v0'
+env = gym.make(env_name)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+random_seed = 42
 
 # Configure a wandb log
 # #wandb.login()
@@ -418,9 +422,9 @@ if __name__ == '__main__':
         print("Using CPU")
 
     # For reproducibility, fix the random seed
-    env_name = 'Pendulum-v0'
-    random_seed = 42
-    env = gym.make(env_name)
+    # env_name = 'Pendulum-v0'
+    # random_seed = 42
+    # env = gym.make(env_name)
     env.seed(random_seed)  
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)  

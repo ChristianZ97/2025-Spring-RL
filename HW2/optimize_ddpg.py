@@ -41,7 +41,7 @@ search_space = [
     Real(1e-4, 1e-2, name='lr_c', prior='log-uniform'),   # Critic learning rate
     Real(0.97, 0.999, name='gamma'),                      # Discount factor
     Real(0.0001, 0.01, name='tau'),                       # Target network update rate
-    Integer(128, 512, name='hidden_size'),                # Size of hidden layers
+    # Integer(128, 512, name='hidden_size'),                # Size of hidden layers
     Real(0.1, 0.5, name='noise_scale')                    # Exploration noise scale
 ]
 
@@ -70,7 +70,6 @@ def objective(lr_a, lr_c, gamma, tau, hidden_size, noise_scale):
     results = train(
         gamma=gamma,
         tau=tau,
-        hidden_size=int(hidden_size),
         noise_scale=noise_scale,
         lr_a=lr_a,
         lr_c=lr_c,
@@ -149,7 +148,6 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     final_results = train(
         gamma=best_gamma,
         tau=best_tau,
-        hidden_size=int(best_hidden_size),
         noise_scale=best_noise_scale,
         lr_a=best_lr_a,
         lr_c=best_lr_c,

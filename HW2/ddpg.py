@@ -114,7 +114,7 @@ class Actor(nn.Module):
         x = F.relu(self.fc1(inputs))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        action = F.tanh(self.fc_out(x))
+        action = torch.tanh(self.fc_out(x))
 
         action_high = torch.tensor(self.action_space.high, 
                                   dtype=action.dtype, 
@@ -223,10 +223,11 @@ class DDPG(object):
         device = next(self.actor.parameters()).device
         state_batch = state_batch.to(device)
         action_batch = action_batch.to(device)
-        reward_batch = reward_batch.to(device)
-        mask_batch = mask_batch.to(device)
+        reward_batch = reward_batch.view(-1, 1).to(device)
+        mask_batch = mask_batch.view(-1, 1).to(device)
         next_state_batch = next_state_batch.to(device)
-
+        
+        self.actor.train()
         eval_scaled_action = self.actor.forward(inputs=state_batch)
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
 
@@ -238,7 +239,12 @@ class DDPG(object):
         td_target = reward_batch + self.gamma * mask_batch * target_q_value.detach()
 
         value_loss = F.mse_loss(input=eval_q_value, target=td_target)
-        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+
+        # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+        self.critic.eval()
+        eval_actions_for_policy = eval_scaled_action.clone()
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_actions_for_policy).mean()
+        self.critic.train()
 
         self.critic_optim.zero_grad()
         value_loss.backward()

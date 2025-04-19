@@ -226,29 +226,24 @@ class DDPG(object):
         reward_batch = reward_batch.view(-1, 1).to(device)
         mask_batch = mask_batch.view(-1, 1).to(device)
         next_state_batch = next_state_batch.to(device)
-        
-        self.actor.train()
-        eval_scaled_action = self.actor.forward(inputs=state_batch)
-        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
 
         self.actor_target.eval()
         self.critic_target.eval()
         with torch.no_grad():
             target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
             target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-        td_target = reward_batch + self.gamma * mask_batch * target_q_value.detach()
-
+        td_target = reward_batch + self.gamma * mask_batch * target_q_value
+        
+        self.critic.train()
+        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
         value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-        # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
-        self.critic.eval()
-        eval_actions_for_policy = eval_scaled_action.clone()
-        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_actions_for_policy).mean()
-        self.critic.train()
+        self.actor.train()
+        eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-        self.critic_optim.zero_grad()
-        value_loss.backward()
-        self.critic_optim.step()
+        self.critic.eval()
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+        self.critic.train()
 
         self.actor_optim.zero_grad()
         policy_loss.backward()
@@ -287,7 +282,7 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
           lr_a=1e-4, lr_c=1e-3, num_episodes=200, render=True, save_model=True):
     
     torch.autograd.set_detect_anomaly(True)
-    
+
     # num_episodes = 200
     # gamma = 0.995
     # tau = 0.002

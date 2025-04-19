@@ -27,7 +27,7 @@ from torch.utils.tensorboard import SummaryWriter
 #)
 
 # Define a tensorboard writer
-#writer = SummaryWriter("./tb_record_3")
+writer = SummaryWriter("./tb_record_3")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -88,7 +88,14 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own actor network
 
+        self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.fc_out = nn.Linear(hidden_size, num_outputs)
 
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
+            nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
+            nn.init.constant_(layer.bias, 0)
         
         ########## END OF YOUR CODE ##########
         
@@ -96,8 +103,15 @@ class Actor(nn.Module):
         
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your actor network
-        
-        
+
+        x = F.relu(self.fc1(inputs))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        action = torch.tanh(self.fc_out(x))
+
+        scaled_action = action * self.action_space.high
+
+        return scaled_action
         
         ########## END OF YOUR CODE ##########
 

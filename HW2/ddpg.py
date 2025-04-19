@@ -320,7 +320,7 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.Tensor(numpy.array([env.reset()])).to(device)
+        state = torch.Tensor(np.array([env.reset()])).to(device)
 
         episode_reward = 0
         while True:

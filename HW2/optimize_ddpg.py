@@ -121,7 +121,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     )
     
     # Extract best hyperparameters
-    best_lr_a, best_lr_c, best_gamma, best_tau, best_hidden_size, best_noise_scale = result.x
+    best_lr_a, best_lr_c, best_gamma, best_tau, best_noise_scale = result.x
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")

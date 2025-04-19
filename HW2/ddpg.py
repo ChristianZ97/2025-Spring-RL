@@ -320,7 +320,7 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.Tensor([env.reset()]).to(device)
+        state = torch.Tensor(numpy.array([env.reset()])).to(device)
 
         episode_reward = 0
         while True:
@@ -395,7 +395,7 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
             
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
             writer.add_scalar('Train/Episode_Length', t, i_episode)
-            writer.add_scalar('Train/Actor_Loss', policy_loss.item(), i_episode)
+            writer.add_scalar('Train/Actor_Loss', policy_loss, i_episode)
             writer.add_scalar('Train/Critic_Loss', value_loss.item(), i_episode)
 
     if save_model:

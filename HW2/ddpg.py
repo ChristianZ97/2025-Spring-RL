@@ -273,12 +273,15 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train():    
-    num_episodes = 200
-    gamma = 0.995
-    tau = 0.002
-    hidden_size = 128
-    noise_scale = 0.3
+def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3, 
+          lr_a=1e-4, lr_c=1e-3, num_episodes=200, render=True, save_model=True):
+
+    # num_episodes = 200
+    # gamma = 0.995
+    # tau = 0.002
+    # hidden_size = 128
+    # noise_scale = 0.3
+
     replay_size = 100000
     batch_size = 128
     updates_per_step = 1
@@ -288,18 +291,29 @@ def train():
     ewma_reward_history = []
     total_numsteps = 0
     updates = 0
-
+    terrible_threshold = -1000
     
-    agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size)
-    ounoise = OUNoise(env.action_space.shape[0])
+    agent = DDPG(
+        num_inputs=env.observation_space.shape[0], 
+        action_space=env.action_space, 
+        gamma=gamma, 
+        tau=tau, 
+        hidden_size=hidden_size, 
+        lr_a=lr_a, 
+        lr_c=lr_c
+        ).to(device)
+    ounoise = OUNoise(action_dimension=env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
+
+    policy_loss = torch.tensor(0.0).to(device)
+    value_loss = torch.tensor(0.0).to(device)
     
     for i_episode in range(num_episodes):
         
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.Tensor([env.reset()])
+        state = torch.Tensor([env.reset()]).to(device)
 
         episode_reward = 0
         while True:
@@ -309,27 +323,56 @@ def train():
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
 
+            action = agent.select_action(state=state, action_noise=ounoise)
+            next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
+            next_state = torch.Tensor([next_state]).to(device)
+            reward = torch.Tensor([reward]).to(device)
+            mask = torch.Tensor([0.0 if done else 1.0]).to(device)
+            memory.push(state, action, mask, next_state, reward)
 
+            episode_reward += reward.item()
+
+            if len(memory) >= batch_size:
+                for _ in range(updates_per_step):
+                    transitions = memory.sample(batch_size=batch_size)
+                    batch = Transition(*zip(*transitions))
+                    value_loss, policy_loss = agent.update_parameters(batch=batch)
+                    updates += 1
+
+            state = next_state
+            total_numsteps += 1
+
+            if done: break
 
             ########## END OF YOUR CODE ########## 
             # For wandb logging
             # wandb.log({"actor_loss": actor_loss, "critic_loss": critic_loss})
 
         rewards.append(episode_reward)
+
+        if episode_reward < terrible_threshold and i_episode > 20:
+            print(f"Early stopping at episode {i_episode} due to poor performance ({episode_reward:.2f})")
+            return {
+                'last_rewards': [episode_reward] * 10,
+                'best_reward': max(rewards) if rewards else -float('inf'),
+                'ewma_reward': ewma_reward
+            }
+
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.Tensor([env.reset()])
+            state = torch.Tensor([env.reset()]).to(device)
             episode_reward = 0
             while True:
                 action = agent.select_action(state)
 
-                next_state, reward, done, _ = env.step(action.numpy()[0])
+                # next_state, reward, done, _ = env.step(action.numpy()[0])
+                next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
                 
                 env.render()
                 
                 episode_reward += reward
 
-                next_state = torch.Tensor([next_state])
+                next_state = torch.Tensor([next_state]).to(device)
 
                 state = next_state
                 
@@ -343,15 +386,42 @@ def train():
             ewma_reward_history.append(ewma_reward)           
             print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1], ewma_reward))
             
-    agent.save_model(env_name, '.pth')        
- 
+            writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
+            writer.add_scalar('Train/Episode_Length', t, i_episode)
+            writer.add_scalar('Train/Actor_Loss', policy_loss.item(), i_episode)
+            writer.add_scalar('Train/Critic_Loss', value_loss.item(), i_episode)
+
+    if save_model:
+        agent.save_model(env_name, '.pth')
+
+    env.close()
+    writer.close()
+
+    return {
+        'last_rewards': rewards[-10:],
+        'best_reward': max(rewards),
+        'ewma_reward': ewma_reward,
+        'rewards': rewards
+    }
+
 
 if __name__ == '__main__':
+
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"Using CUDA: {torch.cuda.get_device_name(0)}")
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print("Using Apple MPS (Metal Performance Shaders)")
+    else:
+        device = torch.device("cpu")
+        print("Using CPU")
+
     # For reproducibility, fix the random seed
-    random_seed = 10  
-    env = gym.make('Pendulum-v0')
+    env_name = 'Pendulum-v0'
+    random_seed = 42
+    env = gym.make(env_name)
     env.seed(random_seed)  
-    torch.manual_seed(random_seed)  
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)  
     train()
-
-

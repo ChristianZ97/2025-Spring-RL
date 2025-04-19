@@ -17,7 +17,11 @@ from skopt.utils import use_named_args
 from skopt.plots import plot_convergence, plot_objective
 
 # Import the DDPG training function
-from ddpg import train, env, device, env_name
+from ddpg import train
+
+env_name = 'Pendulum-v0'
+env = gym.make(env_name)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Define the hyperparameter search space
 search_space = [

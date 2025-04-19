@@ -40,7 +40,6 @@ def objective(lr_a, lr_c, gamma, tau, hidden_size, noise_scale):
           f"tau={tau:.6f}, hidden_size={hidden_size}, noise_scale={noise_scale:.6f}")
 
     env.close()
-    global env
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility
@@ -76,7 +75,7 @@ def objective(lr_a, lr_c, gamma, tau, hidden_size, noise_scale):
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-    
+
     # Return negative reward for minimization
     return -final_reward
 

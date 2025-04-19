@@ -333,8 +333,8 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
             action = agent.select_action(state=state, action_noise=ounoise)
             next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
             next_state = torch.Tensor(np.array([next_state])).to(device)
-            reward = torch.Tensor([reward]).to(device)
-            mask = torch.Tensor([0.0 if done else 1.0]).to(device)
+            reward = torch.Tensor(np.array([reward])).to(device)
+            mask = torch.Tensor(np.array([0.0 if done else 1.0])).to(device)
             memory.push(state, action, mask, next_state, reward)
 
             episode_reward += reward.item()
@@ -367,7 +367,7 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
 
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.Tensor([env.reset()]).to(device)
+            state = torch.Tensor(np.array([env.reset()])).to(device)
             episode_reward = 0
             while True:
                 action = agent.select_action(state)
@@ -379,7 +379,7 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
                 
                 episode_reward += reward
 
-                next_state = torch.Tensor([next_state]).to(device)
+                next_state = torch.Tensor(np.array([next_state])).to(device)
 
                 state = next_state
                 

@@ -5,19 +5,30 @@ This script uses scikit-optimize to perform Bayesian Optimization on the DDPG
 algorithm's hyperparameters to maximize performance on reinforcement learning tasks.
 """
 
+import sys
+import gym
 import numpy as np
-import torch
-import random
-import matplotlib.pyplot as plt
 import os
 import time
+import random
+from collections import namedtuple
+import torch
+import torch.nn as nn
+# import wandb
+from torch.optim import Adam
+from torch.autograd import Variable
+import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
+
+# Import the DDPG training function
+from ddpg import train
+
+import matplotlib.pyplot as plt
+
 from skopt import gp_minimize
 from skopt.space import Real, Integer
 from skopt.utils import use_named_args
 from skopt.plots import plot_convergence, plot_objective
-
-# Import the DDPG training function
-from ddpg import train
 
 env_name = 'Pendulum-v0'
 env = gym.make(env_name)

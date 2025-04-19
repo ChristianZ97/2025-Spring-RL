@@ -285,7 +285,9 @@ class DDPG(object):
 
 def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3, 
           lr_a=1e-4, lr_c=1e-3, num_episodes=200, render=True, save_model=True):
-
+    
+    torch.autograd.set_detect_anomaly(True)
+    
     # num_episodes = 200
     # gamma = 0.995
     # tau = 0.002

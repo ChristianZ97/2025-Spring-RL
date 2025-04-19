@@ -34,6 +34,7 @@ env_name = 'Pendulum-v0'
 env = gym.make(env_name)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 random_seed = 42
+hidden_size = 256
 
 # Define the hyperparameter search space
 search_space = [
@@ -47,7 +48,7 @@ search_space = [
 
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
-def objective(lr_a, lr_c, gamma, tau, hidden_size, noise_scale):
+def objective(lr_a, lr_c, gamma, tau, noise_scale):
     """
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.

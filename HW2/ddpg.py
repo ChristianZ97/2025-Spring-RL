@@ -305,7 +305,7 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
         hidden_size=hidden_size, 
         lr_a=lr_a, 
         lr_c=lr_c
-        ).to(device)
+        )
     ounoise = OUNoise(action_dimension=env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
 

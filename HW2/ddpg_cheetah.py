@@ -313,6 +313,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         state = torch.from_numpy(env.reset()).float().unsqueeze(0)
 
         episode_reward = 0
+        episode_value_loss, episode_policy_loss = 0, 0
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########
@@ -320,22 +321,22 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
 
-            episode_value_loss, episode_policy_loss = 0, 0
             with torch.no_grad():
                 action = agent.select_action(state.to(device), action_noise=ounoise)
                 next_state_np, reward, done, _ = env.step(action.cpu().numpy()[0])
                 next_state = torch.from_numpy(next_state_np).float().unsqueeze(0)
                 mask = 0.0 if done else 1.0
+
                 memory.push(
                     state.cpu(),
                     action.cpu(),
-                    torch.tensor([[reward]], dtype=torch.float32), 
-                    torch.tensor([[mask]], dtype=torch.float32),
-                    next_state.cpu()
+                    torch.tensor([mask], dtype=torch.float32),
+                    next_state.cpu(),
+                    torch.tensor([reward], dtype=torch.float32)
                 )
 
-                state = next_state
-                episode_reward += reward
+            state = next_state
+            episode_reward += reward
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):

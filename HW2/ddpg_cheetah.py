@@ -303,8 +303,10 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
     SOLVED = False
     
     agent = DDPG(
-        num_inputs=env.observation_space.shape[0], 
-        action_space=env.action_space, 
+        # num_inputs=env.observation_space.shape[0],
+        num_inputs=env.single_observation_space.shape[0],
+        # action_space=env.action_space,
+        action_space=env.single_action_space,
         gamma=gamma, 
         tau=tau, 
         hidden_size=hidden_size, 

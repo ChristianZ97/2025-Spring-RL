@@ -213,21 +213,24 @@ class DDPG(object):
 
 
     def update_parameters(self, batch):
+
+        '''
         state_batch = Variable(torch.cat(batch.state))
         action_batch = Variable(torch.cat(batch.action))
         reward_batch = Variable(torch.cat(batch.reward))
         mask_batch = Variable(torch.cat(batch.mask))
         next_state_batch = Variable(torch.cat(batch.next_state))
+        '''
         
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss
         # Update the actor and the critic
-
-        state_batch = state_batch.to(device)
-        action_batch = action_batch.to(device)
-        reward_batch = reward_batch.unsqueeze(1).to(device)
-        mask_batch = mask_batch.unsqueeze(1).to(device)
-        next_state_batch = next_state_batch.to(device)
+        
+        state_batch = torch.stack(batch.state).squeeze(1).to(device)
+        action_batch = torch.stack(batch.action).squeeze(1).to(device)
+        reward_batch = torch.stack(batch.reward).to(device)
+        mask_batch = torch.stack(batch.mask).to(device)
+        next_state_batch = torch.stack(batch.next_state).squeeze(1).to(device)
 
         self.actor_target.eval()
         self.critic_target.eval()

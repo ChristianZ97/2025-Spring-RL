@@ -34,7 +34,6 @@ env_name = 'Pendulum-v0'
 env = gym.make(env_name)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 random_seed = 42
-hidden_size = 256
 
 # Define the hyperparameter search space
 search_space = [
@@ -42,7 +41,6 @@ search_space = [
     Real(1e-4, 1e-2, name='lr_c', prior='log-uniform'),   # Critic learning rate
     Real(0.97, 0.999, name='gamma'),                      # Discount factor
     Real(0.0001, 0.01, name='tau'),                       # Target network update rate
-    # Integer(128, 512, name='hidden_size'),                # Size of hidden layers
     Real(0.1, 0.5, name='noise_scale')                    # Exploration noise scale
 ]
 
@@ -54,7 +52,7 @@ def objective(lr_a, lr_c, gamma, tau, noise_scale):
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
     print(f"\nTrying parameters: lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, gamma={gamma:.6f}, "
-          f"tau={tau:.6f}, hidden_size={hidden_size}, noise_scale={noise_scale:.6f}")
+          f"tau={tau:.6f}, noise_scale={noise_scale:.6f}")
 
     env = gym.make(env_name)
     
@@ -125,7 +123,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
-    for name, value in zip(['lr_a', 'lr_c', 'gamma', 'tau', 'hidden_size', 'noise_scale'], result.x):
+    for name, value in zip(['lr_a', 'lr_c', 'gamma', 'tau', 'noise_scale'], result.x):
         print(f"{name}: {value}")
     
     print(f"Best reward: {-result.fun:.2f}")
@@ -135,7 +133,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['lr_a', 'lr_c', 'gamma', 'tau', 'hidden_size', 'noise_scale'], params)])
+                                  zip(['lr_a', 'lr_c', 'gamma', 'tau', 'noise_scale'], params)])
             f.write(f"{i}, {-value:.4f}, {param_str}\n")
     
     # Create visualization plots
@@ -163,7 +161,6 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write(f"lr_c = {best_lr_c}\n")
         f.write(f"gamma = {best_gamma}\n")
         f.write(f"tau = {best_tau}\n")
-        # f.write(f"hidden_size = {best_hidden_size}\n")
         f.write(f"noise_scale = {best_noise_scale}\n")
         f.write(f"Best reward: {-result.fun:.2f}\n")
     

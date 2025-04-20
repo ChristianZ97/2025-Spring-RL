@@ -343,8 +343,6 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 action = agent.select_action(state.to(device), action_noise=ounoise)
                 action_np = action.cpu().numpy()
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
-                action = agent.select_action(state.to(device), action_noise=ounoise)
-                next_state_np, reward_np, done, _ = env.step(action.cpu().numpy())
                 next_state = torch.from_numpy(next_state_np).float()
                 reward = torch.from_numpy(reward_np).float().unsqueeze(1)
                 mask = torch.from_numpy(1.0 - done_np).float().unsqueeze(1)
@@ -390,7 +388,6 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 action_np = action.cpu().numpy()
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
                 next_state_np, reward_np, done, _ = env.step(action.cpu().numpy())
-                next_state = torch.from_numpy(next_state_np).float()
                 
                 if render: env.render()
                 
@@ -398,7 +395,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 episode_reward += reward_np.mean().item()
 
                 # next_state = torch.Tensor([next_state])
-                next_state = torch.from_numpy(next_state).float()
+                next_state = torch.from_numpy(next_state_np).float()
                 state = next_state
                 
                 t += 1

@@ -163,7 +163,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write(f"lr_c = {best_lr_c}\n")
         f.write(f"gamma = {best_gamma}\n")
         f.write(f"tau = {best_tau}\n")
-        f.write(f"hidden_size = {best_hidden_size}\n")
+        # f.write(f"hidden_size = {best_hidden_size}\n")
         f.write(f"noise_scale = {best_noise_scale}\n")
         f.write(f"Best reward: {-result.fun:.2f}\n")
     

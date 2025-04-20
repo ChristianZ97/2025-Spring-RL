@@ -336,7 +336,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
 
             with torch.no_grad():
                 action = agent.select_action(state.to(device), action_noise=ounoise)
-                next_state_np, reward, done, _ = env.step(action.cpu().numpy()[0])
+                next_state_np, reward, done, _ = env.step(action.cpu().numpy())
                 next_state = torch.from_numpy(next_state_np).float()
                 done = np.array(done, dtype=np.float32)
                 mask = torch.from_numpy(1.0 - done).float().unsqueeze(1)
@@ -382,7 +382,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 action = agent.select_action(state.to(device))
 
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
-                next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
+                next_state, reward, done, _ = env.step(action.cpu().numpy())
                 
                 if render: env.render()
                 

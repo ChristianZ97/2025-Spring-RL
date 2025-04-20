@@ -202,8 +202,8 @@ class DDPG(object):
         if action_noise is not None:
             ounoise = torch.from_numpy(action_noise.noise()).float().to(mu.device)
             mu += ounoise
-
-        mu = torch.clamp(mu, torch.tensor(self.action_space.low), torch.tensor(self.action_space.high))
+        
+        mu = torch.clamp(mu, torch.tensor(self.action_space.low).to(mu.device), torch.tensor(self.action_space.high).to(mu.device))
         return mu
 
         ########## END OF YOUR CODE ##########

@@ -21,8 +21,8 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 # Import the DDPG training function
-from ddpg import env_name, random_seed, device
-# from ddpg_cheetah import env_name, random_seed, device
+from ddpg import train, env_name, random_seed, device
+# from ddpg_cheetah import train, env_name, random_seed, device
 
 import matplotlib.pyplot as plt
 

@@ -30,7 +30,7 @@ from skopt import gp_minimize
 from skopt.space import Real, Integer
 from skopt.utils import use_named_args
 from skopt.plots import plot_convergence, plot_objective
-    import gc
+import gc
 
 # Define the hyperparameter search space
 search_space = [

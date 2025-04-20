@@ -200,7 +200,7 @@ class DDPG(object):
         # Clipping might be needed
 
         if action_noise is not None:
-            mu += action_noise.noise()
+            mu += torch.tensor(action_noise.noise())
 
         mu = torch.clamp(mu, torch.tensor(self.action_space.low), torch.tensor(self.action_space.high))
         return mu

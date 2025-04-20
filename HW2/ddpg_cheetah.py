@@ -228,15 +228,14 @@ class DDPG(object):
 
         state_batch = torch.stack(batch.state).squeeze(1).to(device)
         action_batch = torch.stack(batch.action).squeeze(1).to(device)
-        reward_batch = torch.stack(batch.reward).to(device)
-        mask_batch = torch.stack(batch.mask).to(device)
+        reward_batch = torch.stack(batch.reward).squeeze(1).to(device)
+        mask_batch = torch.stack(batch.mask).squeeze(1).to(device)
         next_state_batch = torch.stack(batch.next_state).squeeze(1).to(device)
 
         self.actor_target.eval()
         self.critic_target.eval()
         target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
         target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action).detach()
-        target_q_value = target_q_value.squeeze(-1)
         td_target = (reward_batch + self.gamma * mask_batch * target_q_value)
 
 

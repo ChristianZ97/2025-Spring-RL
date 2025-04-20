@@ -61,7 +61,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c):
     start_time = time.time()
     results = train(
         env,
-        num_episodes=3, # Use fewer episodes for optimization to save time
+        num_episodes=30, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -142,8 +142,11 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     
     # Train final model with best parameters
     print("\nTraining final model with best parameters...")
+    final_env = gym.make(env_name)
+    final_env.seed(random_seed)
+
     final_results = train(
-        env=env,
+        env=final_env,
         num_episodes=num_episodes,
         gamma=best_gamma,
         tau=best_tau,

@@ -16,7 +16,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v0'
+env_name = 'HalfCheetah-v2'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -30,7 +30,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #)
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_3")
+writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -92,8 +92,11 @@ class Actor(nn.Module):
         # Construct your own actor network
 
         self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.ln1 = nn.LayerNorm(hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.ln2 = nn.LayerNorm(hidden_size)
         self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.ln3 = nn.LayerNorm(hidden_size)
         self.fc_out = nn.Linear(hidden_size, num_outputs)
 
         for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
@@ -110,9 +113,9 @@ class Actor(nn.Module):
         device = next(self.parameters()).device
         inputs = inputs.to(device)
 
-        x = F.relu(self.fc1(inputs))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
+        x = F.relu(self.ln1(self.fc1(inputs)))
+        x = F.relu(self.ln2(self.fc2(x)))
+        x = F.relu(self.ln3(self.fc3(x)))
         action = torch.tanh(self.fc_out(x))
 
         action_high = torch.tensor(self.action_space.high, 
@@ -134,10 +137,14 @@ class Critic(nn.Module):
         # Construct your own critic network
 
         self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.ln1 = nn.LayerNorm(hidden_size)
         self.fc2 = nn.Linear(hidden_size + num_outputs, hidden_size)
+        self.ln2 = nn.LayerNorm(hidden_size)
         self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.ln3 = nn.LayerNorm(hidden_size)
         self.fc_out = nn.Linear(hidden_size, 1)
-        
+
+
         for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
@@ -152,11 +159,11 @@ class Critic(nn.Module):
         device = next(self.parameters()).device
         inputs = inputs.to(device)
         actions = actions.to(device)
-        
-        x = F.relu(self.fc1(inputs))
+
+        x = F.relu(self.ln1(self.fc1(inputs)))
         x = torch.cat([x, actions], 1)
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
+        x = F.relu(self.ln2(self.fc2(x)))
+        x = F.relu(self.ln3(self.fc3(x)))
         q_value = self.fc_out(x)
 
         return q_value
@@ -243,7 +250,7 @@ class DDPG(object):
 
             self.critic_optim.zero_grad()
             value_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
             self.critic_optim.step()
 
 
@@ -255,7 +262,7 @@ class DDPG(object):
 
             self.actor_optim.zero_grad()
             policy_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
             self.actor_optim.step()
 
             ########## END OF YOUR CODE ########## 
@@ -287,14 +294,14 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train(env, num_episodes=300, gamma=0.995, tau=0.002, noise_scale=0.3, 
-          lr_a=1e-4, lr_c=1e-3, render=False, save_model=True):
+def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2, 
+          lr_a=3e-5, lr_c=3e-4, render=False, save_model=True):
     
     torch.autograd.set_detect_anomaly(True)
 
-    hidden_size = 256
-    replay_size = 100000
-    batch_size = 512
+    hidden_size = 512
+    replay_size = 1000000
+    batch_size = 256
     updates_per_step = 1
     print_freq = 10
     ewma_reward = 0
@@ -323,7 +330,8 @@ def train(env, num_episodes=300, gamma=0.995, tau=0.002, noise_scale=0.3,
     for i_episode in range(num_episodes):
         
         # ounoise.scale = noise_scale
-        ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
+        # ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
+        ounoise.scale = noise_scale * (1.0 - i_episode / (num_episodes * 0.8))
         ounoise.reset()
         
         state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
@@ -395,7 +403,8 @@ def train(env, num_episodes=300, gamma=0.995, tau=0.002, noise_scale=0.3,
             writer.add_scalar('Train/Actor_Loss', policy_loss, i_episode)
             writer.add_scalar('Train/Critic_Loss', value_loss, i_episode)
 
-            if ewma_reward > -200 and i_episode > 10: SOLVED = True
+            # if ewma_reward > -200 and i_episode > 200: SOLVED = True
+            if ewma_reward > 5000 and i_episode > 500: SOLVED = True
 
             if SOLVED:
                 if save_model: agent.save_model(env_name, '.pth')

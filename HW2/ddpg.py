@@ -285,7 +285,7 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train(gamma=0.995, tau=0.002, noise_scale=0.3, 
+def train(env, gamma=0.995, tau=0.002, noise_scale=0.3, 
           lr_a=1e-4, lr_c=1e-3, render=True, save_model=True):
     
     torch.autograd.set_detect_anomaly(True)
@@ -422,4 +422,4 @@ if __name__ == '__main__':
     env.seed(random_seed)  
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)  
-    train()
+    train(env)

@@ -40,8 +40,6 @@ search_space = [
     Real(1e-4, 1e-2, name='lr_c', prior='log-uniform')    # Critic learning rate
 ]
 
-env = gym.make(env_name)
-
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
 def objective(lr_a, lr_c, gamma, tau, noise_scale):
@@ -64,6 +62,7 @@ def objective(lr_a, lr_c, gamma, tau, noise_scale):
     
     start_time = time.time()
     results = train(
+        env=env,
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -141,6 +140,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     # Train final model with best parameters
     print("\nTraining final model with best parameters...")
     final_results = train(
+        env=env,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,

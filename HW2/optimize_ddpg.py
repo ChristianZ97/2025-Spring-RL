@@ -21,8 +21,8 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 # Import the DDPG training function
-from ddpg import train, env_name, random_seed, device
-# from ddpg_cheetah import train, env_name, random_seed, device
+#from ddpg import train, env_name, random_seed, device
+from ddpg_cheetah import train, env_name, random_seed, device
 
 import matplotlib.pyplot as plt
 
@@ -34,11 +34,11 @@ import gc
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.97, 0.999, name='gamma'),                      # Discount factor
+    Real(0.98, 0.999, name='gamma'),                      # Discount factor
     Real(0.0001, 0.01, name='tau'),                       # Target network update rate
-    Real(0.1, 0.5, name='noise_scale'),                   # Exploration noise scale
-    Real(1e-5, 1e-3, name='lr_a', prior='log-uniform'),   # Actor learning rate
-    Real(1e-4, 1e-2, name='lr_c', prior='log-uniform')    # Critic learning rate
+    Real(0.05, 0.3, name='noise_scale'),                   # Exploration noise scale
+    Real(1e-6, 5e-4, name='lr_a', prior='log-uniform'),   # Actor learning rate
+    Real(1e-5, 5e-3, name='lr_c', prior='log-uniform')    # Critic learning rate
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -61,7 +61,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c):
     start_time = time.time()
     results = train(
         env=env,
-        num_episodes=30, # Use fewer episodes for optimization to save time
+        num_episodes=3, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -83,6 +83,10 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c):
 
     env.close()
 
+    if final_reward < -100:
+        print("Performance too poor, early stopping")
+        return 1000
+    
     # Return negative reward for minimization
     return -final_reward
 
@@ -108,11 +112,12 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         n_calls=n_calls,          # Total number of evaluations
         n_random_starts=n_random_starts,  # Initial random evaluations
         verbose=True,             # Print progress
-        random_state=random_seed  # Random seed
+        random_state=random_seed, # Random seed
+        n_jobs=-1
     )
     
     # Extract best hyperparameters
-    best_lr_a, best_lr_c, best_gamma, best_tau, best_noise_scale = result.x
+    best_gamma, best_tau, best_noise_scale, best_lr_a, best_lr_c = result.x
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
@@ -139,7 +144,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     print("\nTraining final model with best parameters...")
     final_results = train(
         env=env,
-        # num_episodes=num_episodes,
+        num_episodes=num_episodes,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,

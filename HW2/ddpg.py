@@ -319,7 +319,8 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
     
     for i_episode in range(num_episodes):
         
-        ounoise.scale = noise_scale
+        # ounoise.scale = noise_scale
+        ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
         ounoise.reset()
         
         state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
@@ -391,7 +392,7 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
             writer.add_scalar('Train/Actor_Loss', policy_loss, i_episode)
             writer.add_scalar('Train/Critic_Loss', value_loss, i_episode)
 
-            if ewma_reward > -200:
+            if ewma_reward > -200 and i_episode > 200:
                 if save_model: agent.save_model(env_name, '.pth')
                 print("Solved! Running reward is now {} and "
                   "the last episode runs to {} time steps!".format(ewma_reward, t))

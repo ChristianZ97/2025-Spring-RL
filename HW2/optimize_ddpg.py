@@ -35,9 +35,9 @@ from skopt.plots import plot_convergence, plot_objective
 search_space = [
     Real(0.97, 0.999, name='gamma'),                      # Discount factor
     Real(0.0001, 0.01, name='tau'),                       # Target network update rate
-    Real(0.1, 0.5, name='noise_scale')                    # Exploration noise scale
+    Real(0.1, 0.5, name='noise_scale'),                   # Exploration noise scale
     Real(1e-5, 1e-3, name='lr_a', prior='log-uniform'),   # Actor learning rate
-    Real(1e-4, 1e-2, name='lr_c', prior='log-uniform'),   # Critic learning rate
+    Real(1e-4, 1e-2, name='lr_c', prior='log-uniform')    # Critic learning rate
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -47,8 +47,7 @@ def objective(lr_a, lr_c, gamma, tau, noise_scale):
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    print(f"\nTrying parameters: lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, gamma={gamma:.6f}, "
-          f"tau={tau:.6f}, noise_scale={noise_scale:.6f}")
+    print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}")
 
     env = gym.make(env_name)
     

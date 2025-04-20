@@ -290,8 +290,8 @@ def train(env, gamma=0.995, tau=0.002, noise_scale=0.3,
     
     torch.autograd.set_detect_anomaly(True)
 
-    num_episodes=300
-    hidden_size=256
+    num_episodes = 300
+    hidden_size = 256
     replay_size = 100000
     batch_size = 512
     updates_per_step = 20
@@ -369,7 +369,7 @@ def train(env, gamma=0.995, tau=0.002, noise_scale=0.3,
 
                 next_state, reward, done, _ = env.step(action.numpy()[0])
                 
-                env.render()
+                if render: env.render()
                 
                 episode_reward += reward
 

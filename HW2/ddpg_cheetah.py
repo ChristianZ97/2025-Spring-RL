@@ -202,7 +202,7 @@ class DDPG(object):
         if action_noise is not None:
             mu += action_noise.noise()
 
-        mu = torch.clamp(mu, self.action_space.low, self.action_space.high)
+        mu = torch.clamp(mu, torch.tensor(self.action_space.low), torch.tensor(self.action_space.high))
         return mu
 
         ########## END OF YOUR CODE ##########

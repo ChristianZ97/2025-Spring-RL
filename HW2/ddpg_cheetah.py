@@ -228,7 +228,7 @@ class DDPG(object):
 
         state_batch = torch.stack(batch.state).squeeze(1).to(device)
         action_batch = torch.stack(batch.action).squeeze(1).to(device)
-        reward_batch = torch.stack(batch.reward).squeeze(1).to(device)
+        reward_batch = torch.stack(batch.reward).squeeze(1).view(-1, 1).to(device)
         mask_batch = torch.stack(batch.mask).squeeze(1).view(-1, 1) .to(device)
         next_state_batch = torch.stack(batch.next_state).squeeze(1).to(device)
 

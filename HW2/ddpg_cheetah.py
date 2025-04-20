@@ -313,7 +313,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])
-        state = torch.from_numpy(env.reset()).unsqueeze(0).to(device)
+        state = torch.from_numpy(env.reset()).float().unsqueeze(0).to(device)
 
         episode_reward = 0
         while True:
@@ -335,9 +335,9 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                     buffer_rewards.append(reward)
                     buffer_masks.append(0.0 if done else 1.0)
                     buffer_next_states.append(next_state)
-                    state = torch.from_numpy(next_state).unsqueeze(0).to(device)
+                    state = torch.from_numpy(next_state).float().unsqueeze(0).to(device)
                     if done:
-                        state = torch.from_numpy(env.reset()).unsqueeze(0).to(device)
+                        state = torch.from_numpy(env.reset()).float().unsqueeze(0).to(device)
 
             states = torch.from_numpy(np.vstack(buffer_states)).float().to(device)
             actions = torch.from_numpy(np.vstack(buffer_actions)).float().to(device)
@@ -361,7 +361,8 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         rewards.append(episode_reward)
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.Tensor([env.reset()])
+            # state = torch.Tensor([env.reset()])
+            state = torch.from_numpy(env.reset()).float().unsqueeze(0).to(device)
             episode_reward = 0
             while True:
                 action = agent.select_action(state)
@@ -373,7 +374,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 episode_reward += reward
 
                 # next_state = torch.Tensor([next_state])
-                next_state = torch.from_numpy(next_state).unsqueeze(0).to(device)
+                next_state = torch.from_numpy(next_state).float().unsqueeze(0).to(device)
 
                 state = next_state
                 

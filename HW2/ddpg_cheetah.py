@@ -27,7 +27,7 @@ def make_env():
         return gym.make(env_name)
     return _thunk
 
-num_envs = 8
+num_envs = 32
 env = SyncVectorEnv([make_env() for _ in range(num_envs)])
 
 # Configure a wandb log
@@ -296,7 +296,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
     replay_size = 1000000
     batch_size = 2048
     updates_per_step = 16
-    print_freq = 5
+    print_freq = 1
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []
@@ -406,7 +406,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # update EWMA reward and log the results
             ewma_reward = 0.05 * episode_reward + (1 - 0.05) * ewma_reward
             ewma_reward_history.append(ewma_reward)           
-            print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1].item(), ewma_reward))
+            print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1].mean(), ewma_reward))
             
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
             writer.add_scalar('Train/Episode_Length', t, i_episode)

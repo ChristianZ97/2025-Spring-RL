@@ -213,10 +213,16 @@ class DDPG(object):
         # Calculate policy loss and value loss
         # Update the actor and the critic
 
+        state_batch = state_batch.to(device)
+        action_batch = action_batch.to(device)
+        reward_batch = reward_batch.unsqueeze(1).to(device)
+        mask_batch = mask_batch.unsqueeze(1).to(device)
+        next_state_batch = next_state_batch.to(device)
+
         self.actor_target.eval()
         self.critic_target.eval()
         target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action).detach()
         td_target = (reward_batch + self.gamma * mask_batch * target_q_value)
 
 
@@ -297,9 +303,6 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         )
     ounoise = OUNoise(action_dimension=env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
-
-    policy_loss = torch.tensor(0.0).to(device)
-    value_loss = torch.tensor(0.0).to(device)
     
     for i_episode in range(num_episodes):
         
@@ -307,7 +310,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])
-        state = torch.from_numpy(env.reset()).float().unsqueeze(0).to(device)
+        state = torch.from_numpy(env.reset()).float().unsqueeze(0)
 
         episode_reward = 0
         while True:
@@ -317,43 +320,34 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
 
-            buffer_states, buffer_actions = [], []
-            buffer_rewards, buffer_masks, buffer_next_states = [], [], []
-
+            episode_value_loss, episode_policy_loss = 0, 0
             with torch.no_grad():
-                for _ in range(batch_size):
-                    action = agent.select_action(state, action_noise=ounoise)
-                    next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
-                    buffer_states.append(state.cpu().numpy()[0])
-                    buffer_actions.append(action.cpu().numpy()[0])
-                    buffer_rewards.append(reward)
-                    buffer_masks.append(0.0 if done else 1.0)
-                    buffer_next_states.append(next_state)
-                    state = torch.from_numpy(next_state).float().unsqueeze(0).to(device)
-                    if done:
-                        state = torch.from_numpy(env.reset()).float().unsqueeze(0).to(device)
-
-            states = torch.from_numpy(np.vstack(buffer_states)).float().to(device)
-            actions = torch.from_numpy(np.vstack(buffer_actions)).float().to(device)
-            rewards = torch.from_numpy(np.array(buffer_rewards)).unsqueeze(1).float().to(device)
-            masks = torch.from_numpy(np.array(buffer_masks)).unsqueeze(1).float().to(device)
-            next_states = torch.from_numpy(np.vstack(buffer_next_states)).float().to(device)
-
-            for i in range(batch_size):
+                action = agent.select_action(state.to(device), action_noise=ounoise)
+                next_state_np, reward, done, _ = env.step(action.cpu().numpy()[0])
+                next_state = torch.from_numpy(next_state_np).float().unsqueeze(0)
+                mask = 0.0 if done else 1.0
                 memory.push(
-                    states[i].unsqueeze(0),
-                    actions[i].unsqueeze(0),
-                    masks[i].unsqueeze(0),
-                    next_states[i].unsqueeze(0),
-                    rewards[i].unsqueeze(0)
+                    state.cpu(),
+                    action.cpu(),
+                    torch.tensor([[reward]], dtype=torch.float32), 
+                    torch.tensor([[mask]], dtype=torch.float32),
+                    next_state.cpu()
                 )
+
+                state = next_state
+                episode_reward += reward
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
                     transitions = memory.sample(batch_size=batch_size)
                     batch = Transition(*zip(*transitions))
+
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
+                    episode_value_loss += value_loss
+                    episode_policy_loss += policy_loss
                     updates += 1
+
+            if done: break # End one episode
 
             ########## END OF YOUR CODE ########## 
             # For wandb logging
@@ -363,10 +357,12 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         t = 0
         if i_episode % print_freq == 0:
             # state = torch.Tensor([env.reset()])
-            state = torch.from_numpy(env.reset()).float().unsqueeze(0).to(device)
+            state = torch.from_numpy(env.reset()).float().unsqueeze(0)
+
             episode_reward = 0
             while True:
-                action = agent.select_action(state)
+                # action = agent.select_action(state)
+                action = agent.select_action(state.to(device))
 
                 next_state, reward, done, _ = env.step(action.numpy()[0])
                 
@@ -375,7 +371,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 episode_reward += reward
 
                 # next_state = torch.Tensor([next_state])
-                next_state = torch.from_numpy(next_state).float().unsqueeze(0).to(device)
+                next_state = torch.from_numpy(next_state).float().unsqueeze(0)
 
                 state = next_state
                 
@@ -391,8 +387,8 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
             writer.add_scalar('Train/Episode_Length', t, i_episode)
-            writer.add_scalar('Train/Actor_Loss', policy_loss, i_episode)
-            writer.add_scalar('Train/Critic_Loss', value_loss, i_episode)
+            writer.add_scalar('Train/Critic_Loss', episode_value_loss, i_episode)
+            writer.add_scalar('Train/Actor_Loss', episode_policy_loss, i_episode)
 
             # if ewma_reward > -200 and i_episode > 200: SOLVED = True
             if ewma_reward > 5000 and i_episode > 500: SOLVED = True

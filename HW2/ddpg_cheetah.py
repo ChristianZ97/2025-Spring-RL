@@ -110,9 +110,6 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your actor network
 
-        device = next(self.parameters()).device
-        inputs = inputs.to(device)
-
         x = F.relu(self.ln1(self.fc1(inputs)))
         x = F.relu(self.ln2(self.fc2(x)))
         x = F.relu(self.ln3(self.fc3(x)))
@@ -154,10 +151,6 @@ class Critic(nn.Module):
         
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your critic network
-
-        device = next(self.parameters()).device
-        inputs = inputs.to(device)
-        actions = actions.to(device)
 
         x = F.relu(self.ln1(self.fc1(inputs)))
         x = torch.cat([x, actions], 1)
@@ -222,14 +215,14 @@ class DDPG(object):
 
         self.actor_target.eval()
         self.critic_target.eval()
-        target_scaled_action = self.actor_target.forward(inputs=next_state_batch).to(device)
-        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action).to(device)
-        td_target = (reward_batch + self.gamma * mask_batch * target_q_value).to(device)
-        
+        target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        td_target = (reward_batch + self.gamma * mask_batch * target_q_value)
+
 
         self.critic.train()
-        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch).to(device)
-        value_loss = F.mse_loss(input=eval_q_value, target=td_target).to(device)
+        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
+        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
         self.critic_optim.zero_grad()
         value_loss.backward()
@@ -238,10 +231,10 @@ class DDPG(object):
 
 
         self.actor.train()
-        eval_scaled_action = self.actor.forward(inputs=state_batch).to(device)
+        eval_scaled_action = self.actor.forward(inputs=state_batch)
 
         self.critic.eval()
-        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean().to(device)
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
         self.actor_optim.zero_grad()
         policy_loss.backward()

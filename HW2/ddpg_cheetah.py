@@ -312,7 +312,8 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.Tensor([env.reset()])
+        # state = torch.Tensor([env.reset()])
+        state = torch.from_numpy([env.reset()]).unsqueeze(0).to(device)
 
         episode_reward = 0
         while True:
@@ -371,7 +372,8 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 
                 episode_reward += reward
 
-                next_state = torch.Tensor([next_state])
+                # next_state = torch.Tensor([next_state])
+                next_state = torch.from_numpy([next_state]).unsqueeze(0).to(device)
 
                 state = next_state
                 

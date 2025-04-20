@@ -30,6 +30,7 @@ from skopt import gp_minimize
 from skopt.space import Real, Integer
 from skopt.utils import use_named_args
 from skopt.plots import plot_convergence, plot_objective
+    import gc
 
 # Define the hyperparameter search space
 search_space = [
@@ -57,13 +58,10 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c):
     np.random.seed(random_seed)
     random.seed(random_seed)
     
-    # Use fewer episodes for optimization to save time
-    opt_episodes = 30
-    
     start_time = time.time()
     results = train(
         env=env,
-        num_episodes=opt_episodes,
+        num_episodes=30, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -79,7 +77,6 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c):
     final_reward = np.mean(results['last_rewards'])
     print(f"Training completed in {duration:.1f} seconds - Mean reward: {final_reward:.2f}")
     
-    import gc
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()

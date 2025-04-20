@@ -175,14 +175,14 @@ class DDPG(object):
         self.num_inputs = num_inputs
         self.action_space = action_space
 
-        self.actor = Actor(hidden_size, self.num_inputs, self.action_space)
-        self.actor_target = Actor(hidden_size, self.num_inputs, self.action_space)
-        self.actor_perturbed = Actor(hidden_size, self.num_inputs, self.action_space)
-        self.actor_optim = Adam(self.actor.parameters(), lr=lr_a)
+        self.actor = Actor(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.actor_target = Actor(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.actor_perturbed = Actor(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.actor_optim = Adam(self.actor.parameters(), lr=lr_a).to(device)
 
-        self.critic = Critic(hidden_size, self.num_inputs, self.action_space)
-        self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
+        self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c).to(device)
 
         self.gamma = gamma
         self.tau = tau

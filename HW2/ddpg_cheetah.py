@@ -225,7 +225,7 @@ class DDPG(object):
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss
         # Update the actor and the critic
-        
+
         state_batch = torch.stack(batch.state).squeeze(1).to(device)
         action_batch = torch.stack(batch.action).squeeze(1).to(device)
         reward_batch = torch.stack(batch.reward).to(device)
@@ -236,6 +236,7 @@ class DDPG(object):
         self.critic_target.eval()
         target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
         target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action).detach()
+        target_q_value = target_q_value.squeeze(-1)
         td_target = (reward_batch + self.gamma * mask_batch * target_q_value)
 
 
@@ -397,7 +398,8 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 state = next_state
                 
                 t += 1
-                if done:
+                #if done:
+                if done.any():
                     break
 
             rewards.append(episode_reward)

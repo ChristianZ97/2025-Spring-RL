@@ -122,7 +122,6 @@ class Actor(nn.Module):
                                   dtype=action.dtype, 
                                   device=device)
         scaled_action = action * action_high
-
         return scaled_action
 
         ########## END OF YOUR CODE ##########
@@ -165,7 +164,6 @@ class Critic(nn.Module):
         x = F.relu(self.ln2(self.fc2(x)))
         x = F.relu(self.ln3(self.fc3(x)))
         q_value = self.fc_out(x)
-
         return q_value
         
         ########## END OF YOUR CODE ##########        
@@ -192,7 +190,6 @@ class DDPG(object):
         hard_update(self.actor_target, self.actor) 
         hard_update(self.critic_target, self.critic)
 
-    @torch.no_grad()
     def select_action(self, state, action_noise=None):
         self.actor.eval()
         mu = self.actor((Variable(state)))
@@ -203,74 +200,59 @@ class DDPG(object):
         # Clipping might be needed
 
         if action_noise is not None:
-            noise = torch.tensor(action_noise.noise(), dtype=mu.dtype, device=mu.device)
-            mu += noise
+            mu += action_noise.noise()
 
-        action_low = torch.tensor(self.action_space.low, dtype=mu.dtype, device=mu.device)
-        action_high = torch.tensor(self.action_space.high, dtype=mu.dtype, device=mu.device)
-        mu = torch.clamp(mu, action_low, action_high)
-
+        mu = torch.clamp(mu, self.action_space.low, self.action_space.high)
         return mu
 
         ########## END OF YOUR CODE ##########
 
 
     def update_parameters(self, batch):
-        with torch.cuda.amp.autocast():
+        state_batch = Variable(torch.cat(batch.state))
+        action_batch = Variable(torch.cat(batch.action))
+        reward_batch = Variable(torch.cat(batch.reward))
+        mask_batch = Variable(torch.cat(batch.mask))
+        next_state_batch = Variable(torch.cat(batch.next_state))
+        
+        ########## YOUR CODE HERE (10~20 lines) ##########
+        # Calculate policy loss and value loss
+        # Update the actor and the critic
 
-            state_batch = Variable(torch.cat(batch.state))
-            action_batch = Variable(torch.cat(batch.action))
-            reward_batch = Variable(torch.cat(batch.reward))
-            mask_batch = Variable(torch.cat(batch.mask))
-            next_state_batch = Variable(torch.cat(batch.next_state))
-            
-            ########## YOUR CODE HERE (10~20 lines) ##########
-            # Calculate policy loss and value loss
-            # Update the actor and the critic
+        self.actor_target.eval()
+        self.critic_target.eval()
+        target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        td_target = reward_batch + self.gamma * mask_batch * target_q_value
+        
 
-            device = next(self.actor.parameters()).device
-            state_batch = state_batch.to(device)
-            action_batch = action_batch.to(device)
-            reward_batch = reward_batch.view(-1, 1).to(device)
-            mask_batch = mask_batch.view(-1, 1).to(device)
-            next_state_batch = next_state_batch.to(device)
+        self.critic.train()
+        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
+        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-
-            self.actor_target.eval()
-            self.critic_target.eval()
-            with torch.no_grad():
-                target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-                target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-            td_target = reward_batch + self.gamma * mask_batch * target_q_value
-            
-
-            self.critic.train()
-            eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
-            value_loss = F.mse_loss(input=eval_q_value, target=td_target)
-
-            self.critic_optim.zero_grad()
-            value_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-            self.critic_optim.step()
+        self.critic_optim.zero_grad()
+        value_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+        self.critic_optim.step()
 
 
-            self.actor.train()
-            eval_scaled_action = self.actor.forward(inputs=state_batch)
+        self.actor.train()
+        eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-            self.critic.eval()
-            policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+        self.critic.eval()
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
-            self.actor_optim.zero_grad()
-            policy_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-            self.actor_optim.step()
+        self.actor_optim.zero_grad()
+        policy_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+        self.actor_optim.step()
 
-            ########## END OF YOUR CODE ########## 
+        ########## END OF YOUR CODE ########## 
 
-            soft_update(self.actor_target, self.actor, self.tau)
-            soft_update(self.critic_target, self.critic, self.tau)
+        soft_update(self.actor_target, self.actor, self.tau)
+        soft_update(self.critic_target, self.critic, self.tau)
 
-            return value_loss.item(), policy_loss.item()
+        return value_loss.item(), policy_loss.item()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):
@@ -296,13 +278,11 @@ class DDPG(object):
 
 def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2, 
           lr_a=3e-5, lr_c=3e-4, render=False, save_model=True):
-    
-    torch.autograd.set_detect_anomaly(True)
 
     hidden_size = 512
     replay_size = 1000000
     batch_size = 256
-    updates_per_step = 1
+    updates_per_step = 4
     print_freq = 5
     ewma_reward = 0
     rewards = []
@@ -329,12 +309,10 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
     
     for i_episode in range(num_episodes):
         
-        # ounoise.scale = noise_scale
-        # ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
-        ounoise.scale = noise_scale * (1.0 - i_episode / (num_episodes * 0.8))
+        ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
+        state = torch.Tensor([env.reset()])
 
         episode_reward = 0
         while True:
@@ -344,27 +322,36 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
 
-            action = agent.select_action(state=state, action_noise=ounoise)
-            next_state, reward, done, _ = env.step(action.numpy()[0])
+            buffer_states, buffer_actions = [], []
+            buffer_rewards, buffer_masks, buffer_next_states = [], [], []
 
-            next_state = torch.tensor(next_state, dtype=torch.float32, device=device).unsqueeze(0)
-            reward = torch.tensor(reward, dtype=torch.float32, device=device).unsqueeze(0)
-            mask = torch.tensor([0.0 if done else 1.0], dtype=torch.float32, device=device).unsqueeze(0)
-            memory.push(state, action, mask, next_state, reward)
+            with torch.no_grad():
+                for _ in range(batch_size):
+                    action = agent.select_action(state, action_noise=ounoise)
+                    next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
+                    buffer_states.append(state.cpu().numpy()[0])
+                    buffer_actions.append(action.cpu().numpy()[0])
+                    buffer_rewards.append(reward)
+                    buffer_masks.append(0.0 if done else 1.0)
+                    buffer_next_states.append(next_state)
+                    state = torch.from_numpy(next_state).unsqueeze(0).to(device)
+                    if done:
+                        state = torch.from_numpy(env.reset()).unsqueeze(0).to(device)
 
-            episode_reward += reward.item()
+            states = torch.from_numpy(np.vstack(buffer_states)).float().to(device)
+            actions = torch.from_numpy(np.vstack(buffer_actions)).float().to(device)
+            rewards = torch.from_numpy(np.array(buffer_rewards)).unsqueeze(1).float().to(device)
+            masks = torch.from_numpy(np.array(buffer_masks)).unsqueeze(1).float().to(device)
+            next_states = torch.from_numpy(np.vstack(buffer_next_states)).float().to(device)
+
+            for i in range(batch_size):
+                memory.push(states[i], actions[i], masks[i], next_states[i], rewards[i])
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
-                    transitions = memory.sample(batch_size=batch_size)
-                    batch = Transition(*zip(*transitions))
+                    batch = memory.sample(batch_size=batch_size)
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
                     updates += 1
-
-            state = next_state
-            total_numsteps += 1
-
-            if done: break
 
             ########## END OF YOUR CODE ########## 
             # For wandb logging
@@ -373,18 +360,18 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         rewards.append(episode_reward)
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
+            state = torch.Tensor([env.reset()])
             episode_reward = 0
             while True:
                 action = agent.select_action(state)
 
                 next_state, reward, done, _ = env.step(action.numpy()[0])
                 
-                if render: env.render()
+                env.render()
                 
                 episode_reward += reward
 
-                next_state = torch.tensor(next_state, dtype=torch.float32, device=device).unsqueeze(0)
+                next_state = torch.Tensor([next_state])
 
                 state = next_state
                 

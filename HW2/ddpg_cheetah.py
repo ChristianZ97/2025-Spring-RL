@@ -359,7 +359,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                     )
 
             state = next_state
-            episode_reward += reward_np.mean()
+            episode_reward += reward_np.mean().item()
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
@@ -377,7 +377,6 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # For wandb logging
             # wandb.log({"actor_loss": actor_loss, "critic_loss": critic_loss})
 
-        episode_reward = float(np.mean(episode_reward))
         rewards.append(episode_reward)
         t = 0
         if i_episode % print_freq == 0:
@@ -388,13 +387,15 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             while True:
                 # action = agent.select_action(state)
                 action = agent.select_action(state.to(device))
-
+                action_np = action.cpu().numpy()
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
-                next_state, reward, done, _ = env.step(action.cpu().numpy())
+                next_state_np, reward_np, done, _ = env.step(action.cpu().numpy())
+                next_state = torch.from_numpy(next_state_np).float()
                 
                 if render: env.render()
                 
-                episode_reward += reward
+                #episode_reward += reward
+                episode_reward += reward_np.mean().item()
 
                 # next_state = torch.Tensor([next_state])
                 next_state = torch.from_numpy(next_state).float()

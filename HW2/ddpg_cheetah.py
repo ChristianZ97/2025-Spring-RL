@@ -320,9 +320,10 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])
-        state = torch.from_numpy(env.reset()).float().unsqueeze(0)
+        state = torch.from_numpy(env.reset()).float()
 
-        episode_reward = 0
+        # episode_reward = 0
+        episode_reward = np.zeros(num_envs)
         episode_value_loss, episode_policy_loss = 0, 0
         while True:
             
@@ -334,8 +335,10 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             with torch.no_grad():
                 action = agent.select_action(state.to(device), action_noise=ounoise)
                 next_state_np, reward, done, _ = env.step(action.cpu().numpy()[0])
-                next_state = torch.from_numpy(next_state_np).float().unsqueeze(0)
-                mask = torch.from_numpy(1.0 - done.astype(float)).float().unsqueeze(1)
+                next_state = torch.from_numpy(next_state_np).float()
+                done = np.array(done, dtype=np.float32)
+                mask = torch.from_numpy(1.0 - done).float().unsqueeze(1)
+
 
                 for i in range(num_envs):
                     memory.push(
@@ -365,11 +368,11 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # For wandb logging
             # wandb.log({"actor_loss": actor_loss, "critic_loss": critic_loss})
 
-        rewards.append(episode_reward)
+        rewards.append(episode_reward.mean())
         t = 0
         if i_episode % print_freq == 0:
             # state = torch.Tensor([env.reset()])
-            state = torch.from_numpy(env.reset()).float().unsqueeze(0)
+            state = torch.from_numpy(env.reset()).float()
 
             episode_reward = 0
             while True:
@@ -384,8 +387,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 episode_reward += reward
 
                 # next_state = torch.Tensor([next_state])
-                next_state = torch.from_numpy(next_state).float().unsqueeze(0)
-
+                next_state = torch.from_numpy(next_state).float()
                 state = next_state
                 
                 t += 1

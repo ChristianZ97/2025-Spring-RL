@@ -17,7 +17,6 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 env_name = 'Pendulum-v0'
-env = gym.make(env_name)
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -227,6 +226,7 @@ class DDPG(object):
         mask_batch = mask_batch.view(-1, 1).to(device)
         next_state_batch = next_state_batch.to(device)
 
+
         self.actor_target.eval()
         self.critic_target.eval()
         with torch.no_grad():
@@ -234,17 +234,22 @@ class DDPG(object):
             target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
         td_target = reward_batch + self.gamma * mask_batch * target_q_value
         
+
         self.critic.train()
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
         value_loss = F.mse_loss(input=eval_q_value, target=td_target)
+
+        self.critic_optim.zero_grad()
+        value_loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+        self.critic_optim.step()
+
 
         self.actor.train()
         eval_scaled_action = self.actor.forward(inputs=state_batch)
 
         self.critic.eval()
-        value_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
-        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-        self.critic.train()
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
         self.actor_optim.zero_grad()
         policy_loss.backward()
@@ -317,7 +322,7 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.tensor([env.reset()]).to(device)
+        state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
 
         episode_reward = 0
         while True:
@@ -329,9 +334,10 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
 
             action = agent.select_action(state=state, action_noise=ounoise)
             next_state, reward, done, _ = env.step(action.numpy()[0])
-            next_state = torch.tensor([next_state]).to(device)
-            reward = torch.tensor([reward]).to(device)
-            mask = torch.tensor([0.0 if done else 1.0]).to(device)
+
+            next_state = torch.tensor(next_state, dtype=torch.float32, device=device).unsqueeze(0)
+            reward = torch.tensor(reward, dtype=torch.float32, device=device).unsqueeze(0)
+            mask = torch.tensor([0.0 if done else 1.0], dtype=torch.float32, device=device).unsqueeze(0)
             memory.push(state, action, mask, next_state, reward)
 
             episode_reward += reward.item()
@@ -355,7 +361,7 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
         rewards.append(episode_reward)
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.tensor([env.reset()]).to(device)
+            state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
             episode_reward = 0
             while True:
                 action = agent.select_action(state)
@@ -366,7 +372,7 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
                 
                 episode_reward += reward
 
-                next_state = torch.tensor([next_state]).to(device)
+                next_state = torch.tensor(next_state, dtype=torch.float32, device=device).unsqueeze(0)
 
                 state = next_state
                 
@@ -411,7 +417,7 @@ if __name__ == '__main__':
     # For reproducibility, fix the random seed
     # env_name = 'Pendulum-v0'
     # random_seed = 42
-    # env = gym.make(env_name)
+    env = gym.make(env_name)
     env.seed(random_seed)  
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)  

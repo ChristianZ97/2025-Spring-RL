@@ -60,7 +60,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c):
     
     start_time = time.time()
     results = train(
-        env=env,
+        env,
         num_episodes=3, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,

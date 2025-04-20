@@ -346,7 +346,13 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             next_states = torch.from_numpy(np.vstack(buffer_next_states)).float().to(device)
 
             for i in range(batch_size):
-                memory.push(states[i], actions[i], masks[i], next_states[i], rewards[i])
+                memory.push(
+                    states[i].unsqueeze(0),
+                    actions[i].unsqueeze(0),
+                    masks[i].unsqueeze(0),
+                    next_states[i].unsqueeze(0),
+                    rewards[i].unsqueeze(0)
+                )
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):

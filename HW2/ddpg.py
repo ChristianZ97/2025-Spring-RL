@@ -294,7 +294,7 @@ def train(env, gamma=0.995, tau=0.002, noise_scale=0.3,
     hidden_size = 256
     replay_size = 100000
     batch_size = 512
-    updates_per_step = 4
+    updates_per_step = 1
     print_freq = 1
     ewma_reward = 0
     rewards = []

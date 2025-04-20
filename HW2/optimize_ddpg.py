@@ -40,6 +40,8 @@ search_space = [
     Real(1e-4, 1e-2, name='lr_c', prior='log-uniform')    # Critic learning rate
 ]
 
+env = gym.make(env_name)
+
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
 def objective(lr_a, lr_c, gamma, tau, noise_scale):

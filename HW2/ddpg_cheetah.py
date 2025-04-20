@@ -435,7 +435,7 @@ if __name__ == '__main__':
     # For reproducibility, fix the random seed
     # env_name = 'Pendulum-v0'
     # random_seed = 42
-    env = gym.make(env_name)
+    # env = gym.make(env_name)
     env.seed(random_seed)  
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)  

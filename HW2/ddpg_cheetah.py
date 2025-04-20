@@ -260,12 +260,6 @@ class DDPG(object):
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
 
-        print("reward", reward_batch.shape)
-        print("mask", mask_batch.shape)
-        print("target_q", target_q_value.shape)
-        print("td_target", td_target.shape)
-        print("eval_q_value", eval_q_value.shape)
-
         ########## END OF YOUR CODE ########## 
 
         soft_update(self.actor_target, self.actor, self.tau)

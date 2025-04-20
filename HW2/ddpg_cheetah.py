@@ -20,6 +20,16 @@ env_name = 'HalfCheetah-v2'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+from gym.vector import SyncVectorEnv
+
+def make_env():
+    def _thunk():
+        return gym.make(env_name)
+    return _thunk
+
+num_envs = 8
+env = SyncVectorEnv([make_env() for _ in range(num_envs)])
+
 # Configure a wandb log
 # #wandb.login()
 #run = wandb.init(
@@ -279,10 +289,10 @@ class DDPG(object):
 def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2, 
           lr_a=3e-5, lr_c=3e-4, render=False, save_model=True):
 
-    hidden_size = 512
+    hidden_size = 1024
     replay_size = 1000000
-    batch_size = 256
-    updates_per_step = 4
+    batch_size = 512
+    updates_per_step = 16
     print_freq = 5
     ewma_reward = 0
     rewards = []
@@ -325,15 +335,16 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 action = agent.select_action(state.to(device), action_noise=ounoise)
                 next_state_np, reward, done, _ = env.step(action.cpu().numpy()[0])
                 next_state = torch.from_numpy(next_state_np).float().unsqueeze(0)
-                mask = 0.0 if done else 1.0
+                mask = torch.from_numpy(1.0 - done.astype(float)).float().unsqueeze(1)
 
-                memory.push(
-                    state.cpu(),
-                    action.cpu(),
-                    torch.tensor([mask], dtype=torch.float32),
-                    next_state.cpu(),
-                    torch.tensor([reward], dtype=torch.float32)
-                )
+                for i in range(num_envs):
+                    memory.push(
+                        state[i].unsqueeze(0),
+                        action[i].unsqueeze(0),
+                        mask[i].unsqueeze(0),
+                        next_state[i].unsqueeze(0),
+                        reward[i].unsqueeze(0)
+                    )
 
             state = next_state
             episode_reward += reward

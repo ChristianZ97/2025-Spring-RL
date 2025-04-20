@@ -368,7 +368,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
                 next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
                 
-                env.render()
+                if render: env.render()
                 
                 episode_reward += reward
 

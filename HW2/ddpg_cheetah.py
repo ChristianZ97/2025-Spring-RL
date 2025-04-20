@@ -20,15 +20,17 @@ env_name = 'HalfCheetah-v2'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-from gym.vector import SyncVectorEnv
+# from gym.vector import SyncVectorEnv
+from gym.vector import AsyncVectorEnv
 
 def make_env():
     def _thunk():
         return gym.make(env_name)
     return _thunk
 
-num_envs = 32
-env = SyncVectorEnv([make_env() for _ in range(num_envs)])
+num_envs = 8
+# env = SyncVectorEnv([make_env() for _ in range(num_envs)])
+env = AsyncVectorEnv([make_env() for _ in range(num_envs)])
 
 # Configure a wandb log
 # #wandb.login()
@@ -406,7 +408,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # update EWMA reward and log the results
             ewma_reward = 0.05 * episode_reward + (1 - 0.05) * ewma_reward
             ewma_reward_history.append(ewma_reward)           
-            print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1].mean(), ewma_reward))
+            print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1].mean().item(), ewma_reward))
             
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
             writer.add_scalar('Train/Episode_Length', t, i_episode)

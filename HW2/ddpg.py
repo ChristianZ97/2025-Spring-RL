@@ -210,7 +210,7 @@ class DDPG(object):
 
     def update_parameters(self, batch):
         with torch.cuda.amp.autocast():
-            
+
             state_batch = Variable(torch.cat(batch.state))
             action_batch = Variable(torch.cat(batch.action))
             reward_batch = Variable(torch.cat(batch.reward))
@@ -287,7 +287,7 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train(env, gamma=0.995, tau=0.002, noise_scale=0.3, 
+def train(env, num_episodes=300, gamma=0.995, tau=0.002, noise_scale=0.3, 
           lr_a=1e-4, lr_c=1e-3, render=False, save_model=True):
     
     torch.autograd.set_detect_anomaly(True)
@@ -303,6 +303,8 @@ def train(env, gamma=0.995, tau=0.002, noise_scale=0.3,
     ewma_reward_history = []
     total_numsteps = 0
     updates = 0
+
+    SOLVED = False
     
     agent = DDPG(
         num_inputs=env.observation_space.shape[0], 
@@ -394,7 +396,9 @@ def train(env, gamma=0.995, tau=0.002, noise_scale=0.3,
             writer.add_scalar('Train/Actor_Loss', policy_loss, i_episode)
             writer.add_scalar('Train/Critic_Loss', value_loss, i_episode)
 
-            if ewma_reward > -200 and i_episode > 200:
+            if ewma_reward > -200 and i_episode > 200: SOLVED = True
+
+            if SOLVED:
                 if save_model: agent.save_model(env_name, '.pth')
                 print("Solved! Running reward is now {} and "
                   "the last episode runs to {} time steps!".format(ewma_reward, t))
@@ -402,10 +406,11 @@ def train(env, gamma=0.995, tau=0.002, noise_scale=0.3,
                 writer.close()
                 break
 
-    if save_model: agent.save_model(env_name, '.pth')
-    print("Unsolved! Reach the MAXIMUM num_episodes!")
-    env.close()
-    writer.close()
+    if not SOLVED:
+        if save_model: agent.save_model(env_name, '.pth')
+        print("Unsolved! Reach the MAXIMUM num_episodes!")
+        env.close()
+        writer.close()
 
     return {
         'last_rewards': rewards[-10:],

@@ -63,6 +63,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c):
     start_time = time.time()
     results = train(
         env=env,
+        num_episodes=opt_episodes,
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -141,6 +142,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     print("\nTraining final model with best parameters...")
     final_results = train(
         env=env,
+        # num_episodes=num_episodes,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,

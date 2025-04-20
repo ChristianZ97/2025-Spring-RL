@@ -369,7 +369,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                     episode_policy_loss += policy_loss
                     updates += 1
 
-            if done.any(): break # End one episode
+            if done_np.any(): break # End one episode
 
             ########## END OF YOUR CODE ########## 
             # For wandb logging
@@ -387,7 +387,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 action = agent.select_action(state.to(device))
                 action_np = action.cpu().numpy()
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
-                next_state_np, reward_np, done, _ = env.step(action.cpu().numpy())
+                next_state_np, reward_np, done_np, _ = env.step(action_np)
                 
                 if render: env.render()
                 
@@ -400,7 +400,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
                 
                 t += 1
                 #if done:
-                if done.any():
+                if done_np.any():
                     break
 
             rewards.append(episode_reward)

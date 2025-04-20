@@ -58,7 +58,7 @@ def objective(lr_a, lr_c, gamma, tau, noise_scale):
     random.seed(random_seed)
     
     # Use fewer episodes for optimization to save time
-    opt_episodes = 100
+    opt_episodes = 30
     
     start_time = time.time()
     results = train(

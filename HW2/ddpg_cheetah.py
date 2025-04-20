@@ -377,7 +377,8 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
             # For wandb logging
             # wandb.log({"actor_loss": actor_loss, "critic_loss": critic_loss})
 
-        rewards.append(episode_reward.mean().item())
+        episode_reward = float(np.mean(episode_reward))
+        rewards.append(episode_reward)
         t = 0
         if i_episode % print_freq == 0:
             # state = torch.Tensor([env.reset()])

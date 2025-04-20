@@ -278,7 +278,7 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3, 
+def train(gamma=0.995, tau=0.002, noise_scale=0.3, 
           lr_a=1e-4, lr_c=1e-3, num_episodes=200, render=True, save_model=True):
     
     torch.autograd.set_detect_anomaly(True)
@@ -286,9 +286,9 @@ def train(gamma=0.995, tau=0.002, hidden_size=256, noise_scale=0.3,
     # num_episodes = 200
     # gamma = 0.995
     # tau = 0.002
-    # hidden_size = 128
     # noise_scale = 0.3
 
+    hidden_size=256
     replay_size = 100000
     batch_size = 128
     updates_per_step = 1

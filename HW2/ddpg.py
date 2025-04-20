@@ -292,7 +292,6 @@ def train(env, num_episodes=300, gamma=0.995, tau=0.002, noise_scale=0.3,
     
     torch.autograd.set_detect_anomaly(True)
 
-    num_episodes = 300
     hidden_size = 256
     replay_size = 100000
     batch_size = 512

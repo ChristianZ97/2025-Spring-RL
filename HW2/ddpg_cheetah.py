@@ -313,7 +313,7 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
         lr_a=lr_a, 
         lr_c=lr_c
         )
-    ounoise = OUNoise(action_dimension=env.action_space.shape[0])
+    ounoise = OUNoise(action_dimension=env.single_action_space.shape[0])
     memory = ReplayMemory(replay_size)
     
     for i_episode in range(num_episodes):

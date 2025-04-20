@@ -18,8 +18,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 env_name = 'Pendulum-v0'
 env = gym.make(env_name)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 random_seed = 42
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Configure a wandb log
 # #wandb.login()
@@ -242,11 +242,13 @@ class DDPG(object):
         eval_scaled_action = self.actor.forward(inputs=state_batch)
 
         self.critic.eval()
-        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+        value_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic.train()
 
         self.actor_optim.zero_grad()
         policy_loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
 
         ########## END OF YOUR CODE ########## 
@@ -279,15 +281,11 @@ class DDPG(object):
             self.critic.load_state_dict(torch.load(critic_path))
 
 def train(gamma=0.995, tau=0.002, noise_scale=0.3, 
-          lr_a=1e-4, lr_c=1e-3, num_episodes=200, render=True, save_model=True):
+          lr_a=1e-4, lr_c=1e-3, render=True, save_model=True):
     
     torch.autograd.set_detect_anomaly(True)
 
-    # num_episodes = 200
-    # gamma = 0.995
-    # tau = 0.002
-    # noise_scale = 0.3
-
+    num_episodes=300
     hidden_size=256
     replay_size = 100000
     batch_size = 128
@@ -298,7 +296,6 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
     ewma_reward_history = []
     total_numsteps = 0
     updates = 0
-    terrible_threshold = -1000
     
     agent = DDPG(
         num_inputs=env.observation_space.shape[0], 
@@ -320,7 +317,7 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.Tensor(np.array([env.reset()])).to(device)
+        state = torch.tensor([env.reset()]).to(device)
 
         episode_reward = 0
         while True:
@@ -331,10 +328,10 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
             # 3. Update the actor and the critic
 
             action = agent.select_action(state=state, action_noise=ounoise)
-            next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
-            next_state = torch.Tensor(np.array([next_state])).to(device)
-            reward = torch.Tensor(np.array([reward])).to(device)
-            mask = torch.Tensor(np.array([0.0 if done else 1.0])).to(device)
+            next_state, reward, done, _ = env.step(action.numpy()[0])
+            next_state = torch.tensor([next_state]).to(device)
+            reward = torch.tensor([reward]).to(device)
+            mask = torch.tensor([0.0 if done else 1.0]).to(device)
             memory.push(state, action, mask, next_state, reward)
 
             episode_reward += reward.item()
@@ -356,30 +353,20 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
             # wandb.log({"actor_loss": actor_loss, "critic_loss": critic_loss})
 
         rewards.append(episode_reward)
-
-        if episode_reward < terrible_threshold and i_episode > 20:
-            print(f"Early stopping at episode {i_episode} due to poor performance ({episode_reward:.2f})")
-            return {
-                'last_rewards': [episode_reward] * 10,
-                'best_reward': max(rewards) if rewards else -float('inf'),
-                'ewma_reward': ewma_reward
-            }
-
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.Tensor(np.array([env.reset()])).to(device)
+            state = torch.tensor([env.reset()]).to(device)
             episode_reward = 0
             while True:
                 action = agent.select_action(state)
 
-                # next_state, reward, done, _ = env.step(action.numpy()[0])
-                next_state, reward, done, _ = env.step(action.cpu().numpy()[0])
+                next_state, reward, done, _ = env.step(action.numpy()[0])
                 
                 env.render()
                 
                 episode_reward += reward
 
-                next_state = torch.Tensor(np.array([next_state])).to(device)
+                next_state = torch.tensor([next_state]).to(device)
 
                 state = next_state
                 
@@ -398,9 +385,16 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
             writer.add_scalar('Train/Actor_Loss', policy_loss, i_episode)
             writer.add_scalar('Train/Critic_Loss', value_loss, i_episode)
 
-    if save_model:
-        agent.save_model(env_name, '.pth')
+            if ewma_reward > -200:
+                if save_model: agent.save_model(env_name, '.pth')
+                print("Solved! Running reward is now {} and "
+                  "the last episode runs to {} time steps!".format(ewma_reward, t))
+                env.close()
+                writer.close()
+                break
 
+    if save_model: agent.save_model(env_name, '.pth')
+    print("Unsolved! Reach the MAXIMUM num_episodes!")
     env.close()
     writer.close()
 
@@ -413,16 +407,6 @@ def train(gamma=0.995, tau=0.002, noise_scale=0.3,
 
 
 if __name__ == '__main__':
-
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-        print(f"Using CUDA: {torch.cuda.get_device_name(0)}")
-    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-        device = torch.device("mps")
-        print("Using Apple MPS (Metal Performance Shaders)")
-    else:
-        device = torch.device("cpu")
-        print("Using CPU")
 
     # For reproducibility, fix the random seed
     # env_name = 'Pendulum-v0'

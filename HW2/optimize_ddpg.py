@@ -21,7 +21,8 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 # Import the DDPG training function
-from ddpg import train
+from ddpg import env_name, env, random_seed, device
+# from ddpg_cheetah import env_name, env, random_seed, device
 
 import matplotlib.pyplot as plt
 
@@ -30,18 +31,13 @@ from skopt.space import Real, Integer
 from skopt.utils import use_named_args
 from skopt.plots import plot_convergence, plot_objective
 
-env_name = 'Pendulum-v0'
-env = gym.make(env_name)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-random_seed = 42
-
 # Define the hyperparameter search space
 search_space = [
-    Real(1e-5, 1e-3, name='lr_a', prior='log-uniform'),   # Actor learning rate
-    Real(1e-4, 1e-2, name='lr_c', prior='log-uniform'),   # Critic learning rate
     Real(0.97, 0.999, name='gamma'),                      # Discount factor
     Real(0.0001, 0.01, name='tau'),                       # Target network update rate
     Real(0.1, 0.5, name='noise_scale')                    # Exploration noise scale
+    Real(1e-5, 1e-3, name='lr_a', prior='log-uniform'),   # Actor learning rate
+    Real(1e-4, 1e-2, name='lr_c', prior='log-uniform'),   # Critic learning rate
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -72,7 +68,6 @@ def objective(lr_a, lr_c, gamma, tau, noise_scale):
         noise_scale=noise_scale,
         lr_a=lr_a,
         lr_c=lr_c,
-        num_episodes=opt_episodes,
         render=False,   # No rendering during optimization
         save_model=False  # Don't save models during optimization
     )
@@ -104,9 +99,9 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         os.makedirs(output_dir)
     
     # Set random seed for reproducibility
-    random.seed(42)
-    np.random.seed(42)
-    torch.manual_seed(42)
+    random.seed(random_seed)
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
     
     # Run Bayesian Optimization
     result = gp_minimize(
@@ -115,7 +110,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         n_calls=n_calls,          # Total number of evaluations
         n_random_starts=n_random_starts,  # Initial random evaluations
         verbose=True,             # Print progress
-        random_state=42           # Random seed
+        random_state=random_seed  # Random seed
     )
     
     # Extract best hyperparameters
@@ -123,7 +118,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
-    for name, value in zip(['lr_a', 'lr_c', 'gamma', 'tau', 'noise_scale'], result.x):
+    for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c'], result.x):
         print(f"{name}: {value}")
     
     print(f"Best reward: {-result.fun:.2f}")
@@ -133,7 +128,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['lr_a', 'lr_c', 'gamma', 'tau', 'noise_scale'], params)])
+                                  zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c'], params)])
             f.write(f"{i}, {-value:.4f}, {param_str}\n")
     
     # Create visualization plots
@@ -150,18 +145,17 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         noise_scale=best_noise_scale,
         lr_a=best_lr_a,
         lr_c=best_lr_c,
-        num_episodes=300,  # More episodes for final model
         render=True,       # Render the environment
         save_model=True    # Save the final model
     )
     
     # Save best hyperparameters to file
     with open(f"{output_dir}/best_hyperparameters.txt", "w") as f:
-        f.write(f"lr_a = {best_lr_a}\n")
-        f.write(f"lr_c = {best_lr_c}\n")
         f.write(f"gamma = {best_gamma}\n")
         f.write(f"tau = {best_tau}\n")
         f.write(f"noise_scale = {best_noise_scale}\n")
+        f.write(f"lr_a = {best_lr_a}\n")
+        f.write(f"lr_c = {best_lr_c}\n")
         f.write(f"Best reward: {-result.fun:.2f}\n")
     
     return result, final_results

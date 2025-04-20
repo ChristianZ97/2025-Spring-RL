@@ -345,24 +345,25 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
 
             with torch.no_grad():
                 action = agent.select_action(state.to(device), action_noise=ounoise)
+                action_np = action.cpu().numpy()
+                next_state_np, reward_np, done_np, _ = env.step(action_np)
+                action = agent.select_action(state.to(device), action_noise=ounoise)
                 next_state_np, reward_np, done, _ = env.step(action.cpu().numpy())
                 next_state = torch.from_numpy(next_state_np).float()
-                reward = torch.tensor(reward_np).float()
-                done = np.array(done, dtype=np.float32)
-                mask = torch.from_numpy(1.0 - done).float().unsqueeze(1)
-
+                reward = torch.from_numpy(reward_np).float().unsqueeze(1)
+                mask = torch.from_numpy(1.0 - done_np).float().unsqueeze(1)
 
                 for i in range(num_envs):
                     memory.push(
                         state[i].unsqueeze(0),
                         action[i].unsqueeze(0),
-                        mask[i].unsqueeze(0),
+                        mask[i],
                         next_state[i].unsqueeze(0),
-                        reward[i].unsqueeze(0)
+                        reward[i]
                     )
 
             state = next_state
-            episode_reward += reward.sum().item()
+            episode_reward += reward_np.mean()
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):

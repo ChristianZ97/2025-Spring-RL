@@ -350,7 +350,8 @@ def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2,
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
-                    batch = memory.sample(batch_size=batch_size)
+                    transitions = memory.sample(batch_size=batch_size)
+                    batch = Transition(*zip(*transitions))
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
                     updates += 1
 

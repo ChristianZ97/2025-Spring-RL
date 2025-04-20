@@ -185,7 +185,7 @@ class DDPG(object):
         hard_update(self.actor_target, self.actor) 
         hard_update(self.critic_target, self.critic)
 
-
+    @torch.no_grad()
     def select_action(self, state, action_noise=None):
         self.actor.eval()
         mu = self.actor((Variable(state)))
@@ -209,59 +209,61 @@ class DDPG(object):
 
 
     def update_parameters(self, batch):
-        state_batch = Variable(torch.cat(batch.state))
-        action_batch = Variable(torch.cat(batch.action))
-        reward_batch = Variable(torch.cat(batch.reward))
-        mask_batch = Variable(torch.cat(batch.mask))
-        next_state_batch = Variable(torch.cat(batch.next_state))
-        
-        ########## YOUR CODE HERE (10~20 lines) ##########
-        # Calculate policy loss and value loss
-        # Update the actor and the critic
+        with torch.cuda.amp.autocast():
+            
+            state_batch = Variable(torch.cat(batch.state))
+            action_batch = Variable(torch.cat(batch.action))
+            reward_batch = Variable(torch.cat(batch.reward))
+            mask_batch = Variable(torch.cat(batch.mask))
+            next_state_batch = Variable(torch.cat(batch.next_state))
+            
+            ########## YOUR CODE HERE (10~20 lines) ##########
+            # Calculate policy loss and value loss
+            # Update the actor and the critic
 
-        device = next(self.actor.parameters()).device
-        state_batch = state_batch.to(device)
-        action_batch = action_batch.to(device)
-        reward_batch = reward_batch.view(-1, 1).to(device)
-        mask_batch = mask_batch.view(-1, 1).to(device)
-        next_state_batch = next_state_batch.to(device)
-
-
-        self.actor_target.eval()
-        self.critic_target.eval()
-        with torch.no_grad():
-            target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-            target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-        td_target = reward_batch + self.gamma * mask_batch * target_q_value
-        
-
-        self.critic.train()
-        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
-        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
-
-        self.critic_optim.zero_grad()
-        value_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-        self.critic_optim.step()
+            device = next(self.actor.parameters()).device
+            state_batch = state_batch.to(device)
+            action_batch = action_batch.to(device)
+            reward_batch = reward_batch.view(-1, 1).to(device)
+            mask_batch = mask_batch.view(-1, 1).to(device)
+            next_state_batch = next_state_batch.to(device)
 
 
-        self.actor.train()
-        eval_scaled_action = self.actor.forward(inputs=state_batch)
+            self.actor_target.eval()
+            self.critic_target.eval()
+            with torch.no_grad():
+                target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+                target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+            td_target = reward_batch + self.gamma * mask_batch * target_q_value
+            
 
-        self.critic.eval()
-        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+            self.critic.train()
+            eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
+            value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-        self.actor_optim.zero_grad()
-        policy_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-        self.actor_optim.step()
+            self.critic_optim.zero_grad()
+            value_loss.backward()
+            # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+            self.critic_optim.step()
 
-        ########## END OF YOUR CODE ########## 
 
-        soft_update(self.actor_target, self.actor, self.tau)
-        soft_update(self.critic_target, self.critic, self.tau)
+            self.actor.train()
+            eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-        return value_loss.item(), policy_loss.item()
+            self.critic.eval()
+            policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+
+            self.actor_optim.zero_grad()
+            policy_loss.backward()
+            # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+            self.actor_optim.step()
+
+            ########## END OF YOUR CODE ########## 
+
+            soft_update(self.actor_target, self.actor, self.tau)
+            soft_update(self.critic_target, self.critic, self.tau)
+
+            return value_loss.item(), policy_loss.item()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):
@@ -286,7 +288,7 @@ class DDPG(object):
             self.critic.load_state_dict(torch.load(critic_path))
 
 def train(env, gamma=0.995, tau=0.002, noise_scale=0.3, 
-          lr_a=1e-4, lr_c=1e-3, render=True, save_model=True):
+          lr_a=1e-4, lr_c=1e-3, render=False, save_model=True):
     
     torch.autograd.set_detect_anomaly(True)
 

@@ -198,7 +198,7 @@ class DDPG(object):
         mu = torch.clamp(mu, action_low, action_high)
 
         self.actor.train()
-        return mu
+        return mu.cpu().numpy()
 
         ########## END OF YOUR CODE ##########
 
@@ -315,7 +315,7 @@ def train():
             # 3. Update the actor and the critic
 
             action = agent.select_action(state=state, action_noise=ounoise)
-            next_state, reward, done, _ = env.step(action.numpy()[0])
+            next_state, reward, done, _ = env.step(action[0])
             mask = 1.0 - done
 
             memory.push(state, action, mask, next_state, reward)
@@ -346,8 +346,9 @@ def train():
             while True:
                 action = agent.select_action(state)
 
-                next_state, reward, done, _ = env.step(action.numpy()[0])
-                
+                # next_state, reward, done, _ = env.step(action.numpy()[0])
+                next_state, reward, done, _ = env.step(action[0])
+
                 env.render()
                 
                 episode_reward += reward

@@ -20,6 +20,18 @@ env_name = 'HalfCheetah-v2'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# from gym.vector import SyncVectorEnv
+from gym.vector import AsyncVectorEnv
+
+def make_env():
+    def _thunk():
+        return gym.make(env_name)
+    return _thunk
+
+num_envs = 8
+# env = SyncVectorEnv([make_env() for _ in range(num_envs)])
+env = AsyncVectorEnv([make_env() for _ in range(num_envs)])
+
 # Configure a wandb log
 # #wandb.login()
 #run = wandb.init(
@@ -30,7 +42,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #)
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_pendulum")
+writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -91,13 +103,15 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own actor network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
+        self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.ln1 = nn.LayerNorm(hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.ln2 = nn.LayerNorm(hidden_size)
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.ln3 = nn.LayerNorm(hidden_size)
+        self.fc_out = nn.Linear(hidden_size, num_outputs)
 
-        for layer in [self.fc1, self.fc2, self.fc_out]:
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
         
@@ -108,21 +122,14 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your actor network
 
-        d = next(self.parameters()).device
-        inputs = inputs.to(d, non_blocking=True)
+        x = F.relu(self.ln1(self.fc1(inputs)))
+        x = F.relu(self.ln2(self.fc2(x)))
+        x = F.relu(self.ln3(self.fc3(x)))
+        action = torch.tanh(self.fc_out(x))
 
-        x = self.fc1(inputs)
-        x = self.ln1(x)
-        x = torch.relu(x)
-
-        x = self.fc2(x)
-        x = self.ln2(x)
-        x = torch.relu(x)
-
-        x = self.fc_out(x)
-        action = torch.tanh(x)
-
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=device)
+        action_high = torch.tensor(self.action_space.high, 
+                                  dtype=action.dtype, 
+                                  device=device)
         scaled_action = action * action_high
         return scaled_action
 
@@ -137,15 +144,16 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
+        self.fc1 = nn.Linear(num_inputs, hidden_size)
+        self.ln1 = nn.LayerNorm(hidden_size)
+        self.fc2 = nn.Linear(hidden_size + num_outputs, hidden_size)
+        self.ln2 = nn.LayerNorm(hidden_size)
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.ln3 = nn.LayerNorm(hidden_size)
+        self.fc_out = nn.Linear(hidden_size, 1)
 
-        self.fc_a = nn.Linear(in_features=num_outputs, out_features=300)
 
-        for layer in [self.fc1, self.fc2, self.fc_out, self.fc_a]:
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
 
@@ -156,22 +164,10 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your critic network
 
-        d = next(self.parameters()).device
-        inputs = inputs.to(d, non_blocking=True)
-        actions = actions.to(d, non_blocking=True)
-
-        x = self.fc1(inputs)
-        x = self.ln1(x)
-        x = torch.relu(x)
-
-        x = self.fc2(x)
-        x = self.ln2(x)
-        x = torch.relu(x)
-
-        a = self.fc_a(actions)
-
-        x = torch.add(x, a)
-        x = torch.relu(x)
+        x = F.relu(self.ln1(self.fc1(inputs)))
+        x = torch.cat([x, actions], 1)
+        x = F.relu(self.ln2(self.fc2(x)))
+        x = F.relu(self.ln3(self.fc3(x)))
         q_value = self.fc_out(x)
         return q_value
         
@@ -191,45 +187,35 @@ class DDPG(object):
 
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-2)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
 
         self.gamma = gamma
         self.tau = tau
 
-        hard_update(self.actor_target, self.actor)
+        hard_update(self.actor_target, self.actor) 
         hard_update(self.critic_target, self.critic)
 
-    @torch.no_grad()
     def select_action(self, state, action_noise=None):
-
-        d = next(self.actor.parameters()).device
-        state = state.to(d, non_blocking=True)
-
         self.actor.eval()
-        # mu = self.actor((Variable(state)))
-        mu = self.actor(state)
+        mu = self.actor((Variable(state)))
         mu = mu.data
 
         ########## YOUR CODE HERE (3~5 lines) ##########
         # Add noise to your action for exploration
         # Clipping might be needed
 
-        # dtype=torch, device=gpu
         if action_noise is not None:
-            ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=d)
+            ounoise = torch.from_numpy(action_noise.noise()).float().to(mu.device)
             mu += ounoise
         
-        action_low = torch.tensor(self.action_space.low, dtype=torch.float32, device=d)
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=d)
-        mu = torch.clamp(mu, action_low, action_high)
-
-        self.actor.train()
+        mu = torch.clamp(mu, torch.tensor(self.action_space.low).to(mu.device), torch.tensor(self.action_space.high).to(mu.device))
         return mu
 
         ########## END OF YOUR CODE ##########
 
 
     def update_parameters(self, batch):
+
         '''
         state_batch = Variable(torch.cat(batch.state))
         action_batch = Variable(torch.cat(batch.action))
@@ -237,53 +223,51 @@ class DDPG(object):
         mask_batch = Variable(torch.cat(batch.mask))
         next_state_batch = Variable(torch.cat(batch.next_state))
         '''
-        d = next(self.actor.parameters()).device
-        state_batch = batch.state.to(d, non_blocking=True)
-        action_batch = batch.action.to(d, non_blocking=True)
-        reward_batch = batch.reward.to(d, non_blocking=True)
-        mask_batch = batch.mask.to(d, non_blocking=True)
-        next_state_batch = batch.next_state.to(d, non_blocking=True)
+        
+        ########## YOUR CODE HERE (10~20 lines) ##########
+        # Calculate policy loss and value loss
+        # Update the actor and the critic
 
-        with torch.cuda.amp.autocast():
-            
-            ########## YOUR CODE HERE (10~20 lines) ##########
-            # Calculate policy loss and value loss
-            # Update the actor and the critic
+        state_batch = torch.stack(batch.state).squeeze(1).to(device)
+        action_batch = torch.stack(batch.action).squeeze(1).to(device)
+        reward_batch = torch.stack(batch.reward).squeeze(1).view(-1, 1).to(device)
+        mask_batch = torch.stack(batch.mask).squeeze(1).view(-1, 1) .to(device)
+        next_state_batch = torch.stack(batch.next_state).squeeze(1).to(device)
 
-            # dtype=torch, device=gpu
-            self.actor_target.eval()
-            self.critic_target.eval()
-            with torch.no_grad():
-                target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-                target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-            td_target = reward_batch + self.gamma * mask_batch * target_q_value
+        self.actor_target.eval()
+        self.critic_target.eval()
+        target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action).detach().view(-1, 1)
+        td_target = (reward_batch + self.gamma * mask_batch * target_q_value)
 
-            self.critic.train()
-            eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
-            value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-            self.critic_optim.zero_grad()
-            value_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-            self.critic_optim.step()
+        self.critic.train()
+        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
+        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-            self.actor.train()
-            eval_scaled_action = self.actor.forward(inputs=state_batch)
+        self.critic_optim.zero_grad()
+        value_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+        self.critic_optim.step()
 
-            self.critic.eval()
-            policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
-            self.actor_optim.zero_grad()
-            policy_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-            self.actor_optim.step()
+        self.actor.train()
+        eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-            ########## END OF YOUR CODE ########## 
+        self.critic.eval()
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
-            soft_update(self.actor_target, self.actor, self.tau)
-            soft_update(self.critic_target, self.critic, self.tau)
+        self.actor_optim.zero_grad()
+        policy_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+        self.actor_optim.step()
 
-            return value_loss.item(), policy_loss.item()
+        ########## END OF YOUR CODE ########## 
+
+        soft_update(self.actor_target, self.actor, self.tau)
+        soft_update(self.critic_target, self.critic, self.tau)
+
+        return value_loss.item(), policy_loss.item()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):
@@ -307,16 +291,12 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train():
-    torch.autograd.set_detect_anomaly(True)
+def train(env, num_episodes=500000, gamma=0.99, tau=0.005, noise_scale=0.2, 
+          lr_a=3e-5, lr_c=3e-4, render=False, save_model=True):
 
-    num_episodes = 500000
-    gamma = 0.99
-    tau = 0.001
-    hidden_size = 128
-    noise_scale = 0.3
+    hidden_size = 1024
     replay_size = 1000000
-    batch_size = 1024
+    batch_size = 2048
     updates_per_step = 16
     print_freq = 1
     ewma_reward = 0
@@ -327,21 +307,31 @@ def train():
 
     SOLVED = False
     
-    agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size)
-    ounoise = OUNoise(env.action_space.shape[0])
+    agent = DDPG(
+        # num_inputs=env.observation_space.shape[0],
+        num_inputs=env.single_observation_space.shape[0],
+        # action_space=env.action_space,
+        action_space=env.single_action_space,
+        gamma=gamma, 
+        tau=tau, 
+        hidden_size=hidden_size, 
+        lr_a=lr_a, 
+        lr_c=lr_c
+        )
+    ounoise = OUNoise(action_dimension=env.single_action_space.shape[0])
     memory = ReplayMemory(replay_size)
     
     for i_episode in range(num_episodes):
         
-        # ounoise.scale = noise_scale
-        ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
+        ounoise.scale = noise_scale
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])
-        state_np = env.reset()
+        state = torch.from_numpy(env.reset()).float()
 
-        episode_reward = 0
-        episode_actor_loss, episode_critic_loss = [0], [0]
+        # episode_reward = 0
+        episode_reward = np.zeros(num_envs)
+        episode_value_loss, episode_policy_loss = 0, 0
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########
@@ -349,53 +339,37 @@ def train():
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
 
-            # dtype=tensor, device=gpu
-            state = torch.tensor(state_np, dtype=torch.float32, device=device)
-            action = agent.select_action(state=state, action_noise=ounoise)
+            with torch.no_grad():
+                action = agent.select_action(state.to(device), action_noise=ounoise)
+                action_np = action.cpu().numpy()
+                next_state_np, reward_np, done_np, _ = env.step(action_np)
+                next_state = torch.from_numpy(next_state_np).float()
+                reward = torch.from_numpy(reward_np).float().unsqueeze(1)
+                mask = torch.from_numpy(1.0 - done_np).float().unsqueeze(1)
 
-            # dtype=numpy, device=cpu
-            action_np = action.cpu().numpy()
-            next_state_np, reward_np, done_np, _ = env.step(action_np)
-            mask_np = 1.0 - done_np
-            memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
+                for i in range(num_envs):
+                    memory.push(
+                        state[i].unsqueeze(0),
+                        action[i].unsqueeze(0),
+                        mask[i],
+                        next_state[i].unsqueeze(0),
+                        reward[i]
+                    )
 
-            state_np = next_state_np
-            episode_reward += reward_np
+            state = next_state
+            episode_reward += reward_np.mean().item()
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
+                    transitions = memory.sample(batch_size=batch_size)
+                    batch = Transition(*zip(*transitions))
 
-                    # dtype=numpy, device=cpu
-                    transition = memory.sample(batch_size=batch_size)
-                    batch_b = Transition(*zip(*transition))
-
-                    state_b = torch.tensor(np.array(batch_b.state), dtype=torch.float32, device=device)
-                    action_b = torch.tensor(np.array(batch_b.action), dtype=torch.float32, device=device)
-                    mask_b = torch.tensor(np.array(batch_b.mask), dtype=torch.float32, device=device).unsqueeze(1)
-                    next_state_b = torch.tensor(np.array(batch_b.next_state), dtype=torch.float32, device=device)
-                    reward_b = torch.tensor(np.array(batch_b.reward), dtype=torch.float32, device=device).unsqueeze(1)
-
-                    batch = Transition(state_b, action_b, mask_b, next_state_b, reward_b)
-
-                    # dtype=tensor, device=gpu
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
-                    episode_critic_loss.append(value_loss)
-                    episode_actor_loss.append(policy_loss)
+                    episode_value_loss += value_loss
+                    episode_policy_loss += policy_loss
                     updates += 1
 
-                    writer.add_scalar('Update/Critic_Loss', value_loss, updates)
-                    writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
-
-                    with torch.no_grad():
-                        q_eval = agent.critic(state_b, action_b).mean().item()
-                        q_target = agent.critic_target(state_b, action_b).mean().item()
-                        td_error = (q_eval - q_target).__abs__()
-                    writer.add_scalar('Update/Q_Eval', q_eval, updates)
-                    writer.add_scalar('Update/Q_Target', q_target, updates)
-                    writer.add_scalar('Update/TD_Error', td_error, updates)
-
-            if done_np: break
-        # End one training epoch
+            if done_np.any(): break # End one episode
 
             ########## END OF YOUR CODE ########## 
             # For wandb logging
@@ -405,75 +379,73 @@ def train():
         t = 0
         if i_episode % print_freq == 0:
             # state = torch.Tensor([env.reset()])
-            state_np = env.reset()
+            state = torch.from_numpy(env.reset()).float()
+
             episode_reward = 0
             while True:
                 # action = agent.select_action(state)
-                state = torch.tensor(state_np, dtype=torch.float32, device=device)
-                action = agent.select_action(state=state, action_noise=ounoise)
-
-                # next_state, reward, done, _ = env.step(action.numpy()[0])
+                action = agent.select_action(state.to(device))
                 action_np = action.cpu().numpy()
+                # next_state, reward, done, _ = env.step(action.numpy()[0])
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
-
-                # if i_episode % 10 == 0:
-                    # env.render()
                 
-                # episode_reward += reward
-                episode_reward += reward_np
+                if render: env.render()
+                
+                #episode_reward += reward
+                episode_reward += reward_np.mean().item()
 
                 # next_state = torch.Tensor([next_state])
-
-                # state = next_state
-                state_np = next_state_np
+                next_state = torch.from_numpy(next_state_np).float()
+                state = next_state
                 
                 t += 1
-                if done_np: break
+                #if done:
+                if done_np.any():
+                    break
 
             rewards.append(episode_reward)
             # update EWMA reward and log the results
             ewma_reward = 0.05 * episode_reward + (1 - 0.05) * ewma_reward
             ewma_reward_history.append(ewma_reward)           
             print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1], ewma_reward))
-
-            writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
+            
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
-            writer.add_scalar('Train/Actor_Loss', episode_actor_loss[-1], i_episode)
-            writer.add_scalar('Train/Critic_Loss', episode_critic_loss[-1], i_episode)
+            writer.add_scalar('Train/Episode_Length', t, i_episode)
+            writer.add_scalar('Train/Critic_Loss', episode_value_loss, i_episode)
+            writer.add_scalar('Train/Actor_Loss', episode_policy_loss, i_episode)
 
-            # if ewma_reward > -120 and updates > 200: SOLVED = True
-            if ewma_reward > 5000 and updates > 500: SOLVED = True
-        # End one testing epoch
+            # if ewma_reward > -200 and i_episode > 200: SOLVED = True
+            if ewma_reward > 5000 and i_episode > 500: SOLVED = True
 
-        if SOLVED:
-            agent.save_model(env_name, '.pth')
-            print("Solved! Running reward is now {} and "
-              "the last episode runs to {} time steps!".format(ewma_reward, t))
-            env.render()
-            env.close()
-            writer.close()
-            break
+            if SOLVED:
+                if save_model: agent.save_model(env_name, '.pth')
+                print("Solved! Running reward is now {} and "
+                  "the last episode runs to {} time steps!".format(ewma_reward, t))
+                env.close()
+                writer.close()
+                break
 
-    agent.save_model(env_name, '.pth')
-    print("Unsolved! Reach the MAXIMUM num_episodes!")
-    env.close()
-    writer.close()
-    '''
+    if not SOLVED:
+        if save_model: agent.save_model(env_name, '.pth')
+        print("Unsolved! Reach the MAXIMUM num_episodes!")
+        env.close()
+        writer.close()
+
     return {
         'last_rewards': rewards[-10:],
         'best_reward': max(rewards),
         'ewma_reward': ewma_reward,
         'rewards': rewards
     }
-    '''
+
 
 if __name__ == '__main__':
 
     # For reproducibility, fix the random seed
     # env_name = 'Pendulum-v0'
     # random_seed = 42
-    env = gym.make(env_name)
+    # env = gym.make(env_name)
     env.seed(random_seed)  
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)  
-    train()
+    train(env)

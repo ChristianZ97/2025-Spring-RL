@@ -16,9 +16,10 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v0'
+env_name = 'Pendulum-v2'
 random_seed = 42
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = "cpu"
 
 # Configure a wandb log
 # #wandb.login()
@@ -446,7 +447,7 @@ def train():
         # End one testing epoch
 
         if SOLVED:
-            if save_model: agent.save_model(env_name, '.pth')
+            agent.save_model(env_name, '.pth')
             print("Solved! Running reward is now {} and "
               "the last episode runs to {} time steps!".format(ewma_reward, t))
             env.render()
@@ -454,7 +455,7 @@ def train():
             writer.close()
             break
 
-    if save_model: agent.save_model(env_name, '.pth')
+    agent.save_model(env_name, '.pth')
     print("Unsolved! Reach the MAXIMUM num_episodes!")
     env.close()
     writer.close()

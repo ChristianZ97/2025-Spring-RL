@@ -223,14 +223,13 @@ class DDPG(object):
         next_state_batch = Variable(torch.cat(batch.next_state))
         '''
         d = next(self.actor.parameters()).device
-        batch = batch.to(d, non_blocking=True)
+        state_batch = batch.state.to(d, non_blocking=True)
+        action_batch = batch.action.to(d, non_blocking=True)
+        reward_batch = batch.reward.to(d, non_blocking=True)
+        mask_batch = batch.mask.to(d, non_blocking=True)
+        next_state_batch = batch.next_state.to(d, non_blocking=True)
         
         with torch.cuda.amp.autocast():
-            state_batch = batch.state
-            action_batch = batch.action
-            reward_batch = batch.reward
-            mask_batch = batch.mask
-            next_state_batch = batch.next_state
             
             ########## YOUR CODE HERE (10~20 lines) ##########
             # Calculate policy loss and value loss

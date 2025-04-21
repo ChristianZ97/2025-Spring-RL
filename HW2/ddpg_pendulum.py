@@ -326,7 +326,7 @@ def train():
         state_np = env.reset()
 
         episode_reward = 0
-        episode_actor_loss, episode_critic_loss = 0, 0
+        episode_actor_loss, episode_critic_loss = [], []
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########
@@ -364,8 +364,8 @@ def train():
 
                     # dtype=tensor, device=gpu
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
-                    episode_critic_loss += value_loss
-                    episode_actor_loss  += policy_loss
+                    episode_critic_loss.append(value_loss)
+                    episode_actor_loss.append(policy_loss)
                     updates += 1
 
                     writer.add_scalar('Update/Critic_Loss', value_loss, updates)
@@ -422,8 +422,8 @@ def train():
 
             writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
-            writer.add_scalar('Train/Actor_Loss', episode_actor_loss, i_episode)
-            writer.add_scalar('Train/Critic_Loss', episode_critic_loss, i_episode)
+            writer.add_scalar('Train/Actor_Loss', episode_actor_loss[-1], i_episode)
+            writer.add_scalar('Train/Critic_Loss', episode_critic_loss[-1], i_episode)
 
             if ewma_reward > -120 and i_episode > 200: SOLVED = True
             # if ewma_reward > 5000 and i_episode > 500: SOLVED = True

@@ -235,7 +235,7 @@ class DDPG(object):
 
 
         with torch.cuda.amp.autocast():
-            
+
             actor_device = next(self.actor.parameters()).device
             state_batch = state_batch.to(actor_device)
             action_batch = action_batch.to(actor_device)
@@ -298,7 +298,9 @@ class DDPG(object):
             self.critic.load_state_dict(torch.load(critic_path))
 
 def train():
-    torch.autograd.set_detect_anomaly(True)    
+    torch.autograd.set_detect_anomaly(True)
+    SOLVED = False
+       
     num_episodes = 500
     gamma = 0.995
     tau = 0.002

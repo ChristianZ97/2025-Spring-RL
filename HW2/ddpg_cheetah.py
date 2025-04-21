@@ -213,8 +213,8 @@ class DDPG(object):
 
         state_batch = batch.state
         action_batch = batch.action
-        reward_batch = batch.reward.unsqueeze(1)
-        mask_batch = batch.mask.unsqueeze(1)
+        reward_batch = batch.reward
+        mask_batch = batch.mask
         next_state_batch = batch.next_state
         
         ########## YOUR CODE HERE (10~20 lines) ##########
@@ -226,8 +226,7 @@ class DDPG(object):
         self.critic_target.eval()
         target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
         target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-
-        td_target = reward_batch.view(-1, 1) + self.gamma * mask_batch.view(-1, 1) * target_q_value.view(-1, 1)
+        td_target = reward_batch + self.gamma * mask_batch * target_q_value
 
         self.critic.train()
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
@@ -334,14 +333,15 @@ def train():
 
                     # dtype=numpy, device=cpu
                     transition = memory.sample(batch_size=batch_size)
-                    batch = Transition(*zip(*transition))
-                    batch = Transition(
-                        state=torch.tensor(batch.state, dtype=torch.float32, device=device),
-                        action=torch.tensor(batch.action, dtype=torch.float32, device=device),
-                        mask=torch.tensor(batch.mask, dtype=torch.float32, device=device),
-                        next_state=torch.tensor(batch.next_state, dtype=torch.float32, device=device),
-                        reward=torch.tensor(batch.reward, dtype=torch.float32, device=device)
-                    )
+                    batch_b = Transition(*zip(*transition))
+
+                    state_b = torch.tensor(np.array(batch.state), dtype=torch.float32, device=device)
+                    action_b = torch.tensor(np.array(batch.action), dtype=torch.float32, device=device)
+                    mask_b = torch.tensor(np.array(batch.mask), dtype=torch.float32, device=device).unsqueeze(1)
+                    next_state_b = torch.tensor(np.array(batch.next_state), dtype=torch.float32, device=device)
+                    reward_b = torch.tensor(np.array(batch.reward), dtype=torch.float32, device=device).unsqueeze(1)
+
+                    batch = Transition(state_b, action_b, mask_b, next_state_b, reward_b)
 
                     # dtype=tensor, device=gpu
                     value_loss, policy_loss = agent.update_parameters(batch=batch)

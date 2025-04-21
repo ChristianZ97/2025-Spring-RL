@@ -335,11 +335,11 @@ def train():
                     transition = memory.sample(batch_size=batch_size)
                     batch_b = Transition(*zip(*transition))
 
-                    state_b = torch.tensor(np.array(batch.state), dtype=torch.float32, device=device)
-                    action_b = torch.tensor(np.array(batch.action), dtype=torch.float32, device=device)
-                    mask_b = torch.tensor(np.array(batch.mask), dtype=torch.float32, device=device).unsqueeze(1)
-                    next_state_b = torch.tensor(np.array(batch.next_state), dtype=torch.float32, device=device)
-                    reward_b = torch.tensor(np.array(batch.reward), dtype=torch.float32, device=device).unsqueeze(1)
+                    state_b = torch.tensor(np.array(batch_b.state), dtype=torch.float32, device=device)
+                    action_b = torch.tensor(np.array(batch_b.action), dtype=torch.float32, device=device)
+                    mask_b = torch.tensor(np.array(batch_b.mask), dtype=torch.float32, device=device).unsqueeze(1)
+                    next_state_b = torch.tensor(np.array(batch_b.next_state), dtype=torch.float32, device=device)
+                    reward_b = torch.tensor(np.array(batch_b.reward), dtype=torch.float32, device=device).unsqueeze(1)
 
                     batch = Transition(state_b, action_b, mask_b, next_state_b, reward_b)
 

@@ -184,18 +184,22 @@ class DDPG(object):
         mu = self.actor((Variable(state)))
         mu = mu.data
 
+        check(mu)
         ########## YOUR CODE HERE (3~5 lines) ##########
         # Add noise to your action for exploration
         # Clipping might be needed
 
         mu = mu.to(device)
         if action_noise is not None:
+            check(action_noise.noise())
             ounoise = torch.tensor(action_noise.noise(), dtype=torch.float, device=device)
+            check(ounoise)
             mu += ounoise
         
         action_low = torch.tensor(self.action_space.low, dtype=torch.float, device=device)
         action_high = torch.tensor(self.action_space.high, dtype=torch.float, device=device)
         mu = torch.clamp(mu, action_low, action_high)
+        check(mu)
 
         self.actor.train()
         return mu.cpu().numpy()
@@ -296,8 +300,6 @@ def train():
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size)
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
-
-    check(ounoise)
     
     for i_episode in range(num_episodes):
         

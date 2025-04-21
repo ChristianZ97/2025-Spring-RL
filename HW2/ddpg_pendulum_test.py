@@ -235,13 +235,13 @@ class DDPG(object):
 
 
         with torch.cuda.amp.autocast():
-            '''
-            state_batch = state_batch.to(self.actor.parameters().device)
-            action_batch = action_batch.to(self.actor.parameters().device)
-            reward_batch = reward_batch.view(-1, 1).to(self.actor.parameters().device)
-            mask_batch = mask_batch.view(-1, 1).to(self.actor.parameters().device)
-            next_state_batch = next_state_batch.to(self.actor.parameters().device)
-            '''
+            
+            actor_device = next(self.actor.parameters()).device
+            state_batch = state_batch.to(actor_device)
+            action_batch = action_batch.to(actor_device)
+            reward_batch = reward_batch.view(-1, 1).to(actor_device)
+            mask_batch = mask_batch.view(-1, 1).to(actor_device)
+            next_state_batch = next_state_batch.to(actor_device)
 
             self.actor_target.eval()
             self.critic_target.eval()

@@ -193,8 +193,8 @@ class DDPG(object):
             ounoise = torch.tensor(action_noise.noise()).to(device)
             mu += ounoise
         
-        action_low = torch.tensor(self.action_space.low)
-        action_high = torch.tensor(self.action_space.high)
+        action_low = torch.tensor(self.action_space.low).to(device)
+        action_high = torch.tensor(self.action_space.high).to(device)
         mu = torch.clamp(mu, action_low, action_high)
 
         self.actor.train()

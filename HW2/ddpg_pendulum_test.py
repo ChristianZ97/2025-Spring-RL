@@ -31,7 +31,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #)
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_3")
+writer = SummaryWriter("./tb_record_pendulum")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -111,8 +111,7 @@ class Actor(nn.Module):
         # Define the forward pass your actor network
         
 
-        device = next(self.parameters()).device
-        inputs = inputs.to(device)
+        inputs = inputs.to(next(self.parameters()).device)
 
         x = self.fc1(inputs)
         x = F.relu(x)
@@ -161,9 +160,8 @@ class Critic(nn.Module):
         # Define the forward pass your critic network
         
 
-        device = next(self.parameters()).device
-        inputs = inputs.to(device)
-        actions = actions.to(device)
+        inputs = inputs.to(next(self.parameters()).device)
+        actions = actions.to(next(self.parameters()).device)
         
         x = self.fc1(inputs)
         x = F.relu(x)
@@ -238,11 +236,11 @@ class DDPG(object):
 
         with torch.cuda.amp.autocast():
 
-            state_batch = state_batch.to(self.actor.device)
-            action_batch = action_batch.to(self.actor.device)
-            reward_batch = reward_batch.view(-1, 1).to(self.actor.device)
-            mask_batch = mask_batch.view(-1, 1).to(self.actor.device)
-            next_state_batch = next_state_batch.to(self.actor.device)
+            state_batch = state_batch.to(self.actor.parameters().device)
+            action_batch = action_batch.to(self.actor.parameters().device)
+            reward_batch = reward_batch.view(-1, 1).to(self.actor.parameters().device)
+            mask_batch = mask_batch.view(-1, 1).to(self.actor.parameters().device)
+            next_state_batch = next_state_batch.to(self.actor.parameters().device)
 
             self.actor_target.eval()
             self.critic_target.eval()
@@ -300,14 +298,14 @@ class DDPG(object):
 
 def train():
     torch.autograd.set_detect_anomaly(True)    
-    num_episodes = 200
+    num_episodes = 500
     gamma = 0.995
     tau = 0.002
-    hidden_size = 128
+    hidden_size = 256
     noise_scale = 0.3
     replay_size = 100000
-    batch_size = 128
-    updates_per_step = 1
+    batch_size = 64
+    updates_per_step = 2
     print_freq = 1
     ewma_reward = 0
     rewards = []

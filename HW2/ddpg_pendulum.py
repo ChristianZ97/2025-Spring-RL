@@ -108,6 +108,9 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your actor network
 
+        d = next(self.parameters()).device
+        inputs = inputs.to(d, non_blocking=True)
+
         x = torch.relu(self.ln1(self.fc1(inputs)))
         x = torch.relu(self.ln2(self.fc2(x)))
         action = torch.tanh(self.fc_out(x))
@@ -146,6 +149,10 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your critic network
 
+        d = next(self.parameters()).device
+        inputs = inputs.to(d, non_blocking=True)
+        actions = actions.to(d, non_blocking=True)
+
         x = torch.relu(self.ln1(self.fc1(inputs)))
         x = torch.relu(self.ln2(self.fc2(x)))
 
@@ -179,6 +186,10 @@ class DDPG(object):
 
     @torch.no_grad()
     def select_action(self, state, action_noise=None):
+
+        d = next(self.actor.parameters()).device
+        state = state.to(d, non_blocking=True)
+
         self.actor.eval()
         # mu = self.actor((Variable(state)))
         mu = self.actor(state)
@@ -190,11 +201,11 @@ class DDPG(object):
 
         # dtype=torch, device=gpu
         if action_noise is not None:
-            ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=device)
+            ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=d)
             mu += ounoise
         
-        action_low = torch.tensor(self.action_space.low, dtype=torch.float32, device=device)
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=device)
+        action_low = torch.tensor(self.action_space.low, dtype=torch.float32, device=d)
+        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=d)
         mu = torch.clamp(mu, action_low, action_high)
 
         self.actor.train()
@@ -211,51 +222,54 @@ class DDPG(object):
         mask_batch = Variable(torch.cat(batch.mask))
         next_state_batch = Variable(torch.cat(batch.next_state))
         '''
-
-        state_batch = batch.state
-        action_batch = batch.action
-        reward_batch = batch.reward
-        mask_batch = batch.mask
-        next_state_batch = batch.next_state
+        d = next(self.actor.parameters()).device
+        batch = batch.to(d, non_blocking=True)
         
-        ########## YOUR CODE HERE (10~20 lines) ##########
-        # Calculate policy loss and value loss
-        # Update the actor and the critic
+        with torch.cuda.amp.autocast():
+            state_batch = batch.state
+            action_batch = batch.action
+            reward_batch = batch.reward
+            mask_batch = batch.mask
+            next_state_batch = batch.next_state
+            
+            ########## YOUR CODE HERE (10~20 lines) ##########
+            # Calculate policy loss and value loss
+            # Update the actor and the critic
 
-        # dtype=torch, device=gpu
-        self.actor_target.eval()
-        self.critic_target.eval()
-        with torch.no_grad():
-            target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-            target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-        td_target = reward_batch + self.gamma * mask_batch * target_q_value
+            # dtype=torch, device=gpu
+            self.actor_target.eval()
+            self.critic_target.eval()
+            with torch.no_grad():
+                target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+                target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+            td_target = reward_batch + self.gamma * mask_batch * target_q_value
 
-        self.critic.train()
-        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
-        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
+            self.critic.train()
+            eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
+            value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-        self.critic_optim.zero_grad()
-        value_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-        self.critic_optim.step()
+            self.critic_optim.zero_grad()
+            value_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+            self.critic_optim.step()
 
-        self.actor.train()
-        eval_scaled_action = self.actor.forward(inputs=state_batch)
+            self.actor.train()
+            eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-        self.critic.eval()
-        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+            self.critic.eval()
+            policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
-        self.actor_optim.zero_grad()
-        policy_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-        self.actor_optim.step()
+            self.actor_optim.zero_grad()
+            policy_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+            self.actor_optim.step()
 
-        ########## END OF YOUR CODE ########## 
+            ########## END OF YOUR CODE ########## 
 
-        soft_update(self.actor_target, self.actor, self.tau)
-        soft_update(self.critic_target, self.critic, self.tau)
+            soft_update(self.actor_target, self.actor, self.tau)
+            soft_update(self.critic_target, self.critic, self.tau)
 
-        return value_loss.item(), policy_loss.item()
+            return value_loss.item(), policy_loss.item()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):

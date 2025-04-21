@@ -284,8 +284,8 @@ def train():
     hidden_size = 128
     noise_scale = 0.3
     replay_size = 1000000
-    batch_size = 64
-    updates_per_step = 1
+    batch_size = 1024
+    updates_per_step = 16
     print_freq = 1
     ewma_reward = 0
     rewards = []

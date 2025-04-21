@@ -180,30 +180,23 @@ class DDPG(object):
         hard_update(self.critic_target, self.critic)
 
     def select_action(self, state, action_noise=None):
-        check(state)
         self.actor.eval()
         mu = self.actor((Variable(state)))
         mu = mu.data
 
-        check(mu)
         ########## YOUR CODE HERE (3~5 lines) ##########
         # Add noise to your action for exploration
         # Clipping might be needed
 
-        mu = mu.to(device)
         if action_noise is not None:
-            check(action_noise.noise())
-            ounoise = torch.tensor(action_noise.noise(), dtype=torch.float, device=device)
-            check(ounoise)
-            mu += ounoise
+            mu += action_noise.noise()
         
-        action_low = torch.tensor(self.action_space.low, dtype=torch.float, device=device)
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float, device=device)
+        action_low = torch.tensor(self.action_space.low)
+        action_high = torch.tensor(self.action_space.high)
         mu = torch.clamp(mu, action_low, action_high)
-        check(mu)
 
         self.actor.train()
-        return mu.cpu().numpy()
+        return mu
 
         ########## END OF YOUR CODE ##########
 
@@ -218,12 +211,6 @@ class DDPG(object):
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss
         # Update the actor and the critic
-
-        state_batch = state_batch.to(device)
-        action_batch = action_batch.to(device)
-        reward_batch = reward_batch.to(device)
-        mask_batch = mask_batch.to(device)
-        next_state_batch = next_state_batch.to(device)
 
         self.actor_target.eval()
         self.critic_target.eval()
@@ -317,11 +304,14 @@ def train():
             # 1. Interact with the env to get new (s,a,r,s') samples 
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
-
             action = agent.select_action(state=state, action_noise=ounoise)
-            next_state, reward, done, _ = env.step(action.numpy()[0])
+            next_state, reward, done, _ = env.step(action.numpy()[0]) # env.step() returns cpu, numpy
             mask = 1.0 - done
 
+            # make sure dtype, device
+            mask = torch.tensor(mask)
+            next_state = torch.tensor(next_state)
+            reward = torch.tensor(reward)
             memory.push(state, action, mask, next_state, reward)
 
             state = next_state
@@ -330,7 +320,7 @@ def train():
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
                     batch = memory.sample(batch_size=batch_size)
-                    batch = Transition(*zip(*batch))
+                    batch = Transition(*zip(*batch)).to(device)
 
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
                     updates += 1

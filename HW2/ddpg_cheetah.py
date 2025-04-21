@@ -210,11 +210,12 @@ class DDPG(object):
         mask_batch = Variable(torch.cat(batch.mask))
         next_state_batch = Variable(torch.cat(batch.next_state))
         '''
-        state_batch = torch.cat(batch.state)
-        action_batch = torch.cat(batch.action)
-        reward_batch = torch.cat(batch.reward)
-        mask_batch = torch.cat(batch.mask)
-        next_state_batch = torch.cat(batch.next_state)
+        
+        state_batch = batch.state
+        action_batch = batch.action
+        reward_batch = batch.reward.unsqueeze(1)
+        mask_batch = batch.mask.unsqueeze(1)
+        next_state_batch = batch.next_state
         
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss
@@ -334,9 +335,15 @@ def train():
                     # dtype=numpy, device=cpu
                     transition = memory.sample(batch_size=batch_size)
                     batch = Transition(*zip(*transition))
+                    batch = Transition(
+                        state=torch.tensor(batch.state, dtype=torch.float32, device=device),
+                        action=torch.tensor(batch.action, dtype=torch.float32, device=device),
+                        mask=torch.tensor(batch.mask, dtype=torch.float32, device=device),
+                        next_state=torch.tensor(batch.next_state, dtype=torch.float32, device=device),
+                        reward=torch.tensor(batch.reward, dtype=torch.float32, device=device)
+                    )
 
                     # dtype=tensor, device=gpu
-                    batch = torch.tensor(batch, dtype=torch.float32, device=device)
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
                     updates += 1
 
@@ -409,7 +416,7 @@ def train():
         'ewma_reward': ewma_reward,
         'rewards': rewards
     }
-    
+
 
 if __name__ == '__main__':
 

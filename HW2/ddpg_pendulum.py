@@ -228,7 +228,7 @@ class DDPG(object):
         reward_batch = batch.reward.to(d, non_blocking=True)
         mask_batch = batch.mask.to(d, non_blocking=True)
         next_state_batch = batch.next_state.to(d, non_blocking=True)
-        
+
         with torch.cuda.amp.autocast():
             
             ########## YOUR CODE HERE (10~20 lines) ##########
@@ -301,7 +301,7 @@ def train():
     hidden_size = 128
     noise_scale = 0.3
     replay_size = 100000
-    batch_size = 256
+    batch_size = 4096
     updates_per_step = 1
     print_freq = 1
     ewma_reward = 0
@@ -401,7 +401,7 @@ def train():
                 action_np = action.cpu().numpy()
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
 
-                env.render()
+                # env.render()
                 
                 # episode_reward += reward
                 episode_reward += reward_np
@@ -433,6 +433,7 @@ def train():
             if save_model: agent.save_model(env_name, '.pth')
             print("Solved! Running reward is now {} and "
               "the last episode runs to {} time steps!".format(ewma_reward, t))
+            env.render()
             env.close()
             writer.close()
             break

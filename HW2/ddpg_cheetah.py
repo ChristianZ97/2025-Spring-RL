@@ -230,7 +230,7 @@ class DDPG(object):
 
         self.critic.train()
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
-        value_loss = torch.mse_loss(input=eval_q_value, target=td_target)
+        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
         self.critic_optim.zero_grad()
         value_loss.backward()

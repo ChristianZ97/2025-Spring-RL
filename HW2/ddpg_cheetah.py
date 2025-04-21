@@ -369,7 +369,7 @@ def train():
                 action_np = action.cpu().numpy()
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
 
-                env.render()
+                # env.render()
                 
                 # episode_reward += reward
                 episode_reward += reward_np

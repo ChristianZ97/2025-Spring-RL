@@ -324,7 +324,8 @@ def train():
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.Tensor([env.reset()])
+        #state = torch.Tensor([env.reset()])
+        state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
 
         episode_reward = 0
         while True:
@@ -338,8 +339,6 @@ def train():
             action = agent.select_action(state=state, action_noise=ounoise)
             next_state, reward, done, _ = env.step(action.numpy()[0])
 
-            state = torch.tensor(state, dtype=torch.float32, device=state.device).unsqueeze(0)
-            action = torch.tensor(state, dtype=torch.float32, device=state.device)
             mask = torch.tensor([0.0 if done else 1.0], dtype=torch.float32, device=state.device).unsqueeze(0)
             next_state = torch.tensor(next_state, dtype=torch.float32, device=state.device).unsqueeze(0)
             reward = torch.tensor(reward, dtype=torch.float32, device=state.device).unsqueeze(0)
@@ -365,7 +364,8 @@ def train():
         rewards.append(episode_reward)
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.Tensor([env.reset()])
+            #state = torch.Tensor([env.reset()])
+            state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
             episode_reward = 0
             while True:
                 action = agent.select_action(state)
@@ -376,7 +376,8 @@ def train():
                 
                 episode_reward += reward
 
-                next_state = torch.Tensor([next_state])
+                #next_state = torch.Tensor([next_state])
+                next_state = torch.tensor(next_state, dtype=torch.float32, device=state.device).unsqueeze(0)
 
                 state = next_state
                 

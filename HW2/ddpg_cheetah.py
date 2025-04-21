@@ -180,6 +180,7 @@ class DDPG(object):
         hard_update(self.critic_target, self.critic)
 
     def select_action(self, state, action_noise=None):
+        check(state)
         self.actor.eval()
         mu = self.actor((Variable(state)))
         mu = mu.data
@@ -307,7 +308,6 @@ def train():
         ounoise.reset()
         
         state = torch.Tensor([env.reset()])
-        check(state)
 
         episode_reward = 0
         episode_actor_loss, episode_critic_loss = 0, 0

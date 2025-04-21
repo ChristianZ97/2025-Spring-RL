@@ -235,19 +235,20 @@ class DDPG(object):
 
 
         with torch.cuda.amp.autocast():
-
+            '''
             state_batch = state_batch.to(self.actor.parameters().device)
             action_batch = action_batch.to(self.actor.parameters().device)
             reward_batch = reward_batch.view(-1, 1).to(self.actor.parameters().device)
             mask_batch = mask_batch.view(-1, 1).to(self.actor.parameters().device)
             next_state_batch = next_state_batch.to(self.actor.parameters().device)
+            '''
 
             self.actor_target.eval()
             self.critic_target.eval()
             with torch.no_grad():
                 target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
                 target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-            td_target = reward_batch + self.gamma * mask_batch * target_q_value
+            td_target = reward_batch.view(-1, 1) + self.gamma * mask_batch.view(-1, 1) * target_q_value
             
             self.critic.train()
             eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)

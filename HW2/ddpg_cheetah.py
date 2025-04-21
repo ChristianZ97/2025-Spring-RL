@@ -198,7 +198,7 @@ class DDPG(object):
         mu = torch.clamp(mu, action_low, action_high)
 
         self.actor.train()
-        return mu.cpu().detach().numpy()
+        return mu
 
         ########## END OF YOUR CODE ##########
 

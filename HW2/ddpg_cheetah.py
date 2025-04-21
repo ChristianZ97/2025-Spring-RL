@@ -404,4 +404,4 @@ if __name__ == '__main__':
     env.seed(random_seed)  
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)  
-    train(env)
+    train()

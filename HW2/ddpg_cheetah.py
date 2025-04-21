@@ -190,7 +190,7 @@ class DDPG(object):
 
         # dtype=torch, device=gpu
         if action_noise is not None:
-            ounoise = torch.tensor(action_noise.noise())
+            ounoise = torch.tensor(action_noise.noise()).to(device)
             mu += ounoise
         
         action_low = torch.tensor(self.action_space.low)

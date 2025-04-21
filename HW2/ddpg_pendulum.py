@@ -92,9 +92,9 @@ class Actor(nn.Module):
         # Construct your own actor network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
+        # self.ln1 = nn.LayerNorm(normalized_shape=400)
         self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
+        # self.ln2 = nn.LayerNorm(normalized_shape=300)
         self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
 
         for layer in [self.fc1, self.fc2, self.fc_out]:
@@ -111,9 +111,16 @@ class Actor(nn.Module):
         d = next(self.parameters()).device
         inputs = inputs.to(d, non_blocking=True)
 
-        x = torch.relu(self.ln1(self.fc1(inputs)))
-        x = torch.relu(self.ln2(self.fc2(x)))
-        action = torch.tanh(self.fc_out(x))
+        x = self.fc1(inputs)
+        # x = self.ln1(x)
+        x = torch.relu(x)
+
+        x = self.fc2(x)
+        # x = self.ln2(x)
+        x = torch.relu(x)
+
+        x = self.fc_out(x)
+        action = torch.tanh(x)
 
         action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=device)
         scaled_action = action * action_high
@@ -131,9 +138,9 @@ class Critic(nn.Module):
         # Construct your own critic network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
+        # self.ln1 = nn.LayerNorm(normalized_shape=400)
         self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
+        # self.ln2 = nn.LayerNorm(normalized_shape=300)
         self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
 
         self.fc_a = nn.Linear(in_features=num_outputs, out_features=300)
@@ -153,11 +160,19 @@ class Critic(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
         actions = actions.to(d, non_blocking=True)
 
-        x = torch.relu(self.ln1(self.fc1(inputs)))
-        x = torch.relu(self.ln2(self.fc2(x)))
+        x = self.fc1(inputs)
+        # x = self.ln1(x)
+        x = torch.relu(x)
+
+        x = self.fc2(x)
+        # x = self.ln2(x)
+        x = torch.relu(x)
 
         a = self.fc_a(actions)
-        q_value = self.fc_out(torch.relu(torch.add(x, a)))
+
+        x = torch.add(x, a)
+        x = torch.relu(x)
+        q_value = self.fc_out(x)
         return q_value
         
         ########## END OF YOUR CODE ##########        
@@ -249,7 +264,7 @@ class DDPG(object):
 
             self.critic_optim.zero_grad()
             value_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+            # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
             self.critic_optim.step()
 
             self.actor.train()
@@ -260,7 +275,7 @@ class DDPG(object):
 
             self.actor_optim.zero_grad()
             policy_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+            # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
             self.actor_optim.step()
 
             ########## END OF YOUR CODE ########## 
@@ -295,14 +310,14 @@ class DDPG(object):
 def train():
     torch.autograd.set_detect_anomaly(True)
 
-    num_episodes = 500000
+    num_episodes = 500
     gamma = 0.99
     tau = 0.001
     hidden_size = 128
     noise_scale = 0.3
     replay_size = 100000
-    batch_size = 4096
-    updates_per_step = 1
+    batch_size = 1024
+    updates_per_step = 8
     print_freq = 1
     ewma_reward = 0
     rewards = []
@@ -401,7 +416,8 @@ def train():
                 action_np = action.cpu().numpy()
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
 
-                # env.render()
+                if i_episode % 10 == 0:
+                    env.render()
                 
                 # episode_reward += reward
                 episode_reward += reward_np
@@ -442,14 +458,14 @@ def train():
     print("Unsolved! Reach the MAXIMUM num_episodes!")
     env.close()
     writer.close()
-
+    '''
     return {
         'last_rewards': rewards[-10:],
         'best_reward': max(rewards),
         'ewma_reward': ewma_reward,
         'rewards': rewards
     }
-
+    '''
 
 if __name__ == '__main__':
 

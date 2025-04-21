@@ -296,7 +296,7 @@ def train(env, num_episodes=300, gamma=0.995, tau=0.002, noise_scale=0.3,
     replay_size = 100000
     batch_size = 512
     updates_per_step = 1
-    print_freq = 10
+    print_freq = 1
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []

@@ -306,6 +306,8 @@ def train():
 
         episode_reward = 0
         episode_actor_loss, episode_critic_loss = 0, 0
+        state = state.to(device)
+        ounoise = ounoise.to(device)
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########

@@ -137,7 +137,7 @@ class Critic(nn.Module):
 
         self.fc_a = nn.Linear(in_features=num_outputs, out_features=300)
 
-        for layer in [self.fc1, self.fc2, self.fc_out, fc_a]:
+        for layer in [self.fc1, self.fc2, self.fc_out, self.fc_a]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
 

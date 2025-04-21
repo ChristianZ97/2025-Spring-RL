@@ -108,9 +108,9 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your actor network
 
-        x = torch.relu(self.ln1(self.fc1(inputs)))
-        x = torch.relu(self.ln2(self.fc2(x)))
-        action = torch.tanh(self.fc_out(x))
+        x = F.relu(self.ln1(self.fc1(inputs)))
+        x = F.relu(self.ln2(self.fc2(x)))
+        action = F.tanh(self.fc_out(x))
 
         action_high = torch.tensor(self.action_space.high, 
                                   dtype=action.dtype, 
@@ -148,11 +148,11 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your critic network
 
-        x = torch.relu(self.ln1(self.fc1(inputs)))
-        x = torch.relu(self.ln2(self.fc2(x)))
+        x = F.relu(self.ln1(self.fc1(inputs)))
+        x = F.relu(self.ln2(self.fc2(x)))
 
         a = self.fc_a(a)
-        q_value = self.fc_out(torch.relu(torch.add(x, a)))
+        q_value = self.fc_out(F.relu(torch.add(x, a)))
         return q_value
         
         ########## END OF YOUR CODE ##########        

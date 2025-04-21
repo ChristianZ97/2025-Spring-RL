@@ -177,6 +177,7 @@ class DDPG(object):
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
+    @torch.no_grad()
     def select_action(self, state, action_noise=None):
         self.actor.eval()
         # mu = self.actor((Variable(state)))
@@ -224,8 +225,9 @@ class DDPG(object):
         # dtype=torch, device=gpu
         self.actor_target.eval()
         self.critic_target.eval()
-        target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        with torch.no_grad():
+            target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+            target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
         td_target = reward_batch + self.gamma * mask_batch * target_q_value
 
         self.critic.train()
@@ -234,7 +236,7 @@ class DDPG(object):
 
         self.critic_optim.zero_grad()
         value_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optim.step()
 
         self.actor.train()
@@ -245,7 +247,7 @@ class DDPG(object):
 
         self.actor_optim.zero_grad()
         policy_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
 
         ########## END OF YOUR CODE ########## 
@@ -277,15 +279,17 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train():    
+def train():
+    torch.autograd.set_detect_anomaly(True)
+
     num_episodes = 500000
     gamma = 0.99
     tau = 0.001
     hidden_size = 128
     noise_scale = 0.3
-    replay_size = 1000000
-    batch_size = 1024
-    updates_per_step = 16
+    replay_size = 100000
+    batch_size = 256
+    updates_per_step = 1
     print_freq = 1
     ewma_reward = 0
     rewards = []
@@ -301,7 +305,8 @@ def train():
     
     for i_episode in range(num_episodes):
         
-        ounoise.scale = noise_scale
+        # ounoise.scale = noise_scale
+        ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])

@@ -108,13 +108,11 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your actor network
 
-        x = F.relu(self.ln1(self.fc1(inputs)))
-        x = F.relu(self.ln2(self.fc2(x)))
-        action = F.tanh(self.fc_out(x))
+        x = torch.relu(self.ln1(self.fc1(inputs)))
+        x = torch.relu(self.ln2(self.fc2(x)))
+        action = torch.tanh(self.fc_out(x))
 
-        action_high = torch.tensor(self.action_space.high, 
-                                  dtype=action.dtype, 
-                                  device=device)
+        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=device)
         scaled_action = action * action_high
         return scaled_action
 
@@ -148,11 +146,11 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Define the forward pass your critic network
 
-        x = F.relu(self.ln1(self.fc1(inputs)))
-        x = F.relu(self.ln2(self.fc2(x)))
+        x = torch.relu(self.ln1(self.fc1(inputs)))
+        x = torch.relu(self.ln2(self.fc2(x)))
 
         a = self.fc_a(a)
-        q_value = self.fc_out(F.relu(torch.add(x, a)))
+        q_value = self.fc_out(torch.relu(torch.add(x, a)))
         return q_value
         
         ########## END OF YOUR CODE ##########        
@@ -164,24 +162,25 @@ class DDPG(object):
         self.num_inputs = num_inputs
         self.action_space = action_space
 
-        self.actor = Actor(hidden_size, self.num_inputs, self.action_space).float().to(device)
-        self.actor_target = Actor(hidden_size, self.num_inputs, self.action_space).float().to(device)
-        self.actor_perturbed = Actor(hidden_size, self.num_inputs, self.action_space).float().to(device)
+        self.actor = Actor(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.actor_target = Actor(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.actor_perturbed = Actor(hidden_size, self.num_inputs, self.action_space).to(device)
         self.actor_optim = Adam(self.actor.parameters(), lr=lr_a)
 
-        self.critic = Critic(hidden_size, self.num_inputs, self.action_space).float().to(device)
-        self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).float().to(device)
+        self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
+        self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
         self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-2)
 
         self.gamma = gamma
         self.tau = tau
 
-        hard_update(self.actor_target, self.actor) 
+        hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
     def select_action(self, state, action_noise=None):
         self.actor.eval()
-        mu = self.actor((Variable(state)))
+        # mu = self.actor((Variable(state)))
+        mu = self.actor(state)
         mu = mu.data
 
         ########## YOUR CODE HERE (3~5 lines) ##########
@@ -190,11 +189,11 @@ class DDPG(object):
 
         # dtype=torch, device=gpu
         if action_noise is not None:
-            ounoise = torch.tensor(action_noise.noise()).to(device)
+            ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=device)
             mu += ounoise
         
-        action_low = torch.tensor(self.action_space.low).to(device)
-        action_high = torch.tensor(self.action_space.high).to(device)
+        action_low = torch.tensor(self.action_space.low, dtype=torch.float32, device=device)
+        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=device)
         mu = torch.clamp(mu, action_low, action_high)
 
         self.actor.train()
@@ -204,11 +203,18 @@ class DDPG(object):
 
 
     def update_parameters(self, batch):
+        '''
         state_batch = Variable(torch.cat(batch.state))
         action_batch = Variable(torch.cat(batch.action))
         reward_batch = Variable(torch.cat(batch.reward))
         mask_batch = Variable(torch.cat(batch.mask))
         next_state_batch = Variable(torch.cat(batch.next_state))
+        '''
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        reward_batch = torch.cat(batch.reward)
+        mask_batch = torch.cat(batch.mask)
+        next_state_batch = torch.cat(batch.next_state)
         
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss
@@ -297,7 +303,8 @@ def train():
         ounoise.scale = noise_scale
         ounoise.reset()
         
-        state = torch.Tensor([env.reset()])
+        # state = torch.Tensor([env.reset()])
+        state_np = env.reset()
 
         episode_reward = 0
         episode_actor_loss, episode_critic_loss = 0, 0
@@ -309,31 +316,31 @@ def train():
             # 3. Update the actor and the critic
 
             # dtype=tensor, device=gpu
-            state = torch.tensor(state).to(device)
+            state = torch.tensor(state_np, dtype=torch.float32, device=device)
             action = agent.select_action(state=state, action_noise=ounoise)
 
             # dtype=numpy, device=cpu
-            state = state.cpu().numpy()
-            action = action.cpu()
-            next_state, reward, done, _ = env.step(action.numpy()[0])
-            mask = 1.0 - done
-            memory.push(state, action, mask, next_state, reward)
+            action_np = action.cpu().numpy()
+            next_state_np, reward_np, done_np, _ = env.step(action_np)
+            mask_np = 1.0 - done_np
+            memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
 
-            state = next_state
-            episode_reward += reward
+            state_np = next_state_np
+            episode_reward += reward_np
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
 
                     # dtype=numpy, device=cpu
-                    batch = memory.sample(batch_size=batch_size)
-                    batch = Transition(*zip(*batch))
+                    transition = memory.sample(batch_size=batch_size)
+                    batch = Transition(*zip(*transition))
 
                     # dtype=tensor, device=gpu
-                    value_loss, policy_loss = agent.update_parameters(batch=batch.to(device))
+                    batch = torch.tensor(batch, dtype=torch.float32, device=device)
+                    value_loss, policy_loss = agent.update_parameters(batch=batch)
                     updates += 1
 
-            if done: break
+            if done_np: break
         # End one training epoch
 
             ########## END OF YOUR CODE ########## 
@@ -343,24 +350,30 @@ def train():
         rewards.append(episode_reward)
         t = 0
         if i_episode % print_freq == 0:
-            state = torch.Tensor([env.reset()])
+            # state = torch.Tensor([env.reset()])
+            state_np = env.reset()
             episode_reward = 0
             while True:
-                action = agent.select_action(state)
+                # action = agent.select_action(state)
+                state = torch.tensor(state_np, dtype=torch.float32, device=device)
+                action = agent.select_action(state=state, action_noise=ounoise)
 
-                next_state, reward, done, _ = env.step(action.numpy()[0])
+                # next_state, reward, done, _ = env.step(action.numpy()[0])
+                action_np = action.cpu().numpy()
+                next_state_np, reward_np, done_np, _ = env.step(action_np)
 
                 env.render()
                 
-                episode_reward += reward
+                # episode_reward += reward
+                episode_reward += reward_np
 
-                next_state = torch.Tensor([next_state])
+                # next_state = torch.Tensor([next_state])
 
-                state = next_state
+                # state = next_state
+                state_np = next_state_np
                 
                 t += 1
-                if done:
-                    break
+                if done_np: break
 
             rewards.append(episode_reward)
             # update EWMA reward and log the results
@@ -396,9 +409,7 @@ def train():
         'ewma_reward': ewma_reward,
         'rewards': rewards
     }
-
-def check(x):
-    print(f"dtype: {x.dtype}, device: {x.device}")
+    
 
 if __name__ == '__main__':
 

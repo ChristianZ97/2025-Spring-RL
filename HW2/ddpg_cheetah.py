@@ -296,6 +296,8 @@ def train():
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size)
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
+
+    check(ounoise)
     
     for i_episode in range(num_episodes):
         
@@ -303,10 +305,10 @@ def train():
         ounoise.reset()
         
         state = torch.Tensor([env.reset()])
+        check(state)
 
         episode_reward = 0
         episode_actor_loss, episode_critic_loss = 0, 0
-        state = state.to(device)
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########
@@ -315,7 +317,7 @@ def train():
             # 3. Update the actor and the critic
 
             action = agent.select_action(state=state, action_noise=ounoise)
-            next_state, reward, done, _ = env.step(action[0])
+            next_state, reward, done, _ = env.step(action.numpy()[0])
             mask = 1.0 - done
 
             memory.push(state, action, mask, next_state, reward)
@@ -346,8 +348,7 @@ def train():
             while True:
                 action = agent.select_action(state)
 
-                # next_state, reward, done, _ = env.step(action.numpy()[0])
-                next_state, reward, done, _ = env.step(action[0])
+                next_state, reward, done, _ = env.step(action.numpy()[0])
 
                 env.render()
                 
@@ -396,6 +397,8 @@ def train():
         'rewards': rewards
     }
 
+def check(x):
+    print(f"dtype: {x.dtype}, device: {x.device}")
 
 if __name__ == '__main__':
 

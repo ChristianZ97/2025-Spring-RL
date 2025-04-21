@@ -149,7 +149,7 @@ class Critic(nn.Module):
         x = torch.relu(self.ln1(self.fc1(inputs)))
         x = torch.relu(self.ln2(self.fc2(x)))
 
-        a = self.fc_a(a)
+        a = self.fc_a(actions)
         q_value = self.fc_out(torch.relu(torch.add(x, a)))
         return q_value
         
@@ -210,7 +210,7 @@ class DDPG(object):
         mask_batch = Variable(torch.cat(batch.mask))
         next_state_batch = Variable(torch.cat(batch.next_state))
         '''
-        
+
         state_batch = batch.state
         action_batch = batch.action
         reward_batch = batch.reward.unsqueeze(1)

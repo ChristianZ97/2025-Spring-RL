@@ -393,7 +393,7 @@ def train():
                     writer.add_scalar('Update/Q_Eval', q_eval, updates)
                     writer.add_scalar('Update/Q_Target', q_target, updates)
                     writer.add_scalar('Update/TD_Error', td_error, updates)
-
+            total_numsteps += 1
             if done_np: break
         # End one training epoch
 
@@ -416,8 +416,7 @@ def train():
                 action_np = action.cpu().numpy()
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
 
-                # if i_episode % 10 == 0:
-                    # env.render()
+                # env.render()
                 
                 # episode_reward += reward
                 episode_reward += reward_np
@@ -436,13 +435,13 @@ def train():
             ewma_reward_history.append(ewma_reward)           
             print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1], ewma_reward))
 
-            writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
-            writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
-            writer.add_scalar('Train/Actor_Loss', episode_actor_loss[-1], i_episode)
-            writer.add_scalar('Train/Critic_Loss', episode_critic_loss[-1], i_episode)
+            writer.add_scalar('Train/Episode_Reward', rewards[-1], total_numsteps)
+            writer.add_scalar('Train/EWMA_Reward', ewma_reward, total_numsteps)
+            writer.add_scalar('Train/Actor_Loss', episode_actor_loss[-1], total_numsteps)
+            writer.add_scalar('Train/Critic_Loss', episode_critic_loss[-1], total_numsteps)
 
             # if ewma_reward > -120 and updates > 200: SOLVED = True
-            if ewma_reward > 5000 and updates > 500: SOLVED = True
+            if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True
         # End one testing epoch
 
         if SOLVED:

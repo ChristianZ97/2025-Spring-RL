@@ -188,8 +188,10 @@ class DDPG(object):
         # Add noise to your action for exploration
         # Clipping might be needed
 
+        # dtype=torch, device=gpu
         if action_noise is not None:
-            mu += action_noise.noise()
+            ounoise = torch.tensor(action_noise.noise())
+            mu += ounoise
         
         action_low = torch.tensor(self.action_space.low)
         action_high = torch.tensor(self.action_space.high)
@@ -212,6 +214,7 @@ class DDPG(object):
         # Calculate policy loss and value loss
         # Update the actor and the critic
 
+        # dtype=torch, device=gpu
         self.actor_target.eval()
         self.critic_target.eval()
         target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
@@ -304,14 +307,16 @@ def train():
             # 1. Interact with the env to get new (s,a,r,s') samples 
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
-            action = agent.select_action(state=state, action_noise=ounoise)
-            next_state, reward, done, _ = env.step(action.numpy()[0]) # env.step() returns cpu, numpy
-            mask = 1.0 - done
 
-            # make sure dtype, device
-            mask = torch.tensor(mask)
-            next_state = torch.tensor(next_state)
-            reward = torch.tensor(reward)
+            # dtype=tensor, device=gpu
+            state = torch.tensor(state).to(device)
+            action = agent.select_action(state=state, action_noise=ounoise)
+
+            # dtype=numpy, device=cpu
+            state = state.cpu().numpy()
+            action = action.cpu()
+            next_state, reward, done, _ = env.step(action.numpy()[0])
+            mask = 1.0 - done
             memory.push(state, action, mask, next_state, reward)
 
             state = next_state
@@ -319,10 +324,13 @@ def train():
 
             if len(memory) >= batch_size:
                 for _ in range(updates_per_step):
-                    batch = memory.sample(batch_size=batch_size)
-                    batch = Transition(*zip(*batch)).to(device)
 
-                    value_loss, policy_loss = agent.update_parameters(batch=batch)
+                    # dtype=numpy, device=cpu
+                    batch = memory.sample(batch_size=batch_size)
+                    batch = Transition(*zip(*batch))
+
+                    # dtype=tensor, device=gpu
+                    value_loss, policy_loss = agent.update_parameters(batch=batch.to(device))
                     updates += 1
 
             if done: break

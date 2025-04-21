@@ -326,7 +326,7 @@ def train():
         state_np = env.reset()
 
         episode_reward = 0
-        episode_actor_loss, episode_critic_loss = [], []
+        episode_actor_loss, episode_critic_loss = [0], [0]
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########

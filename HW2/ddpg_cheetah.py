@@ -346,7 +346,20 @@ def train():
 
                     # dtype=tensor, device=gpu
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
+                    episode_critic_loss += value_loss
+                    episode_actor_loss  += policy_loss
                     updates += 1
+
+                    writer.add_scalar('Update/Critic_Loss', value_loss, updates)
+                    writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
+
+                    with torch.no_grad():
+                        q_eval = agent.critic(state_b, action_b).mean().item()
+                        q_target = agent.critic_target(state_b, action_b).mean().item()
+                        td_error = (q_eval - q_target).__abs__().item()
+                    writer.add_scalar('Update/Q_Eval', q_eval, updates)
+                    writer.add_scalar('Update/Q_Target', q_target, updates)
+                    writer.add_scalar('Update/TD_Error', td_error, updates)
 
             if done_np: break
         # End one training epoch

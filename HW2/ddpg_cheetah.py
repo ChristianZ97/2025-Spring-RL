@@ -293,6 +293,7 @@ def train():
     total_numsteps = 0
     updates = 0
 
+    SOLVED = False
     
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size)
     ounoise = OUNoise(env.action_space.shape[0])

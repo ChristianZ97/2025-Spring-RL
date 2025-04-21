@@ -166,7 +166,8 @@ class Critic(nn.Module):
         x = self.fc1(inputs)
         x = F.relu(x)
 
-        x = self.fc2(torch.cat([x, actions], 1))
+        x = torch.cat([x, actions], 1)
+        x = self.fc2(x)
         x = F.relu(x)
 
         x = self.fc3(x)
@@ -338,7 +339,7 @@ def train():
             next_state, reward, done, _ = env.step(action.numpy()[0])
 
             state = torch.tensor(state, dtype=torch.float32, device=state.device).unsqueeze(0)
-            action = torch.tensor(state, dtype=torch.float32, device=state.device).unsqueeze(0)
+            action = torch.tensor(state, dtype=torch.float32, device=state.device)
             mask = torch.tensor([0.0 if done else 1.0], dtype=torch.float32, device=state.device).unsqueeze(0)
             next_state = torch.tensor(next_state, dtype=torch.float32, device=state.device).unsqueeze(0)
             reward = torch.tensor(reward, dtype=torch.float32, device=state.device).unsqueeze(0)

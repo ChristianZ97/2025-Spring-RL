@@ -353,8 +353,9 @@ def train():
             agent.actor_perturbed = agent.actor_perturbed.to("cpu")
 
             for _ in range(batch_size):
+                state_tensor = torch.tensor(state_np, dtype=torch.float32)
                 with torch.no_grad():
-                    mu = agent.actor_perturbed(state_np.from_numpy().float()).numpy()
+                    mu = agent.actor_perturbed(state_tensor).numpy()
                 mu += ounoise
                 action_np = numpy.clip(mu, agent.action_space.low, agent.action_space.high)
                 next_state_np, reward_np, done_np, _ = env.step(action_np)

@@ -310,17 +310,29 @@ class DDPG(object):
         if critic_path is not None: 
             self.critic.load_state_dict(torch.load(critic_path))
 
-def train():
+def train(
+    env=env,
+    num_episodes=500000,
+    gamma=0.99,
+    tau=0.005,
+    noise_scale=0.3,
+    lr_a=3e-4,
+    lr_c=1e-3,
+    updates_per_step=4,
+    render=True,
+    save_model=True
+    ):
+
     torch.autograd.set_detect_anomaly(True)
 
-    num_episodes = 500000
-    gamma = 0.99
-    tau = 0.005
+    #num_episodes = 500000
+    #gamma = 0.99
+    #tau = 0.005
     hidden_size = 256
-    noise_scale = 0.3
+    #noise_scale = 0.3
     replay_size = 1000000
     batch_size = 256
-    updates_per_step = 1
+    #updates_per_step = 4
     print_freq = 5
     ewma_reward = 0
     rewards = []
@@ -423,7 +435,7 @@ def train():
                 action_np = action.cpu().numpy()
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
 
-                env.render()
+                if render: env.render()
                 
                 # episode_reward += reward
                 episode_reward += reward_np
@@ -450,7 +462,7 @@ def train():
             # End one testing epoch
 
         if SOLVED:
-            agent.save_model(env_name, '.pth')
+            if save_model: agent.save_model(env_name, '.pth')
             print("Solved! Running reward is now {} and "
               "the last episode runs to {} time steps!".format(ewma_reward, t))
             env.render()
@@ -458,18 +470,16 @@ def train():
             writer.close()
             break
 
-    agent.save_model(env_name, '.pth')
     print("Unsolved! Reach the MAXIMUM num_episodes!")
     env.close()
     writer.close()
-    '''
+
     return {
         'last_rewards': rewards[-10:],
         'best_reward': max(rewards),
         'ewma_reward': ewma_reward,
         'rewards': rewards
     }
-    '''
 
 if __name__ == '__main__':
 

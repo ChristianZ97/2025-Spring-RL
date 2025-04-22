@@ -362,8 +362,8 @@ def train():
                     writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
 
                     with torch.no_grad():
-                        q_eval = agent.critic(state_b, action_b).mean().item()
-                        q_target = agent.critic_target(state_b, action_b).mean().item()
+                        q_eval = agent.critic(state, action).mean().item()
+                        q_target = agent.critic_target(state, action).mean().item()
                         td_error = (q_eval - q_target).__abs__()
                     writer.add_scalar('Update/Q_Eval', q_eval, updates)
                     writer.add_scalar('Update/Q_Target', q_target, updates)

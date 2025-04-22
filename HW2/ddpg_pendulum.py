@@ -331,6 +331,7 @@ def train():
         state = torch.tensor(env.reset(), dtype=torch.float32, device=device).unsqueeze(0)
 
         episode_reward = 0
+        episode_actor_loss, episode_critic_loss = [0], [0]
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########
@@ -353,6 +354,8 @@ def train():
                     transitions = memory.sample(batch_size=batch_size)
                     batch = Transition(*zip(*transitions))
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
+                    episode_critic_loss.append(value_loss)
+                    episode_actor_loss.append(policy_loss)
                     updates += 1
 
                     writer.add_scalar('Update/Critic_Loss', value_loss, updates)

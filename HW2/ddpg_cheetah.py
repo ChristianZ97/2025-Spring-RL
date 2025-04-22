@@ -16,7 +16,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'HalfCheetah-v2'
+env_name = 'HalfCheetah-v4'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -91,11 +91,11 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own actor network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
+        # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         for layer in [self.fc1, self.fc2, self.fc_out]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
@@ -112,11 +112,11 @@ class Actor(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
 
         x = self.fc1(inputs)
-        x = self.ln1(x)
+        # x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
-        x = self.ln2(x)
+        # x = self.ln2(x)
         x = torch.relu(x)
 
         x = self.fc_out(x)
@@ -137,13 +137,13 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
+        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
-        self.fc_a = nn.Linear(in_features=num_outputs, out_features=300)
+        self.fc_a = nn.Linear(in_features=num_outputs, out_features=hidden_size)
 
         for layer in [self.fc1, self.fc2, self.fc_out, self.fc_a]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
@@ -179,7 +179,7 @@ class Critic(nn.Module):
         
 
 class DDPG(object):
-    def __init__(self, num_inputs, action_space, gamma=0.995, tau=0.0005, hidden_size=128, lr_a=1e-4, lr_c=1e-3):
+    def __init__(self, num_inputs, action_space, gamma=0.995, tau=0.0005, hidden_size=128, lr_a=3e-4, lr_c=1e-3):
 
         self.num_inputs = num_inputs
         self.action_space = action_space
@@ -314,13 +314,13 @@ def train():
     torch.autograd.set_detect_anomaly(True)
 
     num_episodes = 500000
-    gamma = 0.999
-    tau = 0.001
-    hidden_size = 128
+    gamma = 0.99
+    tau = 0.005
+    hidden_size = 256
     noise_scale = 0.3
-    replay_size = 1000000
-    batch_size = 2048
-    updates_per_step = 16
+    replay_size = 1,000,000
+    batch_size = 256
+    updates_per_step = 1
     print_freq = 10
     ewma_reward = 0
     rewards = []
@@ -423,7 +423,7 @@ def train():
                 action_np = action.cpu().numpy()
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
 
-                # env.render()
+                env.render()
                 
                 # episode_reward += reward
                 episode_reward += reward_np

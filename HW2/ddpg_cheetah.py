@@ -122,7 +122,7 @@ class Actor(nn.Module):
         x = self.fc_out(x)
         action = torch.tanh(x)
 
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=device)
+        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=d)
         scaled_action = action * action_high
         return scaled_action
 

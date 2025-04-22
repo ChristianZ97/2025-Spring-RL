@@ -32,7 +32,10 @@ from skopt.utils import use_named_args
 from skopt.plots import plot_convergence, plot_objective
 import gc
 
-global iteration_count
+iteration_count = 0
+
+def iter_count():
+    iteration_count += 1
 
 # Define the hyperparameter search space
 search_space = [
@@ -56,7 +59,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility
-    iteration_count += 1
+    iter_count()
     writer = SummaryWriter(f"./tb_record_cheetah/{iteration_count}")
     env.seed(random_seed + iteration_count)
     torch.manual_seed(random_seed)

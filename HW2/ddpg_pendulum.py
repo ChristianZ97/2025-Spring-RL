@@ -315,11 +315,11 @@ def train(
     env=env,
     num_episodes=500,
     gamma=0.995,
-    tau=0.03,
-    noise_scale=0.3,
-    lr_a=3e-4,
-    lr_c=1e-3,
-    updates_per_step=1,
+    tau=0.05,
+    noise_scale=0.05,
+    lr_a=3.5e-4,
+    lr_c=3.5e-4,
+    updates_per_step=4,
     render=True,
     save_model=True
     ):
@@ -458,7 +458,7 @@ def train(
             writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
 
-            if ewma_reward > -120 and updates > 200: SOLVED = True
+            if ewma_reward > -120 and i_episode > 150: SOLVED = True
             # if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True
             # End one testing epoch
 

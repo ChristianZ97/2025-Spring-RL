@@ -16,7 +16,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'HalfCheetah-v4'
+env_name = 'HalfCheetah-v3'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -321,7 +321,7 @@ def train():
     replay_size = 1,000,000
     batch_size = 256
     updates_per_step = 1
-    print_freq = 10
+    print_freq = 5
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []
@@ -385,7 +385,7 @@ def train():
         for s, a, m, ns, r in zip(state_b, action_b, mask_b, next_state_b, reward_b):
             memory.push(s, a, m, ns, r)
 
-        if len(memory) >= batch_size * 5:
+        if len(memory) >= 10,000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

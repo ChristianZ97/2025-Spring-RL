@@ -341,7 +341,6 @@ def train():
         state_np = env.reset()
 
         episode_reward = 0
-        episode_actor_loss, episode_critic_loss = [0], [0]
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########
@@ -379,8 +378,6 @@ def train():
 
                     # dtype=tensor, device=gpu
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
-                    episode_critic_loss.append(value_loss)
-                    episode_actor_loss.append(policy_loss)
                     updates += 1
 
                     writer.add_scalar('Update/Critic_Loss', value_loss, updates)
@@ -393,6 +390,7 @@ def train():
                     writer.add_scalar('Update/Q_Eval', q_eval, updates)
                     writer.add_scalar('Update/Q_Target', q_target, updates)
                     writer.add_scalar('Update/TD_Error', td_error, updates)
+
             total_numsteps += 1
             if done_np: break
         # End one training epoch
@@ -435,10 +433,8 @@ def train():
             ewma_reward_history.append(ewma_reward)           
             print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1], ewma_reward))
 
-            writer.add_scalar('Train/Episode_Reward', rewards[-1], total_numsteps)
-            writer.add_scalar('Train/EWMA_Reward', ewma_reward, total_numsteps)
-            writer.add_scalar('Train/Actor_Loss', episode_actor_loss[-1], total_numsteps)
-            writer.add_scalar('Train/Critic_Loss', episode_critic_loss[-1], total_numsteps)
+            writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
+            writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
 
             # if ewma_reward > -120 and updates > 200: SOLVED = True
             if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True

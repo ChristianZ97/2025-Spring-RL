@@ -257,6 +257,7 @@ class DDPG(object):
             value_loss.backward()
             # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
             self.critic_optim.step()
+            self.critic_optim.zero_grad()
 
             self.actor.train()
             self.critic.eval()
@@ -354,8 +355,6 @@ def train():
                     transitions = memory.sample(batch_size=batch_size)
                     batch = Transition(*zip(*transitions))
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
-                    episode_critic_loss.append(value_loss)
-                    episode_actor_loss.append(policy_loss)
                     updates += 1
 
                     writer.add_scalar('Update/Critic_Loss', value_loss, updates)
@@ -408,10 +407,8 @@ def train():
             ewma_reward_history.append(ewma_reward)           
             print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1], ewma_reward))
             
-            writer.add_scalar('Train/Episode_Reward', rewards[-1], total_numsteps)
-            writer.add_scalar('Train/EWMA_Reward', ewma_reward, total_numsteps)
-            writer.add_scalar('Train/Actor_Loss', episode_actor_loss[-1], total_numsteps)
-            writer.add_scalar('Train/Critic_Loss', episode_critic_loss[-1], total_numsteps)
+            writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
+            writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
             
             if ewma_reward > -120 and i_episode > 200: SOLVED = True
             # if ewma_reward > 5000 and i_episode > 500: SOLVED = True

@@ -199,6 +199,7 @@ class DDPG(object):
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
+
     @torch.no_grad()
     def select_action(self, state, action_noise=None):
 
@@ -264,7 +265,7 @@ class DDPG(object):
 
             self.critic_optim.zero_grad()
             value_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
             self.critic_optim.step()
 
             self.actor.train()
@@ -275,7 +276,7 @@ class DDPG(object):
 
             self.actor_optim.zero_grad()
             policy_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
             self.actor_optim.step()
 
             ########## END OF YOUR CODE ########## 
@@ -348,48 +349,49 @@ def train():
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
 
-            # dtype=tensor, device=gpu
-            state = torch.tensor(state_np, dtype=torch.float32, device=device)
-            action = agent.select_action(state=state, action_noise=ounoise)
+            hard_update(agent.actor_perturbed, agent.actor)
+            agent.actor_perturbed = agent.actor_perturbed.to("cpu")
 
-            # dtype=numpy, device=cpu
-            action_np = action.cpu().numpy()
-            next_state_np, reward_np, done_np, _ = env.step(action_np)
-            mask_np = 1.0 - done_np
-            memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
+            for _ in range(batch_size):
+                with torch.no_grad():
+                    mu = agent.actor_perturbed(state_np.from_numpy().float()).numpy()
+                mu += ounoise
+                action_np = numpy.clip(mu, agent.action_space.low, agent.action_space.high)
+                next_state_np, reward_np, done_np, _ = env.step(action_np)
+                mask_np = 1.0 - done_np
+                memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
+                state_np = next_state_np
+                episode_reward += reward_np
 
-            state_np = next_state_np
-            episode_reward += reward_np
+            # if len(memory) >= batch_size:
+            for _ in range(updates_per_step):
 
-            if len(memory) >= batch_size:
-                for _ in range(updates_per_step):
+                # dtype=numpy, device=cpu
+                transition = memory.sample(batch_size=batch_size)
+                batch_b = Transition(*zip(*transition))
 
-                    # dtype=numpy, device=cpu
-                    transition = memory.sample(batch_size=batch_size)
-                    batch_b = Transition(*zip(*transition))
+                state_b = torch.tensor(np.array(batch_b.state), dtype=torch.float32, device=device)
+                action_b = torch.tensor(np.array(batch_b.action), dtype=torch.float32, device=device)
+                mask_b = torch.tensor(np.array(batch_b.mask), dtype=torch.float32, device=device).unsqueeze(1)
+                next_state_b = torch.tensor(np.array(batch_b.next_state), dtype=torch.float32, device=device)
+                reward_b = torch.tensor(np.array(batch_b.reward), dtype=torch.float32, device=device).unsqueeze(1)
 
-                    state_b = torch.tensor(np.array(batch_b.state), dtype=torch.float32, device=device)
-                    action_b = torch.tensor(np.array(batch_b.action), dtype=torch.float32, device=device)
-                    mask_b = torch.tensor(np.array(batch_b.mask), dtype=torch.float32, device=device).unsqueeze(1)
-                    next_state_b = torch.tensor(np.array(batch_b.next_state), dtype=torch.float32, device=device)
-                    reward_b = torch.tensor(np.array(batch_b.reward), dtype=torch.float32, device=device).unsqueeze(1)
+                batch = Transition(state_b, action_b, mask_b, next_state_b, reward_b)
 
-                    batch = Transition(state_b, action_b, mask_b, next_state_b, reward_b)
+                # dtype=tensor, device=gpu
+                value_loss, policy_loss = agent.update_parameters(batch=batch)
+                updates += 1
 
-                    # dtype=tensor, device=gpu
-                    value_loss, policy_loss = agent.update_parameters(batch=batch)
-                    updates += 1
+                writer.add_scalar('Update/Critic_Loss', value_loss, updates)
+                writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
 
-                    writer.add_scalar('Update/Critic_Loss', value_loss, updates)
-                    writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
-
-                    with torch.no_grad():
-                        q_eval = agent.critic(state_b, action_b).mean().item()
-                        q_target = agent.critic_target(state_b, action_b).mean().item()
-                        td_error = (q_eval - q_target).__abs__()
-                    writer.add_scalar('Update/Q_Eval', q_eval, updates)
-                    writer.add_scalar('Update/Q_Target', q_target, updates)
-                    writer.add_scalar('Update/TD_Error', td_error, updates)
+                with torch.no_grad():
+                    q_eval = agent.critic(state_b, action_b).mean().item()
+                    q_target = agent.critic_target(state_b, action_b).mean().item()
+                    td_error = (q_eval - q_target).__abs__()
+                writer.add_scalar('Update/Q_Eval', q_eval, updates)
+                writer.add_scalar('Update/Q_Target', q_target, updates)
+                writer.add_scalar('Update/TD_Error', td_error, updates)
 
             total_numsteps += 1
             if done_np: break

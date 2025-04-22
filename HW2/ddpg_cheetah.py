@@ -30,7 +30,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #)
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_cheetah/small_batch")
+writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -241,8 +241,8 @@ class DDPG(object):
         d = next(self.actor.parameters()).device
         state_batch = batch.state.to(d, non_blocking=True)
         action_batch = batch.action.to(d, non_blocking=True)
-        reward_batch = batch.reward.to(d, non_blocking=True)
-        mask_batch = batch.mask.to(d, non_blocking=True)
+        reward_batch = batch.reward.unsqueeze(1).to(d, non_blocking=True)
+        mask_batch = batch.mask.unsqueeze(1).to(d, non_blocking=True)
         next_state_batch = batch.next_state.to(d, non_blocking=True)
 
         with torch.cuda.amp.autocast():
@@ -342,6 +342,10 @@ def train():
         state_np = env.reset()
 
         episode_reward = 0
+
+        hard_update(agent.actor_perturbed, agent.actor)
+        agent.actor_perturbed = agent.actor_perturbed.to("cpu")
+        states, actions, masks, next_states, rewards_ep = [], [], [], [], []
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########
@@ -349,54 +353,54 @@ def train():
             # 2. Push the sample to the replay buffer
             # 3. Update the actor and the critic
 
-            hard_update(agent.actor_perturbed, agent.actor)
-            agent.actor_perturbed = agent.actor_perturbed.to("cpu")
-
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
             with torch.no_grad():
                 mu = agent.actor_perturbed(state_tensor).numpy()
             mu = mu + ounoise.noise()
             action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
-
             next_state_np, reward_np, done_np, _ = env.step(action_np)
             mask_np = 1.0 - done_np
-            memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
+
+            states.append(state_np)
+            actions.append(action_np)
+            masks.append(mask_np)
+            next_states.append(next_state_np)
+            rewards_ep.append(reward_np)
+
             state_np = next_state_np
             episode_reward += reward_np
-
-            if len(memory) >= batch_size * 5:
-                for _ in range(updates_per_step):
-
-                    # dtype=numpy, device=cpu
-                    transition = memory.sample(batch_size=batch_size)
-                    batch_b = Transition(*zip(*transition))
-
-                    state_b = torch.tensor(np.array(batch_b.state), dtype=torch.float32, device=device)
-                    action_b = torch.tensor(np.array(batch_b.action), dtype=torch.float32, device=device)
-                    mask_b = torch.tensor(np.array(batch_b.mask), dtype=torch.float32, device=device).unsqueeze(1)
-                    next_state_b = torch.tensor(np.array(batch_b.next_state), dtype=torch.float32, device=device)
-                    reward_b = torch.tensor(np.array(batch_b.reward), dtype=torch.float32, device=device).unsqueeze(1)
-
-                    batch = Transition(state_b, action_b, mask_b, next_state_b, reward_b)
-
-                    # dtype=tensor, device=gpu
-                    value_loss, policy_loss = agent.update_parameters(batch=batch)
-                    updates += 1
-
-                    writer.add_scalar('Update/Critic_Loss', value_loss, updates)
-                    writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
-
-                    with torch.no_grad():
-                        q_eval = agent.critic(state_b, action_b).mean().item()
-                        q_target = agent.critic_target(state_b, action_b).mean().item()
-                        td_error = (q_eval - q_target).__abs__()
-                    writer.add_scalar('Update/Q_Eval', q_eval, updates)
-                    writer.add_scalar('Update/Q_Target', q_target, updates)
-                    writer.add_scalar('Update/TD_Error', td_error, updates)
-
             total_numsteps += 1
+
             if done_np: break
-        # End one training epoch
+            # End of one interacted episode
+
+        state_b = torch.as_tensor(np.stack(states) , dtype=torch.float32, device=device)
+        action_b = torch.as_tensor(np.stack(actions) , dtype=torch.float32, device=device)
+        mask_b = torch.as_tensor(np.stack(masks) , dtype=torch.float32, device=device).unsqueeze(1)
+        next_state_b = torch.as_tensor(np.stack(next_states), dtype=torch.float32, device=device)
+        reward_b = torch.as_tensor(np.stack(rewards_ep), dtype=torch.float32, device=device).unsqueeze(1)
+
+        for s, a, m, ns, r in zip(state_b, action_b, mask_b, next_state_b, reward_b):
+            memory.push(s, a, m, ns, r)
+
+        if len(memory) >= batch_size * 5:
+            for _ in range(updates_per_step):
+
+                batch = memory.sample(batch_size)
+                value_loss, policy_loss = agent.update_parameters(batch=batch)
+                updates += 1
+
+                writer.add_scalar('Update/Critic_Loss', value_loss, updates)
+                writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
+
+                with torch.no_grad():
+                    q_eval = agent.critic(state_b, action_b).mean().item()
+                    q_target = agent.critic_target(state_b, action_b).mean().item()
+                    td_error = (q_eval - q_target).__abs__()
+                writer.add_scalar('Update/Q_Eval', q_eval, updates)
+                writer.add_scalar('Update/Q_Target', q_target, updates)
+                writer.add_scalar('Update/TD_Error', td_error, updates)
+            # End one training epoch
 
             ########## END OF YOUR CODE ########## 
             # For wandb logging
@@ -441,7 +445,7 @@ def train():
 
             # if ewma_reward > -120 and updates > 200: SOLVED = True
             if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True
-        # End one testing epoch
+            # End one testing epoch
 
         if SOLVED:
             agent.save_model(env_name, '.pth')

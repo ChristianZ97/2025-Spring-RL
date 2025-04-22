@@ -237,18 +237,18 @@ class DDPG(object):
         with torch.cuda.amp.autocast():
 
             actor_device = next(self.actor.parameters()).device
-            state_batch = state_batch.to(actor_device)
-            action_batch = action_batch.to(actor_device)
-            reward_batch = reward_batch.view(-1, 1).to(actor_device)
-            mask_batch = mask_batch.view(-1, 1).to(actor_device)
-            next_state_batch = next_state_batch.to(actor_device)
+            state_batch = state_batch.to(actor_device, non_blocking=True)
+            action_batch = action_batch.to(actor_device, non_blocking=True)
+            reward_batch = reward_batch.view(-1, 1).to(actor_device, non_blocking=True)
+            mask_batch = mask_batch.view(-1, 1).to(actor_device, non_blocking=True)
+            next_state_batch = next_state_batch.to(actor_device, non_blocking=True)
 
             self.actor_target.eval()
             self.critic_target.eval()
             with torch.no_grad():
                 target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
                 target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-            td_target = reward_batch.view(-1, 1) + self.gamma * mask_batch.view(-1, 1) * target_q_value
+            td_target = reward_batch + self.gamma * mask_batch * target_q_value
             
             self.critic.train()
             eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
@@ -355,6 +355,17 @@ def train():
                     value_loss, policy_loss = agent.update_parameters(batch=batch)
                     updates += 1
 
+                    writer.add_scalar('Update/Critic_Loss', value_loss, updates)
+                    writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
+
+                    with torch.no_grad():
+                        q_eval = agent.critic(state_b, action_b).mean().item()
+                        q_target = agent.critic_target(state_b, action_b).mean().item()
+                        td_error = (q_eval - q_target).__abs__()
+                    writer.add_scalar('Update/Q_Eval', q_eval, updates)
+                    writer.add_scalar('Update/Q_Target', q_target, updates)
+                    writer.add_scalar('Update/TD_Error', td_error, updates)
+
             state = next_state
             total_numsteps += 1
             if done: break
@@ -394,7 +405,11 @@ def train():
             ewma_reward_history.append(ewma_reward)           
             print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1], ewma_reward))
             
+            writer.add_scalar('Train/Episode_Reward', rewards[-1], total_numsteps)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, total_numsteps)
+            writer.add_scalar('Train/Actor_Loss', episode_actor_loss[-1], total_numsteps)
+            writer.add_scalar('Train/Critic_Loss', episode_critic_loss[-1], total_numsteps)
+            
             if ewma_reward > -120 and i_episode > 200: SOLVED = True
             # if ewma_reward > 5000 and i_episode > 500: SOLVED = True
             if SOLVED:

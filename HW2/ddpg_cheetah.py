@@ -19,6 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 env_name = 'HalfCheetah-v3'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+env = gym.make(env_name)
 
 # Configure a wandb log
 # #wandb.login()
@@ -486,7 +487,6 @@ if __name__ == '__main__':
     # For reproducibility, fix the random seed
     # env_name = 'Pendulum-v0'
     # random_seed = 42
-    env = gym.make(env_name)
     env.seed(random_seed)  
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)  

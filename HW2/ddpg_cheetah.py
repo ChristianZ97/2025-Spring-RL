@@ -312,14 +312,14 @@ def train():
     torch.autograd.set_detect_anomaly(True)
 
     num_episodes = 500000
-    gamma = 0.99
+    gamma = 0.999
     tau = 0.001
     hidden_size = 128
     noise_scale = 0.3
     replay_size = 1000000
-    batch_size = 16384
-    updates_per_step = 1
-    print_freq = 20
+    batch_size = 512
+    updates_per_step = 4
+    print_freq = 10
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []

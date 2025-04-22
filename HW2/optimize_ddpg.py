@@ -56,6 +56,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     # Set random seeds for reproducibility
     global iteration_count
     iteration_count += 1
+    writer = SummaryWriter(f"./tb_record_cheetah/{iteration_count}")
     env.seed(random_seed + iteration_count)
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)

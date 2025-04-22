@@ -378,9 +378,9 @@ def train():
 
         state_b = torch.as_tensor(np.stack(states) , dtype=torch.float32, device=device)
         action_b = torch.as_tensor(np.stack(actions) , dtype=torch.float32, device=device)
-        mask_b = torch.as_tensor(np.stack(masks) , dtype=torch.float32, device=device).unsqueeze(1)
+        mask_b = torch.as_tensor(np.stack(masks) , dtype=torch.float32, device=device)
         next_state_b = torch.as_tensor(np.stack(next_states), dtype=torch.float32, device=device)
-        reward_b = torch.as_tensor(np.stack(rewards_ep), dtype=torch.float32, device=device).unsqueeze(1)
+        reward_b = torch.as_tensor(np.stack(rewards_ep), dtype=torch.float32, device=device)
 
         for s, a, m, ns, r in zip(state_b, action_b, mask_b, next_state_b, reward_b):
             memory.push(s, a, m, ns, r)

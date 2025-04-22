@@ -356,7 +356,9 @@ def train():
                 state_tensor = torch.tensor(state_np, dtype=torch.float32)
                 with torch.no_grad():
                     mu = agent.actor_perturbed(state_tensor).numpy()
-                mu += ounoise
+                mu = mu + ounoise.noise()
+
+
                 action_np = numpy.clip(mu, agent.action_space.low, agent.action_space.high)
                 next_state_np, reward_np, done_np, _ = env.step(action_np)
                 mask_np = 1.0 - done_np

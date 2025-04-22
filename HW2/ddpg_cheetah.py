@@ -238,12 +238,14 @@ class DDPG(object):
         mask_batch = Variable(torch.cat(batch.mask))
         next_state_batch = Variable(torch.cat(batch.next_state))
         '''
+
         d = next(self.actor.parameters()).device
-        state_batch = batch.state.to(d, non_blocking=True)
-        action_batch = batch.action.to(d, non_blocking=True)
-        reward_batch = batch.reward.unsqueeze(1).to(d, non_blocking=True)
-        mask_batch = batch.mask.unsqueeze(1).to(d, non_blocking=True)
-        next_state_batch = batch.next_state.to(d, non_blocking=True)
+        batch = Transition(*zip(*batch))
+        state_batch = torch.stack(batch.state).to(d, non_blocking=True)
+        action_batch = torch.stack(batch.action).to(d, non_blocking=True)
+        reward_batch = torch.stack(batch.reward).unsqueeze(1).to(d, non_blocking=True)
+        mask_batch = torch.stack(batch.mask).unsqueeze(1).to(d, non_blocking=True)
+        next_state_batch = torch.stack(batch.next_state).to(d, non_blocking=True)
 
         with torch.cuda.amp.autocast():
             

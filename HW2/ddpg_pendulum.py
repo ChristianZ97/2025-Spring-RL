@@ -16,7 +16,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v0'
+env_name = 'Pendulum-v1'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = gym.make(env_name)
@@ -192,14 +192,11 @@ class DDPG(object):
 
         self.gamma = gamma
         self.tau = tau
-
-        # self.scaler = torch.cuda.amp.GradScaler()
         
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
 
-    @torch.no_grad()
     def select_action(self, state, action_noise=None):
 
         d = next(self.actor.parameters()).device
@@ -238,13 +235,14 @@ class DDPG(object):
         next_state_batch = Variable(torch.cat(batch.next_state))
         '''
 
-        d = next(self.actor.parameters()).device
         batch = Transition(*zip(*batch))
-        state_batch = torch.stack(batch.state).to(d, non_blocking=True)
-        action_batch = torch.stack(batch.action).to(d, non_blocking=True)
-        reward_batch = torch.stack(batch.reward).unsqueeze(1).to(d, non_blocking=True)
-        mask_batch = torch.stack(batch.mask).unsqueeze(1).to(d, non_blocking=True)
-        next_state_batch = torch.stack(batch.next_state).to(d, non_blocking=True)
+        d = next(self.actor.parameters()).device
+
+        state_batch = torch.tensor(np.array(batch.state), dtype=torch.float32, device=d)
+        action_batch = torch.tensor(np.array(batch.action), dtype=torch.float32, device=d)
+        reward_batch = torch.tensor(np.array(batch.reward), dtype=torch.float32, device=d).unsqueeze(1)
+        mask_batch = torch.tensor(np.array(batch.mask), dtype=torch.float32, device=d).unsqueeze(1)
+        next_state_batch = torch.tensor(np.array(batch.next_state), dtype=torch.float32, device=d)
 
         # with torch.cuda.amp.autocast():
             
@@ -252,64 +250,40 @@ class DDPG(object):
         # Calculate policy loss and value loss
         # Update the actor and the critic
 
-        # dtype=torch, device=gpu
-        # self.actor_target.eval()
-        # self.critic_target.eval()
-        # with torch.no_grad():
         target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
         target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        target_q_value = target_q_value.detach()
         td_target = reward_batch + self.gamma * mask_batch * target_q_value
         td_target = td_target.detach()
 
-        # self.critic.train()
+
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
         value_loss = F.mse_loss(input=eval_q_value, target=td_target)
+        td_error = td_target - eval_q_value
+        td_error = td_error.detach()
 
         self.critic_optim.zero_grad()
         value_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optim.step()
         self.critic_optim.zero_grad()
-        
-        '''
-        self.critic_optim.zero_grad()
-        self.scaler.scale(value_loss).backward()
-        self.scaler.unscale_(self.critic_optim)
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-        self.scaler.step(self.critic_optim)
-        '''
 
-        # self.actor.train()
+
         eval_scaled_action = self.actor.forward(inputs=state_batch)
-
-        # self.critic.eval()
-        # with torch.no_grad():
         policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
         policy_loss = -policy_q.mean()
-        # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
         self.actor_optim.zero_grad()
         policy_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
-        self.actor_optim.zero_grad()
-        
-        '''
-        self.actor_optim.zero_grad()
-        self.scaler.scale(policy_loss).backward()
-        self.scaler.unscale_(self.actor_optim)
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-        self.scaler.step(self.actor_optim)
-        '''
-
-        # self.scaler.update()
 
         ########## END OF YOUR CODE ########## 
 
         soft_update(self.actor_target, self.actor, self.tau)
         soft_update(self.critic_target, self.critic, self.tau)
 
-        return value_loss.item(), policy_loss.item()
+        return value_loss.item(), policy_loss.item(), eval_q_value.mean().item(), target_q_value.mean().item(), td_error.mean().item()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):
@@ -374,8 +348,8 @@ def train(
     
     for i_episode in range(num_episodes):
         
-        # ounoise.scale = noise_scale
-        ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
+        ounoise.scale = noise_scale
+        # ounoise.scale = noise_scale * (1.0 - i_episode / num_episodes)
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])
@@ -394,53 +368,35 @@ def train(
             # 3. Update the actor and the critic
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
-            # with torch.no_grad():
             mu = agent.actor_perturbed(state_tensor).detach().numpy()
             mu = mu + ounoise.noise()
             action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
             next_state_np, reward_np, done_np, _ = env.step(action_np)
             mask_np = 1.0 - done_np
 
-            states.append(state_np)
-            actions.append(action_np)
-            masks.append(mask_np)
-            next_states.append(next_state_np)
-            rewards_ep.append(reward_np)
+            memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
 
             state_np = next_state_np
             episode_reward += reward_np
             total_numsteps += 1
 
             if done_np: break
-            # End of one interacted episode
-
-        state_b = torch.as_tensor(np.stack(states) , dtype=torch.float32, device=device)
-        action_b = torch.as_tensor(np.stack(actions) , dtype=torch.float32, device=device)
-        mask_b = torch.as_tensor(np.stack(masks) , dtype=torch.float32, device=device)
-        next_state_b = torch.as_tensor(np.stack(next_states), dtype=torch.float32, device=device)
-        reward_b = torch.as_tensor(np.stack(rewards_ep), dtype=torch.float32, device=device)
-
-        for s, a, m, ns, r in zip(state_b, action_b, mask_b, next_state_b, reward_b):
-            memory.push(s, a, m, ns, r)
+        # End of one interacted episode
 
         if len(memory) >= batch_size:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)
-                value_loss, policy_loss = agent.update_parameters(batch=batch)
+                value_loss, policy_loss, eval_q_value, target_q_value, td_error = agent.update_parameters(batch=batch)
                 updates += 1
 
                 writer.add_scalar('Update/Critic_Loss', value_loss, updates)
                 writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
 
-                # with torch.no_grad():
-                q_eval = agent.critic(state_b, action_b).mean().item()
-                q_target = agent.critic_target(state_b, action_b).mean().item()
-                td_error = (q_eval - q_target).__abs__()
-                writer.add_scalar('Update/Q_Eval', q_eval, updates)
-                writer.add_scalar('Update/Q_Target', q_target, updates)
+                writer.add_scalar('Update/Q_Eval', eval_q_value, updates)
+                writer.add_scalar('Update/Q_Target', target_q_value, updates)
                 writer.add_scalar('Update/TD_Error', td_error, updates)
-            # End one training epoch
+        # End one training epoch
 
             ########## END OF YOUR CODE ########## 
             # For wandb logging

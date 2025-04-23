@@ -310,7 +310,8 @@ def train(
     lr_c=1e-3,
     updates_per_step=2,
     render=True,
-    save_model=True
+    save_model=True,
+    writer=None
     ):
 
     torch.autograd.set_detect_anomaly(True)

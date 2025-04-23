@@ -33,7 +33,7 @@ env = gym.make(env_name)
 #)
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_pendulum")
+# writer = SummaryWriter("./tb_record_pendulum")
 # writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
@@ -310,11 +310,14 @@ def train(
     lr_c=1e-3,
     updates_per_step=2,
     render=True,
-    save_model=True
+    save_model=True,
+    writer=None
     ):
 
     torch.autograd.set_detect_anomaly(True)
-
+    if writer is None:
+        writer = SummaryWriter("./tb_record_pendulum")
+        
     #num_episodes = 500000
     #gamma = 0.99
     #tau = 0.005

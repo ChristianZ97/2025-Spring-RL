@@ -197,6 +197,8 @@ class DDPG(object):
         self.gamma = gamma
         self.tau = tau
 
+        self.scaler = torch.cuda.amp.GradScaler()
+        
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
@@ -266,21 +268,37 @@ class DDPG(object):
             eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
             value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-            self.critic_optim.zero_grad()
+"""            self.critic_optim.zero_grad()
             value_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-            self.critic_optim.step()
+            self.critic_optim.step()"""
+
+            self.critic_optim.zero_grad()
+            self.scaler.scale(value_loss).backward()
+            self.scaler.unscale_(self.critic_optim)
+            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+            self.scaler.step(self.critic_optim)
 
             self.actor.train()
             eval_scaled_action = self.actor.forward(inputs=state_batch)
 
             self.critic.eval()
-            policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+            policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action).detach()
+            policy_loss = -policy_q.mean()
+            # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
-            self.actor_optim.zero_grad()
+"""            self.actor_optim.zero_grad()
             policy_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-            self.actor_optim.step()
+            self.actor_optim.step()"""
+
+            self.actor_optim.zero_grad()
+            self.scaler.scale(policy_loss).backward()
+            self.scaler.unscale_(self.actor_optim)
+            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+            self.scaler.step(self.actor_optim)
+
+            self.scaler.update()
 
             ########## END OF YOUR CODE ########## 
 

@@ -114,11 +114,11 @@ class Actor(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
 
         x = self.fc1(inputs)
-        x = self.ln1(x)
+        # x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
-        x = self.ln2(x)
+        # x = self.ln2(x)
         x = torch.relu(x)
 
         x = self.fc_out(x)

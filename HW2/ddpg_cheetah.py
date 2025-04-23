@@ -350,6 +350,7 @@ def train(
     save_model=True
     ):
 
+    writer = SummaryWriter(f"./tb_record_cheetah/{time.time()}")
     torch.autograd.set_detect_anomaly(True)
 
     #num_episodes = 500000

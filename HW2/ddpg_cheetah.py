@@ -430,7 +430,7 @@ def train(
             while True:
                 # action = agent.select_action(state)
                 state = torch.tensor(state_np, dtype=torch.float32, device=device)
-                action = agent.select_action(state=state, action_noise=ounoise)
+                action = agent.select_action(state=state)
 
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
                 action_np = action.cpu().numpy()

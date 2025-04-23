@@ -94,9 +94,9 @@ class Actor(nn.Module):
         # Construct your own actor network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         for layer in [self.fc1, self.fc2, self.fc_out]:
@@ -114,11 +114,11 @@ class Actor(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
 
         x = self.fc1(inputs)
-        # x = self.ln1(x)
+        x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
-        # x = self.ln2(x)
+        x = self.ln2(x)
         x = torch.relu(x)
 
         x = self.fc_out(x)
@@ -143,7 +143,7 @@ class Critic(nn.Module):
         self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
+        self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
         for layer in [self.fc1, self.fc2, self.fc_out]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))

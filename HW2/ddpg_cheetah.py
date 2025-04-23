@@ -286,8 +286,8 @@ class DDPG(object):
         eval_scaled_action = self.actor.forward(inputs=state_batch)
 
         self.critic.eval()
-        with torch.no_grad():
-            policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
+        # with torch.no_grad():
+        policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
         policy_loss = -policy_q.mean()
         # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 

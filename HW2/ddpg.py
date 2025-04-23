@@ -16,8 +16,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-# env_name = 'Pendulum-v0'
-env_name = 'HalfCheetah-v3'
+env_name = 'Pendulum-v0'
+# env_name = 'HalfCheetah-v3'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = gym.make(env_name)
@@ -33,8 +33,8 @@ env = gym.make(env_name)
 #)
 
 # Define a tensorboard writer
-# writer = SummaryWriter("./tb_record_pendulum")
-writer = SummaryWriter("./tb_record_cheetah")
+writer = SummaryWriter("./tb_record_pendulum")
+# writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -318,14 +318,14 @@ def train(
     #num_episodes = 500000
     #gamma = 0.99
     #tau = 0.005
-    hidden_size = 512
-    # hidden_size = 128
+    # hidden_size = 256
+    hidden_size = 128
     #noise_scale = 0.3
-    replay_size = 1000000
-    # replay_size = 10000
-    batch_size = 512
+    # replay_size = 1000000
+    replay_size = 10000
+    batch_size = 64
     #updates_per_step = 4
-    print_freq = 5
+    print_freq = 1
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []
@@ -432,8 +432,8 @@ def train(
             writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
 
-            # if ewma_reward > -120 and updates > 200: SOLVED = True
-            if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True
+            if ewma_reward > -120 and updates > 200: SOLVED = True
+            # if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True
             # End one testing epoch
 
         if SOLVED:

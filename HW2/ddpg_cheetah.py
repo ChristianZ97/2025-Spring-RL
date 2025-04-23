@@ -391,7 +391,7 @@ def train(
 
         episode_reward = 0
 
-        hard_update(agent.actor_perturbed, agent.actor)
+        hard_update(agent.actor_perturbed, agent.actor_target)
         agent.actor_perturbed = agent.actor_perturbed.to("cpu")
         states, actions, masks, next_states, rewards_ep = [], [], [], [], []
         while True:

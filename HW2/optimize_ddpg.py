@@ -70,7 +70,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
 
     results = train(
         env=env,
-        num_episodes=1000, # Use fewer episodes for optimization to save time
+        num_episodes=75, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -82,19 +82,20 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     )
     
     duration = time.time() - start_time
+    final_rewards = results['last_rewards']
     
-    # Use the average of the last 10 episode rewards as performance metric
-    final_reward = np.mean(results['last_rewards'])
-    print(f"Training completed in {duration:.1f} seconds - Mean reward: {final_reward:.2f}")
-    
+    final_mean = np.mean(final_rewards[-10:])
+    stability = -np.std(final_rewards[-10:]) 
+    score = final_mean + 0.1 * stability
+
+    print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Std: {-stability:.2f} | Score: {score:.2f}")
+
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-
     env.close()
     
-    # Return negative reward for minimization
-    return -final_reward
+    return -score
 
 def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_results'):
     """
@@ -159,7 +160,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
     final_results = train(
         env=final_env,
-        num_episodes=500000,
+        num_episodes=500,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,
@@ -184,5 +185,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=30, n_random_starts=10)
+    result, final_model = run_optimization(n_calls=100, n_random_starts=20)
     print("Optimization and visualization completed!")

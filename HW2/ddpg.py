@@ -302,7 +302,7 @@ class DDPG(object):
 
 def train(
     env=env,
-    num_episodes=500000,
+    num_episodes=5000,
     gamma=0.99,
     tau=0.005,
     noise_scale=0.3,
@@ -318,7 +318,7 @@ def train(
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
         
-    #num_episodes = 500000
+    #num_episodes = 500
     #gamma = 0.99
     #tau = 0.005
     # hidden_size = 256
@@ -367,30 +367,30 @@ def train(
             mu = mu + ounoise.noise()
             action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
             next_state_np, reward_np, done_np, _ = env.step(action_np)
+            total_numsteps += 1
             mask_np = 1.0 - done_np
 
             memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
 
             state_np = next_state_np
             episode_reward += reward_np
-            total_numsteps += 1
 
             if done_np: break
         # End of one interacted episode
 
-        if len(memory) >= batch_size:
+        if len(memory) >= 10000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)
                 value_loss, policy_loss, q, target_q, td_error = agent.update_parameters(batch=batch)
                 updates += 1
 
-                writer.add_scalar('Update/Critic_Loss', value_loss, updates)
-                writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
+                writer.add_scalar('Update/Critic_Loss', value_loss, total_numsteps)
+                writer.add_scalar('Update/Actor_Loss', policy_loss, total_numsteps)
 
-                writer.add_scalar('Update/Q_Eval', q, updates)
-                writer.add_scalar('Update/Q_Target', target_q, updates)
-                writer.add_scalar('Update/TD_Error', td_error, updates)
+                writer.add_scalar('Update/Q_Eval', q, total_numsteps)
+                writer.add_scalar('Update/Q_Target', target_q, total_numsteps)
+                writer.add_scalar('Update/TD_Error', td_error, total_numsteps)
         # End one training epoch
 
             ########## END OF YOUR CODE ########## 
@@ -435,20 +435,21 @@ def train(
             writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
 
-            if ewma_reward > -120 and updates > 200: SOLVED = True
+            if ewma_reward > -120 and total_numsteps > 200: SOLVED = True
             # if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True
-            # End one testing epoch
+        # End one testing epoch
 
         if SOLVED:
             if save_model: agent.save_model(env_name, '.pth')
-            print("Solved! Running reward is now {} and "
-              "the last episode runs to {} time steps!".format(ewma_reward, t))
+            print("\nSolved! Running reward is now {} and "
+              "the last episode runs to {} time steps!\n".format(ewma_reward, t))
             env.render()
             env.close()
             writer.close()
             break
 
-    print("Unsolved! Reach the MAXIMUM num_episodes!")
+    print("\nUnsolved! Reach the MAXIMUM num_episodes!\n")
+    if save_model: agent.save_model(env_name, '.pth')
     env.close()
     writer.close()
 

@@ -398,7 +398,7 @@ def train(
         for s, a, m, ns, r in zip(state_b, action_b, mask_b, next_state_b, reward_b):
             memory.push(s, a, m, ns, r)
 
-        if len(memory) >= 10000:
+        if len(memory) >= batch_size:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

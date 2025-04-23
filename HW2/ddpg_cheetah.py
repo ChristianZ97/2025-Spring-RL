@@ -258,14 +258,14 @@ class DDPG(object):
         # Update the actor and the critic
 
         # dtype=torch, device=gpu
-        self.actor_target.eval()
-        self.critic_target.eval()
-        with torch.no_grad():
-            target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-            target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        # self.actor_target.eval()
+        # self.critic_target.eval()
+        # with torch.no_grad():
+        target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
         td_target = reward_batch + self.gamma * mask_batch * target_q_value
 
-        self.critic.train()
+        # self.critic.train()
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
         value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
@@ -283,10 +283,10 @@ class DDPG(object):
         self.scaler.step(self.critic_optim)
         '''
 
-        self.actor.train()
+        # self.actor.train()
         eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-        self.critic.eval()
+        # self.critic.eval()
         # with torch.no_grad():
         policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
         policy_loss = -policy_q.mean()
@@ -396,8 +396,8 @@ def train(
             # 3. Update the actor and the critic
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
-            with torch.no_grad():
-                mu = agent.actor_perturbed(state_tensor).numpy()
+            # with torch.no_grad():
+            mu = agent.actor_perturbed(state_tensor).numpy()
             mu = mu + ounoise.noise()
             action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
             next_state_np, reward_np, done_np, _ = env.step(action_np)
@@ -435,10 +435,10 @@ def train(
                 writer.add_scalar('Update/Critic_Loss', value_loss, updates)
                 writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
 
-                with torch.no_grad():
-                    q_eval = agent.critic(state_b, action_b).mean().item()
-                    q_target = agent.critic_target(state_b, action_b).mean().item()
-                    td_error = (q_eval - q_target).__abs__()
+                # with torch.no_grad():
+                q_eval = agent.critic(state_b, action_b).mean().item()
+                q_target = agent.critic_target(state_b, action_b).mean().item()
+                td_error = (q_eval - q_target).__abs__()
                 writer.add_scalar('Update/Q_Eval', q_eval, updates)
                 writer.add_scalar('Update/Q_Target', q_target, updates)
                 writer.add_scalar('Update/TD_Error', td_error, updates)

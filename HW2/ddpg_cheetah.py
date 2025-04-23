@@ -34,7 +34,7 @@ env = gym.make(env_name)
 
 # Define a tensorboard writer
 # writer = SummaryWriter("./tb_record_pendulum")
-writer = SummaryWriter("./tb_record_cheetah")
+# writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):

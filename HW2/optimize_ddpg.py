@@ -37,12 +37,12 @@ counter = count(start=0)
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.995, 0.999, name='gamma'),                      # Discount factor
-    Real(0.001, 0.01, name='tau'),                       # Target network update rate
-    Real(0.05, 0.25, name='noise_scale'),                   # Exploration noise scale
-    Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),   # Actor learning rate
-    Real(5e-4, 1e-3, name='lr_c', prior='log-uniform'),    # Critic learning rate
-    Integer(1, 8, name='updates_per_step')
+    Real(0.98, 0.999, name='gamma'),
+    Real(0.005, 0.01, name='tau'),
+    Real(0.1, 0.4, name='noise_scale'),
+    Real(1e-4, 5e-4, name='lr_a', prior='log-uniform'),
+    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
+    Integer(2, 6, name='updates_per_step')
 ]
 
 # Define the objective function for Bayesian Optimization

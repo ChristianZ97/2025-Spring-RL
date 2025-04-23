@@ -100,7 +100,7 @@ class Actor(nn.Module):
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         for layer in [self.fc1, self.fc2, self.fc_out]:
-            nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
+            nn.init.orthogonal_(layer.weight, gain=np.sqrt(0.5))
             nn.init.constant_(layer.bias, 0)
         
         ########## END OF YOUR CODE ##########
@@ -146,7 +146,7 @@ class Critic(nn.Module):
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
         for layer in [self.fc1, self.fc2, self.fc_out]:
-            nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
+            nn.init.orthogonal_(layer.weight, gain=np.sqrt(0.5))
             nn.init.constant_(layer.bias, 0)
 
         ########## END OF YOUR CODE ##########

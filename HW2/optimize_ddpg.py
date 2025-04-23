@@ -56,14 +56,16 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility
-    env.seed(random_seed)
+    opt_step = next(counter)
+    opt_step_seed = random_seed + opt_step
+    env.seed(opt_step_seed)
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     random.seed(random_seed)
     
     start_time = time.time()
     global counter
-    writer = SummaryWriter(f"./tb_record_cheetah/{next(counter)}")
+    writer = SummaryWriter(f"./tb_record_cheetah/{opt_step}")
 
     results = train(
         env=env,

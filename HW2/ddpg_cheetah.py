@@ -21,6 +21,11 @@ random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = gym.make(env_name)
 
+
+iteration_count = 0
+def iter_count(iteration_count):
+    iteration_count += 1
+    
 # Configure a wandb log
 # #wandb.login()
 #run = wandb.init(
@@ -31,7 +36,7 @@ env = gym.make(env_name)
 #)
 
 # Define a tensorboard writer
-writer = SummaryWriter("./tb_record_cheetah")
+# writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -348,6 +353,9 @@ def train(
     render=True,
     save_model=True
     ):
+    
+    iter_count(iteration_count)
+    writer = SummaryWriter(f"./tb_record_cheetah/{iteration_count}")
 
     torch.autograd.set_detect_anomaly(True)
 

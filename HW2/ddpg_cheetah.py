@@ -139,15 +139,13 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
         self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
-        self.fc_a = nn.Linear(in_features=num_outputs, out_features=hidden_size)
-
-        for layer in [self.fc1, self.fc2, self.fc_out, self.fc_a]:
+        for layer in [self.fc1, self.fc2, self.fc_out]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
 
@@ -162,7 +160,8 @@ class Critic(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
         actions = actions.to(d, non_blocking=True)
 
-        x = self.fc1(inputs)
+        x = torch.cat([inputs, actions], dim=-1)
+        x = self.fc1(x)
         x = self.ln1(x)
         x = torch.relu(x)
 
@@ -170,14 +169,10 @@ class Critic(nn.Module):
         x = self.ln2(x)
         x = torch.relu(x)
 
-        a = self.fc_a(actions)
-
-        x = torch.add(x, a)
-        x = torch.relu(x)
         q_value = self.fc_out(x)
         return q_value
         
-        ########## END OF YOUR CODE ##########        
+        ########## END OF YOUR CODE ##########         
         
 
 class DDPG(object):

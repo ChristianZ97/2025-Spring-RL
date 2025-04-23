@@ -315,6 +315,8 @@ def train(
     ):
 
     torch.autograd.set_detect_anomaly(True)
+    if writer is None:
+        writer = SummaryWriter("./tb_record_cheetah")
 
     #num_episodes = 500000
     #gamma = 0.99

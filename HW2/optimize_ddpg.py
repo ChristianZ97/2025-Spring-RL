@@ -149,7 +149,8 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     
     # Train final model with best parameters
     print("\nTraining final model with best parameters...")
-    best_seed = random_seed + result.func_vals.tolist().index(result.fun)
+    best_idx = int(np.argmin(result.func_vals))
+    best_seed = random_seed + best_idx
     final_env = gym.make(env_name)
     final_env.seed(best_seed)
     torch.manual_seed(best_seed)

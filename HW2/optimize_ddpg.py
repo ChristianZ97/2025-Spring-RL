@@ -37,11 +37,11 @@ counter = count(start=0)
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.99, 0.999, name='gamma'),                      # Discount factor
+    Real(0.995, 0.999, name='gamma'),                      # Discount factor
     Real(0.001, 0.01, name='tau'),                       # Target network update rate
     Real(0.05, 0.25, name='noise_scale'),                   # Exploration noise scale
-    Real(5e-5, 1e-3, name='lr_a', prior='log-uniform'),   # Actor learning rate
-    Real(1e-4, 5e-3, name='lr_c', prior='log-uniform'),    # Critic learning rate
+    Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),   # Actor learning rate
+    Real(5e-4, 1e-3, name='lr_c', prior='log-uniform'),    # Critic learning rate
     Integer(1, 8, name='updates_per_step')
 ]
 

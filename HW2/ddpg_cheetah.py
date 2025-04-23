@@ -21,10 +21,6 @@ random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = gym.make(env_name)
 
-
-iteration_count = 0
-def iter_count(iteration_count):
-    iteration_count += 1
     
 # Configure a wandb log
 # #wandb.login()
@@ -353,9 +349,6 @@ def train(
     render=True,
     save_model=True
     ):
-    
-    iter_count(iteration_count)
-    writer = SummaryWriter(f"./tb_record_cheetah/{iteration_count}")
 
     torch.autograd.set_detect_anomaly(True)
 

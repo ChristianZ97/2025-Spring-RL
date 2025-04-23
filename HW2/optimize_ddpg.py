@@ -50,7 +50,6 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
     print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, updates_per_step={updates_per_step}")
-
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility
@@ -60,6 +59,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     random.seed(random_seed)
     
     start_time = time.time()
+    writer = SummaryWriter(f"./tb_record_cheetah/{start_time}")
     results = train(
         env=env,
         num_episodes=1000, # Use fewer episodes for optimization to save time

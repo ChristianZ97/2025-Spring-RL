@@ -38,11 +38,11 @@ def iter_count(iteration_count):
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.98, 0.999, name='gamma'),                      # Discount factor
-    Real(0.001, 0.1, name='tau'),                       # Target network update rate
-    Real(0.05, 0.3, name='noise_scale'),                   # Exploration noise scale
-    Real(1e-6, 5e-4, name='lr_a', prior='log-uniform'),   # Actor learning rate
-    Real(1e-5, 5e-3, name='lr_c', prior='log-uniform'),    # Critic learning rate
+    Real(0.99, 0.999, name='gamma'),                      # Discount factor
+    Real(0.001, 0.01, name='tau'),                       # Target network update rate
+    Real(0.05, 0.25, name='noise_scale'),                   # Exploration noise scale
+    Real(5e-5, 1e-3, name='lr_a', prior='log-uniform'),   # Actor learning rate
+    Real(1e-4, 5e-3, name='lr_c', prior='log-uniform'),    # Critic learning rate
     Integer(1, 8, name='updates_per_step')
 ]
 
@@ -60,7 +60,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     # Set random seeds for reproducibility
     iter_count(iteration_count)
     writer = SummaryWriter(f"./tb_record_cheetah/{iteration_count}")
-    env.seed(random_seed + iteration_count)
+    env.seed(random_seed)
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
     random.seed(random_seed)
@@ -68,7 +68,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     start_time = time.time()
     results = train(
         env=env,
-        num_episodes=200, # Use fewer episodes for optimization to save time
+        num_episodes=1000, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -175,5 +175,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=100, n_random_starts=20)
+    result, final_model = run_optimization(n_calls=100, n_random_starts=30)
     print("Optimization and visualization completed!")

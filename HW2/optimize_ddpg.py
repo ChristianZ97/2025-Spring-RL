@@ -21,8 +21,8 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 # Import the DDPG training function
-#from ddpg import train, env_name, random_seed, device
-from ddpg_cheetah import train, env_name, random_seed, device
+from ddpg_pendulum import train, env_name, random_seed, device
+# from ddpg_cheetah import train, env_name, random_seed, device
 
 import matplotlib.pyplot as plt
 
@@ -59,10 +59,12 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     random.seed(random_seed)
     
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_cheetah/{start_time}")
+    writer = SummaryWriter(f"./tb_record_pendulum/{start_time}")
+    # writer = SummaryWriter(f"./tb_record_cheetah/{start_time}")
+
     results = train(
         env=env,
-        num_episodes=1000, # Use fewer episodes for optimization to save time
+        num_episodes=100, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -169,5 +171,6 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=100, n_random_starts=30)
+    # result, final_model = run_optimization(n_calls=100, n_random_starts=30)
+    result, final_model = run_optimization(n_calls=30, n_random_starts=10)
     print("Optimization and visualization completed!")

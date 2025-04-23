@@ -16,12 +16,11 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v0'
+env_name = 'Pendulum-v1'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = gym.make(env_name)
 
-    
 # Configure a wandb log
 # #wandb.login()
 #run = wandb.init(
@@ -32,7 +31,7 @@ env = gym.make(env_name)
 #)
 
 # Define a tensorboard writer
-# writer = SummaryWriter("./tb_record_cheetah")
+writer = SummaryWriter("./tb_record_pendulum")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -163,11 +162,11 @@ class Critic(nn.Module):
         actions = actions.to(d, non_blocking=True)
 
         x = self.fc1(inputs)
-        x = self.ln1(x)
+        # x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
-        x = self.ln2(x)
+        # x = self.ln2(x)
         x = torch.relu(x)
 
         a = self.fc_a(actions)
@@ -198,8 +197,6 @@ class DDPG(object):
         self.gamma = gamma
         self.tau = tau
 
-        # self.scaler = torch.cuda.amp.GradScaler()
-        
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
@@ -253,19 +250,19 @@ class DDPG(object):
 
         # with torch.cuda.amp.autocast():
             
-        ########## YOUR CODE HERE (10~20 lines) ##########
-        # Calculate policy loss and value loss
-        # Update the actor and the critic
+            ########## YOUR CODE HERE (10~20 lines) ##########
+            # Calculate policy loss and value loss
+            # Update the actor and the critic
 
         # dtype=torch, device=gpu
-        # self.actor_target.eval()
-        # self.critic_target.eval()
-        # with torch.no_grad():
-        target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        self.actor_target.eval()
+        self.critic_target.eval()
+        with torch.no_grad():
+            target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+            target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
         td_target = reward_batch + self.gamma * mask_batch * target_q_value
 
-        # self.critic.train()
+        self.critic.train()
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
         value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
@@ -273,40 +270,17 @@ class DDPG(object):
         value_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optim.step()
-        self.critic_optim.zero_grad()
-        
-        '''
-        self.critic_optim.zero_grad()
-        self.scaler.scale(value_loss).backward()
-        self.scaler.unscale_(self.critic_optim)
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-        self.scaler.step(self.critic_optim)
-        '''
 
-        # self.actor.train()
+        self.actor.train()
         eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-        # self.critic.eval()
-        # with torch.no_grad():
-        policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
-        policy_loss = -policy_q.mean()
-        # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+        self.critic.eval()
+        policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
         self.actor_optim.zero_grad()
         policy_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
-        self.actor_optim.zero_grad()
-        
-        '''
-        self.actor_optim.zero_grad()
-        self.scaler.scale(policy_loss).backward()
-        self.scaler.unscale_(self.actor_optim)
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-        self.scaler.step(self.actor_optim)
-        '''
-
-        # self.scaler.update()
 
         ########## END OF YOUR CODE ########## 
 
@@ -339,31 +313,28 @@ class DDPG(object):
 
 def train(
     env=env,
-    num_episodes=500000,
-    gamma=0.99,
-    tau=0.005,
-    noise_scale=0.3,
-    lr_a=3e-4,
-    lr_c=1e-3,
+    num_episodes=500,
+    gamma=0.995,
+    tau=0.05,
+    noise_scale=0.05,
+    lr_a=3.5e-4,
+    lr_c=3.5e-4,
     updates_per_step=4,
     render=True,
     save_model=True
     ):
 
-    writer = SummaryWriter(f"./tb_record_cheetah/{time.time()}")
     torch.autograd.set_detect_anomaly(True)
 
     #num_episodes = 500000
     #gamma = 0.99
     #tau = 0.005
-    # hidden_size = 256
-    hidden_size = 64
+    hidden_size = 128
     #noise_scale = 0.3
-    # replay_size = 1000000
-    replay_size = 10000
-    batch_size = 32
+    replay_size = 100000
+    batch_size = 256
     #updates_per_step = 4
-    print_freq = 2
+    print_freq = 5
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []
@@ -387,7 +358,7 @@ def train(
 
         episode_reward = 0
 
-        hard_update(agent.actor_perturbed, agent.actor_target)
+        hard_update(agent.actor_perturbed, agent.actor)
         agent.actor_perturbed = agent.actor_perturbed.to("cpu")
         states, actions, masks, next_states, rewards_ep = [], [], [], [], []
         while True:
@@ -398,8 +369,8 @@ def train(
             # 3. Update the actor and the critic
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
-            # with torch.no_grad():
-            mu = agent.actor_perturbed(state_tensor).detach().numpy()
+            with torch.no_grad():
+                mu = agent.actor_perturbed(state_tensor).numpy()
             mu = mu + ounoise.noise()
             action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
             next_state_np, reward_np, done_np, _ = env.step(action_np)
@@ -427,7 +398,7 @@ def train(
         for s, a, m, ns, r in zip(state_b, action_b, mask_b, next_state_b, reward_b):
             memory.push(s, a, m, ns, r)
 
-        if len(memory) >= batch_size:
+        if len(memory) >= 1000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)
@@ -437,10 +408,10 @@ def train(
                 writer.add_scalar('Update/Critic_Loss', value_loss, updates)
                 writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
 
-                # with torch.no_grad():
-                q_eval = agent.critic(state_b, action_b).mean().item()
-                q_target = agent.critic_target(state_b, action_b).mean().item()
-                td_error = (q_eval - q_target).__abs__()
+                with torch.no_grad():
+                    q_eval = agent.critic(state_b, action_b).mean().item()
+                    q_target = agent.critic_target(state_b, action_b).mean().item()
+                    td_error = (q_eval - q_target).__abs__()
                 writer.add_scalar('Update/Q_Eval', q_eval, updates)
                 writer.add_scalar('Update/Q_Target', q_target, updates)
                 writer.add_scalar('Update/TD_Error', td_error, updates)
@@ -459,7 +430,7 @@ def train(
             while True:
                 # action = agent.select_action(state)
                 state = torch.tensor(state_np, dtype=torch.float32, device=device)
-                action = agent.select_action(state=state)
+                action = agent.select_action(state=state, action_noise=ounoise)
 
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
                 action_np = action.cpu().numpy()
@@ -487,7 +458,7 @@ def train(
             writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
 
-            if ewma_reward > -120 and updates > 200: SOLVED = True
+            if ewma_reward > -120 and i_episode > 150: SOLVED = True
             # if ewma_reward > 5000 and total_numsteps > 500: SOLVED = True
             # End one testing epoch
 
@@ -504,12 +475,12 @@ def train(
     env.close()
     writer.close()
 
-    return {
+"""    return {
         'last_rewards': rewards[-10:],
         'best_reward': max(rewards),
         'ewma_reward': ewma_reward,
         'rewards': rewards
-    }
+    }"""
 
 if __name__ == '__main__':
 

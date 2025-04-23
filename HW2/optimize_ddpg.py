@@ -74,7 +74,8 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
         lr_a=lr_a,
         lr_c=lr_c,
         render=False,   # No rendering during optimization
-        save_model=False  # Don't save models during optimization
+        save_model=False,  # Don't save models during optimization
+        writer=writer
     )
     
     duration = time.time() - start_time

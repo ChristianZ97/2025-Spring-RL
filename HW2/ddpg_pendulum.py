@@ -17,6 +17,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 env_name = 'Pendulum-v0'
+# env_name = 'HalfCheetah-v3'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = gym.make(env_name)
@@ -250,40 +251,35 @@ class DDPG(object):
         # Calculate policy loss and value loss
         # Update the actor and the critic
 
-        target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-        target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-        target_q_value = target_q_value.detach()
-        td_target = reward_batch + self.gamma * mask_batch * target_q_value
-        td_target = td_target.detach()
+        with torch.no_grad():
+            next_action = self.actor_target.forward(inputs=next_state_batch)
+            target_q = self.critic_target.forward(inputs=next_state_batch, actions=next_action)
+            td_target = reward_batch + self.gamma * mask_batch * target_q
 
+        q = self.critic.forward(inputs=state_batch, actions=action_batch)
+        td_error = (td_target - q).detach()
 
-        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
-        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
-        td_error = td_target - eval_q_value
-        td_error = td_error.detach()
-
+        value_loss = F.mse_loss(input=q, target=td_target)
         self.critic_optim.zero_grad()
         value_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optim.step()
-        self.critic_optim.zero_grad()
 
 
-        eval_scaled_action = self.actor.forward(inputs=state_batch)
-        policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
-        policy_loss = -policy_q.mean()
-
+        action = self.actor.forward(inputs=state_batch)
+        policy_loss = -(self.critic.forward(inputs=state_batch, actions=action)).mean()
         self.actor_optim.zero_grad()
         policy_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
+
 
         ########## END OF YOUR CODE ########## 
 
         soft_update(self.actor_target, self.actor, self.tau)
         soft_update(self.critic_target, self.critic, self.tau)
 
-        return value_loss.item(), policy_loss.item(), eval_q_value.mean().item(), target_q_value.mean().item(), td_error.abs().mean().item()
+        return value_loss.item(), policy_loss.item(), q.mean().item(), target_q.mean().item(), td_error.abs().mean().item()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):
@@ -368,7 +364,8 @@ def train(
             # 3. Update the actor and the critic
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
-            mu = agent.actor_perturbed(state_tensor).detach().numpy()
+            with torch.no_grad():
+                mu = agent.actor_perturbed(state_tensor).numpy()
             mu = mu + ounoise.noise()
             action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
             next_state_np, reward_np, done_np, _ = env.step(action_np)
@@ -387,14 +384,14 @@ def train(
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)
-                value_loss, policy_loss, eval_q_value, target_q_value, td_error = agent.update_parameters(batch=batch)
+                value_loss, policy_loss, q, target_q, td_error = agent.update_parameters(batch=batch)
                 updates += 1
 
                 writer.add_scalar('Update/Critic_Loss', value_loss, updates)
                 writer.add_scalar('Update/Actor_Loss', policy_loss, updates)
 
-                writer.add_scalar('Update/Q_Eval', eval_q_value, updates)
-                writer.add_scalar('Update/Q_Target', target_q_value, updates)
+                writer.add_scalar('Update/Q_Eval', q, updates)
+                writer.add_scalar('Update/Q_Target', target_q, updates)
                 writer.add_scalar('Update/TD_Error', td_error, updates)
         # End one training epoch
 
@@ -411,7 +408,8 @@ def train(
             while True:
                 # action = agent.select_action(state)
                 state = torch.tensor(state_np, dtype=torch.float32, device=device)
-                action = agent.select_action(state=state)
+                with torch.no_grad():
+                    action = agent.select_action(state=state)
 
                 # next_state, reward, done, _ = env.step(action.numpy()[0])
                 action_np = action.cpu().numpy()

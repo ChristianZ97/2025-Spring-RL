@@ -197,7 +197,7 @@ class DDPG(object):
         self.gamma = gamma
         self.tau = tau
 
-        self.scaler = torch.cuda.amp.GradScaler()
+        # self.scaler = torch.cuda.amp.GradScaler()
         
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
@@ -250,67 +250,67 @@ class DDPG(object):
         mask_batch = torch.stack(batch.mask).unsqueeze(1).to(d, non_blocking=True)
         next_state_batch = torch.stack(batch.next_state).to(d, non_blocking=True)
 
-        with torch.cuda.amp.autocast():
+        # with torch.cuda.amp.autocast():
             
-            ########## YOUR CODE HERE (10~20 lines) ##########
-            # Calculate policy loss and value loss
-            # Update the actor and the critic
+        ########## YOUR CODE HERE (10~20 lines) ##########
+        # Calculate policy loss and value loss
+        # Update the actor and the critic
 
-            # dtype=torch, device=gpu
-            self.actor_target.eval()
-            self.critic_target.eval()
-            with torch.no_grad():
-                target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
-                target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
-            td_target = reward_batch + self.gamma * mask_batch * target_q_value
+        # dtype=torch, device=gpu
+        self.actor_target.eval()
+        self.critic_target.eval()
+        with torch.no_grad():
+            target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
+            target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
+        td_target = reward_batch + self.gamma * mask_batch * target_q_value
 
-            self.critic.train()
-            eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
-            value_loss = F.mse_loss(input=eval_q_value, target=td_target)
+        self.critic.train()
+        eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)
+        value_loss = F.mse_loss(input=eval_q_value, target=td_target)
 
-            """
-            self.critic_optim.zero_grad()
-            value_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-            self.critic_optim.step()
-            """
+        self.critic_optim.zero_grad()
+        value_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+        self.critic_optim.step()
+        
+        '''
+        self.critic_optim.zero_grad()
+        self.scaler.scale(value_loss).backward()
+        self.scaler.unscale_(self.critic_optim)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+        self.scaler.step(self.critic_optim)
+        '''
 
-            self.critic_optim.zero_grad()
-            self.scaler.scale(value_loss).backward()
-            self.scaler.unscale_(self.critic_optim)
-            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
-            self.scaler.step(self.critic_optim)
+        self.actor.train()
+        eval_scaled_action = self.actor.forward(inputs=state_batch)
 
-            self.actor.train()
-            eval_scaled_action = self.actor.forward(inputs=state_batch)
+        self.critic.eval()
+        with torch.no_grad():
+            policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
+        policy_loss = -policy_q.mean()
+        # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
 
-            self.critic.eval()
-            with torch.no_grad():
-                policy_q = self.critic.forward(inputs=state_batch, actions=eval_scaled_action)
-            policy_loss = -policy_q.mean()
-            # policy_loss = -self.critic.forward(inputs=state_batch, actions=eval_scaled_action).mean()
+        self.actor_optim.zero_grad()
+        policy_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+        self.actor_optim.step()
+        
+        '''
+        self.actor_optim.zero_grad()
+        self.scaler.scale(policy_loss).backward()
+        self.scaler.unscale_(self.actor_optim)
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+        self.scaler.step(self.actor_optim)
+        '''
 
-            """            
-            self.actor_optim.zero_grad()
-            policy_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-            self.actor_optim.step()
-            """
+        # self.scaler.update()
 
-            self.actor_optim.zero_grad()
-            self.scaler.scale(policy_loss).backward()
-            self.scaler.unscale_(self.actor_optim)
-            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
-            self.scaler.step(self.actor_optim)
+        ########## END OF YOUR CODE ########## 
 
-            self.scaler.update()
+        soft_update(self.actor_target, self.actor, self.tau)
+        soft_update(self.critic_target, self.critic, self.tau)
 
-            ########## END OF YOUR CODE ########## 
-
-            soft_update(self.actor_target, self.actor, self.tau)
-            soft_update(self.critic_target, self.critic, self.tau)
-
-            return value_loss.item(), policy_loss.item()
+        return value_loss.item(), policy_loss.item()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):

@@ -281,7 +281,7 @@ class DDPG(object):
         soft_update(self.actor_target, self.actor, self.tau)
         soft_update(self.critic_target, self.critic, self.tau)
 
-        return value_loss.item(), policy_loss.item(), eval_q_value.mean().item(), target_q_value.mean().item(), td_error.mean().item()
+        return value_loss.item(), policy_loss.item(), eval_q_value.mean().item(), target_q_value.mean().item(), td_error.mean().item().abs()
 
 
     def save_model(self, env_name, suffix="", actor_path=None, critic_path=None):

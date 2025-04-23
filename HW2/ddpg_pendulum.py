@@ -259,6 +259,7 @@ class DDPG(object):
         target_scaled_action = self.actor_target.forward(inputs=next_state_batch)
         target_q_value = self.critic_target.forward(inputs=next_state_batch, actions=target_scaled_action)
         td_target = reward_batch + self.gamma * mask_batch * target_q_value
+        td_target = td_target.detach()
 
         # self.critic.train()
         eval_q_value = self.critic.forward(inputs=state_batch, actions=action_batch)

@@ -173,6 +173,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=50, n_random_starts=20)
-    # result, final_model = run_optimization(n_calls=30, n_random_starts=10)
+    result, final_model = run_optimization(n_calls=30, n_random_starts=10)
     print("Optimization and visualization completed!")

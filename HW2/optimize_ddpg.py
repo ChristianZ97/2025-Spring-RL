@@ -56,16 +56,17 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility
-    opt_step = next(counter)
-    opt_step_seed = random_seed + opt_step
-    env.seed(opt_step_seed)
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
-    random.seed(random_seed)
+    global counter
+    bo_step = next(counter)
+    bo_seed = random_seed + bo_step
+    
+    env.seed(bo_seed)
+    torch.manual_seed(bo_seed)
+    np.random.seed(bo_seed)
+    random.seed(bo_seed)
     
     start_time = time.time()
-    global counter
-    writer = SummaryWriter(f"./tb_record_cheetah/{opt_step}")
+    writer = SummaryWriter(f"./tb_record_cheetah/{bo_step}")
 
     results = train(
         env=env,
@@ -137,7 +138,8 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
                                   zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'updates_per_step'], params)])
-            f.write(f"{i}, {-value:.4f}, {param_str}\n")
+            seed = random_seed + i
+            f.write(f"{i}, {-value:.4f}, {param_str}, seed={seed}\n")
     
     # Create visualization plots
     plt.figure(figsize=(10, 6))
@@ -147,8 +149,12 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     
     # Train final model with best parameters
     print("\nTraining final model with best parameters...")
+    best_seed = random_seed + result.func_vals.tolist().index(result.fun)
     final_env = gym.make(env_name)
-    final_env.seed(random_seed)
+    final_env.seed(best_seed)
+    torch.manual_seed(best_seed)
+    np.random.seed(best_seed)
+    random.seed(best_seed)
 
     final_results = train(
         env=final_env,

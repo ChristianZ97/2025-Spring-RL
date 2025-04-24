@@ -201,8 +201,8 @@ class DDPG(object):
         self.action_low = torch.tensor(self.action_space.low).to(device)
         self.action_high = torch.tensor(self.action_space.high).to(device)
 
-        #self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.5)
-        #self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.5)
+        self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.5)
+        self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.5)
 
         
         hard_update(self.actor_target, self.actor)
@@ -250,7 +250,7 @@ class DDPG(object):
         mask_batch = torch.tensor(np.array(batch.mask), dtype=torch.float32, device=d).unsqueeze(1)
         next_state_batch = torch.tensor(np.array(batch.next_state), dtype=torch.float32, device=d)
 
-        reward_batch = reward_batch * 10.0
+        reward_batch = reward_batch * 5.0
             
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss
@@ -279,8 +279,8 @@ class DDPG(object):
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
 
-        #self.actor_scheduler.step()
-        #self.critic_scheduler.step()
+        self.actor_scheduler.step()
+        self.critic_scheduler.step()
 
 
         ########## END OF YOUR CODE ##########
@@ -374,7 +374,7 @@ def train(
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
             
-            if total_numsteps < 2500:
+            if total_numsteps < 3000:
                 action_np = env.action_space.sample()
             else:
                 with torch.no_grad():
@@ -394,7 +394,7 @@ def train(
             if done_np: break
         # End of one interacted episode
 
-        if len(memory) >= 2500:
+        if len(memory) >= 3000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

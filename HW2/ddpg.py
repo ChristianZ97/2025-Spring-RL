@@ -126,8 +126,8 @@ class Actor(nn.Module):
         x = self.fc2(x)
         x = torch.relu(x)
 
-        x = self.fc3(x)
-        x = torch.relu(x)
+        #x = self.fc3(x)
+        #x = torch.relu(x)
 
         x = self.fc_out(x)
         action = torch.tanh(x)
@@ -176,8 +176,8 @@ class Critic(nn.Module):
         x = self.fc2(x)
         x = torch.relu(x)
 
-        x = self.fc3(x)
-        x = torch.relu(x)
+        #x = self.fc3(x)
+        #x = torch.relu(x)
 
         q_value = self.fc_out(x)
         return q_value

@@ -369,7 +369,7 @@ def train(
                 with torch.no_grad():
                     mu = agent.actor_perturbed(state_tensor).numpy()
                 mu = mu + ounoise.noise()
-                action_np = np.clip(mu, agent.action_low, agent.action_high)
+                action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
 
             next_state_np, reward_np, done_np, _ = env.step(action_np)
             total_numsteps += 1

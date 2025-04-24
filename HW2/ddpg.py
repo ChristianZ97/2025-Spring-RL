@@ -147,8 +147,8 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        self.fc2 = nn.Linear(in_features=(hidden_size + num_outputs), out_features=hidden_size)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
@@ -169,10 +169,10 @@ class Critic(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
         actions = actions.to(d, non_blocking=True)
 
-        x = self.fc1(inputs)
+        x = torch.cat([inputs, actions], dim=-1)
+        x = self.fc1(x)
         x = torch.relu(x)
 
-        x = torch.cat([x, actions], dim=-1)
         x = self.fc2(x)
         x = torch.relu(x)
 

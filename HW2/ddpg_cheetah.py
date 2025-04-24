@@ -131,15 +131,15 @@ class Actor(nn.Module):
 
         x = self.fc1(inputs)
         #x = self.ln1(x)
-        x = torch.relu(x)
+        x = torch.gelu(x)
 
         x = self.fc2(x)
         #x = self.ln2(x)
-        x = torch.relu(x)
+        x = torch.gelu(x)
 
         x = self.fc3(x)
         #x = self.ln3(x)
-        x = torch.relu(x)
+        x = torch.gelu(x)
 
         x = self.fc_out(x)
         action = torch.tanh(x)

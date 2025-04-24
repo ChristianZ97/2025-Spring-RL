@@ -124,7 +124,7 @@ class Actor(nn.Module):
         # Define the forward pass your actor network
 
         d = next(self.parameters()).device
-        inputs = inputs.to(d, non_blocking=True)
+        inputs = inputs.to(d)
 
         x = self.fc1(inputs)
         x = self.ln1(x)
@@ -179,8 +179,8 @@ class Critic(nn.Module):
         # Define the forward pass your critic network
 
         d = next(self.parameters()).device
-        inputs = inputs.to(d, non_blocking=True)
-        actions = actions.to(d, non_blocking=True)
+        inputs = inputs.to(d)
+        actions = actions.to(d)
 
         x = torch.cat([inputs, actions], dim=-1)
         x = self.fc1(x)
@@ -233,7 +233,7 @@ class DDPG(object):
     def select_action(self, state, action_noise=None):
 
         d = next(self.actor.parameters()).device
-        state = state.to(d, non_blocking=True)
+        state = state.to(d)
 
         # self.actor.eval()
         # mu = self.actor((Variable(state)))

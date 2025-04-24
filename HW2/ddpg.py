@@ -105,9 +105,10 @@ class Actor(nn.Module):
         # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
-        for layer in [self.fc1, self.fc2]:
+        for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
         nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
@@ -131,6 +132,9 @@ class Actor(nn.Module):
         # x = self.ln2(x)
         x = torch.relu(x)
 
+        x = self.fc3(x)
+        x = torch.relu(x)
+
         x = self.fc_out(x)
         action = torch.tanh(x)
 
@@ -149,13 +153,15 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
         # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=(hidden_size + num_outputs), out_features=hidden_size)
         # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
-        for layer in [self.fc1, self.fc2]:
+        for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
         nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
@@ -172,13 +178,16 @@ class Critic(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
         actions = actions.to(d, non_blocking=True)
 
-        x = torch.cat([inputs, actions], dim=-1)
-        x = self.fc1(x)
+        x = self.fc1(inputs)
         # x = self.ln1(x)
         x = torch.relu(x)
 
+        x = torch.cat([x, actions], dim=-1)
         x = self.fc2(x)
         # x = self.ln2(x)
+        x = torch.relu(x)
+
+        x = self.fc3(x)
         x = torch.relu(x)
 
         q_value = self.fc_out(x)
@@ -318,7 +327,7 @@ def train(
     noise_scale=0.3,
     lr_a=3e-4,
     lr_c=1e-3,
-    updates_per_step=2,
+    updates_per_step=1,
     render=True,
     save_model=True,
     writer=None
@@ -336,7 +345,7 @@ def train(
     #noise_scale = 0.3
     # replay_size = 1000000
     replay_size = int(5e4)
-    batch_size = 64
+    batch_size = 512
     #updates_per_step = 4
     print_freq = 1
     ewma_reward = 0

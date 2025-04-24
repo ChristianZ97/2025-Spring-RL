@@ -315,6 +315,8 @@ def train(
     lr_a=3e-4,
     lr_c=1e-3,
     updates_per_step=1,
+    hidden_size=256,
+    batch_size=64,
     render=True,
     save_model=True,
     writer=None
@@ -324,9 +326,7 @@ def train(
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
 
-    hidden_size = 256
     replay_size = int(5e4)
-    batch_size = 64
     print_freq = 1
     ewma_reward = 0
     rewards = []
@@ -342,7 +342,9 @@ def train(
     
     for i_episode in range(num_episodes):
         
-        ounoise.scale = noise_scale
+        decay = 0.99 ** i_episode
+        ounoise.scale = max(0.05, noise_scale * decay)
+        # ounoise.scale = noise_scale
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])

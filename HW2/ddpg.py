@@ -146,9 +146,9 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=(hidden_size // 2))
+        self.fc2 = nn.Linear(in_features=(hidden_size // 2), out_features=(hidden_size // 2))
+        self.fc_out = nn.Linear(in_features=(hidden_size // 2), out_features=1)
 
         for layer in [self.fc1, self.fc2]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
@@ -332,7 +332,7 @@ def train(
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
 
-    replay_size = int(5e4)
+    replay_size = int(1e5)
     print_freq = 1
     ewma_reward = 0
     rewards = []
@@ -348,9 +348,9 @@ def train(
     
     for i_episode in range(num_episodes):
         
-        progress = i_episode / 300
-        decay = np.exp(-5 * progress)  # 從1衰減到~0.05
-        ounoise.scale = max(0.05, noise_scale * decay)
+        progress = i_episode / 500
+        decay = max(0.1, 1.0 - progress)
+        ounoise.scale = noise_scale * decay
         # ounoise.scale = noise_scale
         ounoise.reset()
         
@@ -370,7 +370,7 @@ def train(
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
             
-            if total_numsteps < 2500:
+            if total_numsteps < 3000:
                 action_np = env.action_space.sample()
             else:
                 with torch.no_grad():
@@ -390,7 +390,7 @@ def train(
             if done_np: break
         # End of one interacted episode
 
-        if len(memory) >= 2500:
+        if len(memory) >= 3000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

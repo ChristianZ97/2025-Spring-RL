@@ -349,10 +349,11 @@ def train(
     memory = ReplayMemory(replay_size)
     
     for i_episode in range(num_episodes):
-        
-        progress = i_episode / 500
+
+        progress = i_episode / num_episodes
         decay = max(0.1, 1.0 - progress)
         ounoise.scale = noise_scale * decay
+        param_stddev = max(0.01, 0.15 * decay)
         # ounoise.scale = noise_scale
         ounoise.reset()
         
@@ -365,7 +366,7 @@ def train(
         agent.actor_perturbed = agent.actor_perturbed.to("cpu")
         with torch.no_grad():
             for param in agent.actor_perturbed.parameters():
-                noise = torch.normal(mean=0.0, std=0.1, size=param.data.size())
+                noise = torch.normal(mean=0.0, std=param_stddev, size=param.data.size())
                 param.add_(noise)
         while True:
             
@@ -381,7 +382,6 @@ def train(
             else:
                 with torch.no_grad():
                     mu = agent.actor_perturbed(state_tensor).numpy()
-                mu = mu + ounoise.noise()
                 action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
 
             next_state_np, reward_np, done_np, _ = env.step(action_np)

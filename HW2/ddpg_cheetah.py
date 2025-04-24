@@ -342,7 +342,7 @@ def train(
         writer = SummaryWriter("./tb_record_cheetah")
 
     replay_size = int(1e6)
-    print_freq = 2
+    print_freq = 1
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []

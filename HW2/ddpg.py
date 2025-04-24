@@ -149,10 +149,10 @@ class Critic(nn.Module):
 
         self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        #self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
-        for layer in [self.fc1, self.fc2, self.fc_out]:
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
             #nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             #nn.init.constant_(layer.bias, 0)
             nn.init.uniform_(layer.weight, -3e-3, 3e-3)
@@ -176,8 +176,8 @@ class Critic(nn.Module):
         x = self.fc2(x)
         x = torch.relu(x)
 
-        #x = self.fc3(x)
-        #x = torch.relu(x)
+        x = self.fc3(x)
+        x = torch.relu(x)
 
         q_value = self.fc_out(x)
         return q_value

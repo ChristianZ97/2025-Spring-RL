@@ -101,14 +101,14 @@ class Actor(nn.Module):
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        #self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
-        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
-            nn.init.orthogonal_(layer.weight, gain=np.sqrt(0.05))
+        for layer in [self.fc1, self.fc2, self.fc_out]:
+            #nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
+            #nn.init.constant_(layer.bias, 0)
+            nn.init.uniform_(layer.weight, -3e-3, 3e-3)
             nn.init.constant_(layer.bias, 0)
-        #nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
-        #nn.init.constant_(self.fc_out.bias, 0)
         
         ########## END OF YOUR CODE ##########
         
@@ -149,14 +149,14 @@ class Critic(nn.Module):
 
         self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        #self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
-        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
-            nn.init.orthogonal_(layer.weight, gain=np.sqrt(0.05))
+        for layer in [self.fc1, self.fc2, self.fc_out]:
+            #nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
+            #nn.init.constant_(layer.bias, 0)
+            nn.init.uniform_(layer.weight, -3e-3, 3e-3)
             nn.init.constant_(layer.bias, 0)
-        #nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
-        #nn.init.constant_(self.fc_out.bias, 0)
 
         ########## END OF YOUR CODE ##########
 
@@ -444,7 +444,7 @@ def train(
             # End one testing epoch
 
         writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
-        writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
+        writer.add_scalar('Train/EWMA_Reward', ewma_reward_history[-1], i_episode)
 
         if SOLVED:
             if save_model: agent.save_model(env_name, '.pth')

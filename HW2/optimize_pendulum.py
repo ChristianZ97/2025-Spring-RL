@@ -35,17 +35,16 @@ from itertools import count
 counter = count(start=0)
 
 # Define the hyperparameter search space
-search_space = [
-    Real(0.98, 0.999, name='gamma'),
-    Real(0.005, 0.01, name='tau'),
-    Real(0.1, 0.4, name='noise_scale'),
-    Real(1e-4, 5e-4, name='lr_a', prior='log-uniform'),
-    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
-    Integer(1, 4, name='updates_per_step'),
-    Categorical([128, 256, 512, 1024], name='hidden_size'),
-    Categorical([128, 256, 512, 1024], name='batch_size')
+pendulum_space = [
+    Real(0.98, 0.995, name='gamma'),  # 縮小範圍加速收斂
+    Real(0.001, 0.005, name='tau'),  # 更保守的目標網絡更新
+    Real(0.05, 0.2, name='noise_scale'),  # 降低初始噪音
+    Real(3e-5, 1e-4, name='lr_a', prior='log-uniform'),  # 較低學習率
+    Real(5e-4, 2e-3, name='lr_c', prior='log-uniform'),  # critic 學習率提高
+    Integer(2, 3, name='updates_per_step'),  # 減少更新次數
+    Categorical([128, 256], name='hidden_size'),  # 適中網絡
+    Categorical([64, 128], name='batch_size')  # 較小批量
 ]
-
 
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
@@ -72,7 +71,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step, hidden_size
 
     results = train(
         env=env,
-        num_episodes=150, # Use fewer episodes for optimization to save time
+        num_episodes=200, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -194,5 +193,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=50, n_random_starts=20)
+    result, final_model = run_optimization(n_calls=20, n_random_starts=5)
     print("Optimization and visualization completed!")

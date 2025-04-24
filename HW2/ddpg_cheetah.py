@@ -380,6 +380,10 @@ def train(
 
         hard_update(agent.actor_perturbed, agent.actor_target)
         agent.actor_perturbed = agent.actor_perturbed.to("cpu")
+        with torch.no_grad():
+            for param in agent.actor_perturbed.parameters():
+                noise = torch.normal(mean=0.0, std=0.1, size=param.data.size())
+                param.add_(noise)
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########

@@ -183,6 +183,7 @@ class Critic(nn.Module):
         x = torch.relu(x)
 
         q_value = self.fc_out(x)
+        q_value = torch.clamp(q_value, min=-100.0, max=100.0)
         return q_value
         
         ########## END OF YOUR CODE ##########        
@@ -201,7 +202,7 @@ class DDPG(object):
 
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-4)
 
         self.gamma = gamma
         self.tau = tau
@@ -265,6 +266,7 @@ class DDPG(object):
         with torch.no_grad():
             next_action = self.actor_target.forward(inputs=next_state_batch)
             target_q = self.critic_target.forward(inputs=next_state_batch, actions=next_action)
+            target_q = torch.clamp(target_q, min=-100.0, max=100.0)
             td_target = reward_batch + self.gamma * mask_batch * target_q
 
         q = self.critic.forward(inputs=state_batch, actions=action_batch)
@@ -407,7 +409,7 @@ def train(
 
                 actor_grad_norm = sum(p.grad.norm() for p in agent.actor.parameters())
                 critic_grad_norm = sum(p.grad.norm() for p in agent.critic.parameters())
-                writer.add_scalar('Debug/AC_Grad_Ratio', actor_grad_norm / critic_grad_norm, total_numsteps)
+                writer.add_scalar('Update/AC_Grad_Ratio', actor_grad_norm / critic_grad_norm, total_numsteps)
 
                 writer.add_scalar('Update/Q_Eval', q, total_numsteps)
                 writer.add_scalar('Update/Q_Target', target_q, total_numsteps)

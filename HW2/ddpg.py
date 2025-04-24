@@ -267,7 +267,6 @@ class DDPG(object):
         value_loss = F.mse_loss(input=q, target=td_target)
         self.critic_optim.zero_grad()
         value_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optim.step()
 
 
@@ -275,7 +274,6 @@ class DDPG(object):
         policy_loss = -(self.critic.forward(inputs=state_batch, actions=action)).mean()
         self.actor_optim.zero_grad()
         policy_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
 
 
@@ -328,7 +326,7 @@ def train(
 
     hidden_size = 256
     replay_size = int(5e4)
-    batch_size = 512
+    batch_size = 64
     print_freq = 1
     ewma_reward = 0
     rewards = []

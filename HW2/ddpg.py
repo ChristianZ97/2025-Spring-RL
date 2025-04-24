@@ -255,7 +255,7 @@ class DDPG(object):
         d = next(self.actor.parameters()).device
         state_batch = torch.tensor(np.array(batch.state), dtype=torch.float32, device=d)
         action_batch = torch.tensor(np.array(batch.action), dtype=torch.float32, device=d)
-        reward_batch = torch.tensor(np.array(batch.reward), dtype=torch.float32, device=d).unsqueeze(1)
+        reward_batch = torch.tensor(np.array(batch.reward * 5), dtype=torch.float32, device=d).unsqueeze(1)
         mask_batch = torch.tensor(np.array(batch.mask), dtype=torch.float32, device=d).unsqueeze(1)
         next_state_batch = torch.tensor(np.array(batch.next_state), dtype=torch.float32, device=d)
             

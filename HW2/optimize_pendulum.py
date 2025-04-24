@@ -71,7 +71,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step, hidden_size
 
     results = train(
         env=env,
-        num_episodes=200, # Use fewer episodes for optimization to save time
+        num_episodes=300, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,

@@ -223,8 +223,8 @@ class DDPG(object):
         self.action_low = torch.tensor(self.action_space.low).to(device)
         self.action_high = torch.tensor(self.action_space.low).to(device)
 
-        self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.5)
-        self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.5)
+        self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.95)
+        self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.95)
 
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)

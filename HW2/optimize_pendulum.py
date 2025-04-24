@@ -124,7 +124,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         n_random_starts=n_random_starts,  # Initial random evaluations
         verbose=True,             # Print progress
         random_state=random_seed, # Random seed
-        n_jobs=-1
+        n_jobs=1
     )
     
     # Extract best hyperparameters

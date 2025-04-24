@@ -202,6 +202,10 @@ class DDPG(object):
 
         self.gamma = gamma
         self.tau = tau
+
+        self.action_low = torch.tensor(self.action_space.low).to(device)
+        self.action_high = torch.tensor(self.action_space.high).to(device)
+
         
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
@@ -221,15 +225,11 @@ class DDPG(object):
         # Add noise to your action for exploration
         # Clipping might be needed
 
-        if action_noise is not None:
-            ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=d)
-            mu += ounoise
-        
-        action_low = torch.tensor(self.action_space.low, dtype=torch.float32, device=d)
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=d)
-        mu = torch.clamp(mu, action_low, action_high)
-
-        #self.actor.train()
+        with torch.no_grad():
+            if action_noise is not None:
+                ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=d)
+                mu += ounoise 
+            mu = torch.clamp(mu, self.action_low, self.action_high)
         return mu
 
         ########## END OF YOUR CODE ##########
@@ -369,7 +369,7 @@ def train(
                 with torch.no_grad():
                     mu = agent.actor_perturbed(state_tensor).numpy()
                 mu = mu + ounoise.noise()
-                action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
+                action_np = np.clip(mu, agent.action_low, agent.action_high)
 
             next_state_np, reward_np, done_np, _ = env.step(action_np)
             total_numsteps += 1

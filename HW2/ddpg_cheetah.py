@@ -106,9 +106,9 @@ class Actor(nn.Module):
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
         self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=(hidden_size * 2))
-        self.ln2 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
-        self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
@@ -161,12 +161,12 @@ class Critic(nn.Module):
         self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
+        #self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        #self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
-        for layer in [self.fc1, self.fc2, self.fc3]:
+        for layer in [self.fc1, self.fc2]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
         nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
@@ -192,9 +192,9 @@ class Critic(nn.Module):
         x = self.ln2(x)
         x = torch.relu(x)
 
-        x = self.fc3(x)
-        x = self.ln3(x)
-        x = torch.relu(x)
+        #x = self.fc3(x)
+        #x = self.ln3(x)
+        #x = torch.relu(x)
 
         q_value = self.fc_out(x)
         return q_value
@@ -394,7 +394,7 @@ def train(
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
             
-            if total_numsteps < 10000:
+            if total_numsteps < 30000:
                 action_np = env.action_space.sample()
             else:
                 with torch.no_grad():
@@ -413,7 +413,7 @@ def train(
             if done_np: break
         # End of one interacted episode
 
-        if len(memory) > 10000:
+        if len(memory) > 30000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

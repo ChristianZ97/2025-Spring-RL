@@ -259,7 +259,7 @@ class DDPG(object):
         mask_batch = torch.tensor(np.array(batch.mask), dtype=torch.float32, device=d).unsqueeze(1)
         next_state_batch = torch.tensor(np.array(batch.next_state), dtype=torch.float32, device=d)
 
-        reward_batch = reward_batch * 5.0
+        reward_batch = reward_batch * 10.0
             
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss

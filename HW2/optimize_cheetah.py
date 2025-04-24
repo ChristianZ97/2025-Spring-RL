@@ -36,14 +36,14 @@ counter = count(start=0)
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.995, 0.9999, name='gamma'),  # 長期回報更重要
-    Real(0.005, 0.03, name='tau'),  # 加快目標網絡更新
-    Real(0.2, 0.5, name='noise_scale'),  # 較高初始探索
-    Real(1e-4, 5e-4, name='lr_a', prior='log-uniform'),  
-    Real(1e-3, 5e-3, name='lr_c', prior='log-uniform'),  # 更高critic學習率
-    Integer(3, 5, name='updates_per_step'),  # 更多更新次數
-    Categorical([512, 1024], name='hidden_size'),  # 更大網絡
-    Categorical([256, 512], name='batch_size')  # 更大批量
+    Real(0.995, 0.9995, name='gamma'),                       # 略微縮小避免長期 overfit
+    Real(0.005, 0.03, name='tau'),                           # 不變
+    Real(0.2, 0.5, name='noise_scale'),                      # 不變
+    Real(1e-4, 4e-4, name='lr_a', prior='log-uniform'),      # 提高 actor 下限
+    Real(1e-4, 6e-4, name='lr_c', prior='log-uniform'),      # 拉近與 actor 差距
+    Integer(1, 2, name='updates_per_step'),                  # 減少 critic 更新次數
+    Categorical([256, 512], name='hidden_size'),             # 減小 critic 表達能力（400 是原論文）
+    Categorical([256, 512], name='batch_size')
 ]
 
 

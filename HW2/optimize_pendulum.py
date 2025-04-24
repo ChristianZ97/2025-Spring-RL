@@ -36,14 +36,14 @@ counter = count(start=0)
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.98, 0.995, name='gamma'),  # 縮小範圍加速收斂
-    Real(0.001, 0.005, name='tau'),  # 更保守的目標網絡更新
-    Real(0.05, 0.2, name='noise_scale'),  # 降低初始噪音
-    Real(3e-5, 1e-4, name='lr_a', prior='log-uniform'),  # 較低學習率
-    Real(5e-4, 2e-3, name='lr_c', prior='log-uniform'),  # critic 學習率提高
-    Integer(2, 3, name='updates_per_step'),  # 減少更新次數
-    Categorical([128, 256], name='hidden_size'),  # 適中網絡
-    Categorical([64, 128], name='batch_size')  # 較小批量
+    Real(0.98, 0.995, name='gamma'),                         # 不變
+    Real(0.001, 0.005, name='tau'),                          # 不變
+    Real(0.05, 0.2, name='noise_scale'),                     # 不變
+    Real(1e-4, 3e-4, name='lr_a', prior='log-uniform'),      # 提高 actor lr 下限
+    Real(2e-4, 6e-4, name='lr_c', prior='log-uniform'),      # 拉近與 actor 的比值
+    Integer(1, 2, name='updates_per_step'),                  # 減少更新次數
+    Categorical([128, 256], name='hidden_size'),             # 保持適中網路
+    Categorical([64, 128], name='batch_size')
 ]
 
 # Define the objective function for Bayesian Optimization

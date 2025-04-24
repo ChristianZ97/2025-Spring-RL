@@ -130,7 +130,7 @@ class Actor(nn.Module):
         action_high = self.action_high.to(d)
 
         x = self.fc1(inputs)
-        x = self.ln1(x)
+        #x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
@@ -138,7 +138,7 @@ class Actor(nn.Module):
         x = torch.relu(x)
 
         x = self.fc3(x)
-        x = self.ln3(x)
+        #x = self.ln3(x)
         x = torch.relu(x)
 
         x = self.fc_out(x)

@@ -435,8 +435,8 @@ def train(
             writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
             
-            if i_episode 30:
-                if ewma_reward > -120: SOLVED = True
+            if i_episode > 30:
+                # if ewma_reward > -120: SOLVED = True
                 if ewma_reward > 5000: SOLVED = True
             # End one testing epoch
 

@@ -179,7 +179,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write(f"lr_a = {best_lr_a}\n")
         f.write(f"lr_c = {best_lr_c}\n")
         f.write(f"updates_per_step = {best_updates_per_step}\n")
-        f.write(f"random_seed = {bo_seed}\n")
+        f.write(f"random_seed = {best_seed}\n")
         f.write(f"Best reward: {-result.fun:.2f}\n")
     
     return result, final_results

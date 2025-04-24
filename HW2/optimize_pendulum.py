@@ -37,12 +37,12 @@ counter = count(start=0)
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.95, 0.99, name='gamma'),                       
-    Real(0.005, 0.02, name='tau'),                        
-    Real(0.1, 0.4, name='noise_scale'),                   
-    Real(1e-4, 1e-3, name='lr_a', prior='log-uniform'),   
-    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),   
-    Integer(1, 4, name='updates_per_step')              
+    Real(0.95, 0.995, name='gamma'),                       
+    Real(0.001, 0.02, name='tau'),                        
+    Real(0.1, 0.5, name='noise_scale'),                   
+    Real(1e-5, 1e-3, name='lr_a', prior='log-uniform'),   
+    Real(1e-5, 1e-3, name='lr_c', prior='log-uniform'),   
+    Integer(1, 2, name='updates_per_step')              
 ]
 
 # Define the objective function for Bayesian Optimization

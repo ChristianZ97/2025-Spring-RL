@@ -71,7 +71,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step, hidden_size
 
     results = train(
         env=env,
-        num_episodes=300, # Use fewer episodes for optimization to save time
+        num_episodes=500, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -163,7 +163,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
     final_results = train(
         env=final_env,
-        num_episodes=500,
+        num_episodes=1000,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,

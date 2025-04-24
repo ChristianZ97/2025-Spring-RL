@@ -70,7 +70,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
 
     results = train(
         env=env,
-        num_episodes=75, # Use fewer episodes for optimization to save time
+        num_episodes=150, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,

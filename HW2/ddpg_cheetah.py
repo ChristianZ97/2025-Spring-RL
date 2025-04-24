@@ -161,8 +161,8 @@ class Critic(nn.Module):
         self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
-        #self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        #self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
@@ -192,9 +192,9 @@ class Critic(nn.Module):
         x = self.ln2(x)
         x = torch.relu(x)
 
-        #x = self.fc3(x)
-        #x = self.ln3(x)
-        #x = torch.relu(x)
+        x = self.fc3(x)
+        x = self.ln3(x)
+        x = torch.relu(x)
 
         q_value = self.fc_out(x)
         return q_value

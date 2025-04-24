@@ -382,7 +382,7 @@ def train(
         agent.actor_perturbed = agent.actor_perturbed.to("cpu")
         with torch.no_grad():
             for param in agent.actor_perturbed.parameters():
-                noise = torch.normal(mean=0.0, std=0.1, size=param.data.size())
+                noise = torch.normal(mean=0.0, std=0.05, size=param.data.size())
                 param.add_(noise)
         while True:
             

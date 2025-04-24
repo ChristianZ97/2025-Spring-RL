@@ -110,9 +110,10 @@ class Actor(nn.Module):
         for layer in [self.fc1, self.fc2]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
-        nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
+        nn.init.uniform_(self.fc_out.weight, -1e-2, 1e-2)
         nn.init.constant_(self.fc_out.bias, 0)
-        
+
+
         ########## END OF YOUR CODE ##########
         
     def forward(self, inputs):

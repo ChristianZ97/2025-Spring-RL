@@ -62,7 +62,7 @@ search_space = [
 
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
-def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
+def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step, hidden_size, batch_size):
     """
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.

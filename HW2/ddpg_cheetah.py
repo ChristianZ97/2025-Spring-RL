@@ -105,11 +105,11 @@ class Actor(nn.Module):
         # Construct your own actor network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        #self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=(hidden_size * 2))
         self.ln2 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
         self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
-        #self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         for layer in [self.fc1, self.fc2, self.fc3]:
@@ -130,7 +130,7 @@ class Actor(nn.Module):
         action_high = self.action_high.to(d)
 
         x = self.fc1(inputs)
-        #x = self.ln1(x)
+        x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
@@ -138,7 +138,7 @@ class Actor(nn.Module):
         x = torch.relu(x)
 
         x = self.fc3(x)
-        #x = self.ln3(x)
+        x = self.ln3(x)
         x = torch.relu(x)
 
         x = self.fc_out(x)

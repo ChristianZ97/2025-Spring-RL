@@ -35,7 +35,7 @@ from itertools import count
 counter = count(start=0)
 
 # Define the hyperparameter search space
-halfcheetah_space = [
+search_space = [
     Real(0.995, 0.9999, name='gamma'),  # 長期回報更重要
     Real(0.005, 0.03, name='tau'),  # 加快目標網絡更新
     Real(0.2, 0.5, name='noise_scale'),  # 較高初始探索

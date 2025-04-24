@@ -100,11 +100,11 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own actor network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=(hidden_size * 2))
-        self.ln1 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
-        self.fc2 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
-        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
+        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=(hidden_size * 2))
+        self.ln2 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
+        self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
         self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
@@ -154,11 +154,11 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=(hidden_size * 2))
-        self.ln1 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
-        self.fc2 = nn.Linear(in_features=((hidden_size * 2) + num_outputs), out_features=hidden_size)
-        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
+        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=(hidden_size * 2))
+        self.ln2 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
+        self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
         self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
@@ -180,11 +180,11 @@ class Critic(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
         actions = actions.to(d, non_blocking=True)
 
-        x = self.fc1(inputs)
+        x = torch.cat([inputs, actions], dim=-1)
+        x = self.fc1(x)
         x = self.ln1(x)
         x = torch.relu(x)
 
-        x = torch.cat([x, actions], dim=-1)
         x = self.fc2(x)
         x = self.ln2(x)
         x = torch.relu(x)
@@ -330,6 +330,8 @@ def train(
     lr_a=3e-4,
     lr_c=1e-3,
     updates_per_step=1,
+    hidden_size=256,
+    batch_size = 128,
     render=True,
     save_model=True,
     writer=None
@@ -339,9 +341,7 @@ def train(
     if writer is None:
         writer = SummaryWriter("./tb_record_cheetah")
 
-    hidden_size = 256
     replay_size = int(1e6)
-    batch_size = 128
     print_freq = 2
     ewma_reward = 0
     rewards = []

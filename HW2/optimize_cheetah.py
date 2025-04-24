@@ -27,7 +27,7 @@ from ddpg_cheetah import train, env_name, random_seed, device
 import matplotlib.pyplot as plt
 
 from skopt import gp_minimize
-from skopt.space import Real, Integer
+from skopt.space import Real, Integer, Categorical
 from skopt.utils import use_named_args
 from skopt.plots import plot_convergence, plot_objective
 import gc
@@ -45,6 +45,21 @@ search_space = [
     Integer(2, 6, name='updates_per_step')
 ]
 
+
+from skopt.space import Real, Integer, Categorical
+
+search_space = [
+    Real(0.98, 0.999, name='gamma'),
+    Real(0.005, 0.01, name='tau'),
+    Real(0.1, 0.4, name='noise_scale'),
+    Real(1e-4, 5e-4, name='lr_a', prior='log-uniform'),
+    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
+    Integer(1, 4, name='updates_per_step'),
+    Categorical([128, 256, 512, 1024], name='hidden_size'),
+    Categorical([128, 256, 512, 1024], name='batch_size')
+]
+
+
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
 def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
@@ -52,7 +67,9 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, updates_per_step={updates_per_step}")
+    print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, \
+        lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, \
+        updates_per_step={updates_per_step}, hidden_size={hidden_size}, batch_size={batch_size}")
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility
@@ -76,6 +93,8 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
         noise_scale=noise_scale,
         lr_a=lr_a,
         lr_c=lr_c,
+        hidden_size=hidden_size,
+        batch_size=batch_size,
         render=False,   # No rendering during optimization
         save_model=False,  # Don't save models during optimization
         writer=writer
@@ -124,11 +143,11 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     )
     
     # Extract best hyperparameters
-    best_gamma, best_tau, best_noise_scale, best_lr_a, best_lr_c, best_updates_per_step = result.x
+    best_gamma, best_tau, best_noise_scale, best_lr_a, best_lr_c, best_updates_per_step, best_hidden_size, best_batch_size = result.x
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
-    for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'updates_per_step'], result.x):
+    for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'updates_per_step', 'hidden_size', 'batch_size'], result.x):
         print(f"{name}: {value}")
     
     print(f"Best reward: {-result.fun:.2f}")
@@ -138,7 +157,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'updates_per_step'], params)])
+                                  zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'updates_per_step', 'hidden_size', 'batch_size'], params)])
             seed = random_seed + i
             f.write(f"{i}, {-value:.4f}, {param_str}, seed={seed}\n")
     
@@ -167,6 +186,8 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         lr_a=best_lr_a,
         lr_c=best_lr_c,
         updates_per_step=best_updates_per_step,
+        hidden_size=best_hidden_size,
+        batch_size=best_batch_size,
         render=True,
         save_model=True
     )
@@ -179,6 +200,8 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write(f"lr_a = {best_lr_a}\n")
         f.write(f"lr_c = {best_lr_c}\n")
         f.write(f"updates_per_step = {best_updates_per_step}\n")
+        f.write(f"hidden_size = {best_hidden_size}\n")
+        f.write(f"batch_size = {best_batch_size}\n")
         f.write(f"random_seed = {best_seed}\n")
         f.write(f"Best reward: {-result.fun:.2f}\n")
     

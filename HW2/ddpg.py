@@ -202,7 +202,7 @@ class DDPG(object):
 
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-4)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=5e-3)
 
         self.gamma = gamma
         self.tau = tau

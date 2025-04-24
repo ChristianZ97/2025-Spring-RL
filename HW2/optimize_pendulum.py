@@ -70,7 +70,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
 
     results = train(
         env=env,
-        num_episodes=75, # Use fewer episodes for optimization to save time
+        num_episodes=50, # Use fewer episodes for optimization to save time
         gamma=gamma,
         tau=tau,
         noise_scale=noise_scale,
@@ -186,5 +186,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=150, n_random_starts=30)
+    result, final_model = run_optimization(n_calls=100, n_random_starts=20)
     print("Optimization and visualization completed!")

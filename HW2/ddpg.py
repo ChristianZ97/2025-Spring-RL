@@ -147,10 +147,10 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=(hidden_size * 2))
+        self.fc2 = nn.Linear(in_features=(hidden_size * 2), out_features=(hidden_size * 2))
+        self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=(hidden_size * 2))
+        self.fc_out = nn.Linear(in_features=(hidden_size * 2), out_features=1)
 
         for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
             #nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))

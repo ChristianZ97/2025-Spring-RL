@@ -106,11 +106,11 @@ class Actor(nn.Module):
         #self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
-        for layer in [self.fc1, self.fc2, self.fc_out]:
-            #nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
-            #nn.init.constant_(layer.bias, 0)
-            nn.init.uniform_(layer.weight, -3e-3, 3e-3)
+        for layer in [self.fc1, self.fc2]:
+            nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
+        nn.init.uniform_(self.fc_out.weight, -1e-4, 1e-4)
+        nn.init.constant_(self.fc_out.bias, 0)
         
         ########## END OF YOUR CODE ##########
         
@@ -154,11 +154,11 @@ class Critic(nn.Module):
         self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=(hidden_size * 2))
         self.fc_out = nn.Linear(in_features=(hidden_size * 2), out_features=1)
 
-        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
-            #nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
-            #nn.init.constant_(layer.bias, 0)
-            nn.init.uniform_(layer.weight, -3e-3, 3e-3)
+        for layer in [self.fc1, self.fc2, self.fc3]:
+            nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
+        nn.init.uniform_(self.fc_out.weight, -1e-3, 1e-3)
+        nn.init.constant_(self.fc_out.bias, 0)
 
         ########## END OF YOUR CODE ##########
 
@@ -273,6 +273,7 @@ class DDPG(object):
         value_loss = F.mse_loss(input=q, target=td_target)
         self.critic_optim.zero_grad()
         value_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
         self.critic_optim.step()
 
 
@@ -280,13 +281,14 @@ class DDPG(object):
         policy_loss = -(self.critic.forward(inputs=state_batch, actions=action)).mean()
         self.actor_optim.zero_grad()
         policy_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
 
         self.actor_scheduler.step()
         self.critic_scheduler.step()
 
 
-        ########## END OF YOUR CODE ########## 
+        ########## END OF YOUR CODE ##########
 
         soft_update(self.actor_target, self.actor, self.tau)
         soft_update(self.critic_target, self.critic, self.tau)
@@ -403,9 +405,14 @@ def train(
                 writer.add_scalar('Update/Critic_Loss', value_loss, total_numsteps)
                 writer.add_scalar('Update/Actor_Loss', policy_loss, total_numsteps)
 
+                actor_grad_norm = sum(p.grad.norm() for p in actor.parameters())
+                critic_grad_norm = sum(p.grad.norm() for p in critic.parameters())
+                writer.add_scalar('Debug/AC_Grad_Ratio', actor_grad_norm / critic_grad_norm, total_numsteps)
+
                 writer.add_scalar('Update/Q_Eval', q, total_numsteps)
                 writer.add_scalar('Update/Q_Target', target_q, total_numsteps)
                 writer.add_scalar('Update/TD_Error', td_error, total_numsteps)
+
         # End one training epoch
 
             ########## END OF YOUR CODE ########## 

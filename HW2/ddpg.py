@@ -16,7 +16,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v0'
+env_name = 'Pendulum-v1'
 # env_name = 'HalfCheetah-v3'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -96,9 +96,9 @@ class Actor(nn.Module):
         # Construct your own actor network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         for layer in [self.fc1, self.fc2]:
@@ -118,11 +118,11 @@ class Actor(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
 
         x = self.fc1(inputs)
-        x = self.ln1(x)
+        # x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
-        x = self.ln2(x)
+        # x = self.ln2(x)
         x = torch.relu(x)
 
         x = self.fc_out(x)
@@ -144,9 +144,9 @@ class Critic(nn.Module):
         # Construct your own critic network
 
         self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
-        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
         for layer in [self.fc1, self.fc2]:
@@ -168,11 +168,11 @@ class Critic(nn.Module):
 
         x = torch.cat([inputs, actions], dim=-1)
         x = self.fc1(x)
-        x = self.ln1(x)
+        # x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
-        x = self.ln2(x)
+        # x = self.ln2(x)
         x = torch.relu(x)
 
         q_value = self.fc_out(x)
@@ -326,10 +326,10 @@ def train(
     #gamma = 0.99
     #tau = 0.005
     # hidden_size = 256
-    hidden_size = 128
+    hidden_size = 256
     #noise_scale = 0.3
     # replay_size = 1000000
-    replay_size = 10000
+    replay_size = 50000
     batch_size = 64
     #updates_per_step = 4
     print_freq = 1
@@ -366,10 +366,15 @@ def train(
             # 3. Update the actor and the critic
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
-            with torch.no_grad():
-                mu = agent.actor_perturbed(state_tensor).numpy()
-            mu = mu + ounoise.noise()
-            action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
+            
+            if total_numsteps < 10000:
+                action_np = env.action_space.sample()
+            else:
+                with torch.no_grad():
+                    mu = agent.actor_perturbed(state_tensor).numpy()
+                mu = mu + ounoise.noise()
+                action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
+
             next_state_np, reward_np, done_np, _ = env.step(action_np)
             total_numsteps += 1
             mask_np = 1.0 - done_np

@@ -66,7 +66,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step):
     random.seed(bo_seed)
     
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_cheetah/{bo_step}")
+    writer = SummaryWriter(f"./tb_record_pendulum/{bo_step}")
 
     results = train(
         env=env,

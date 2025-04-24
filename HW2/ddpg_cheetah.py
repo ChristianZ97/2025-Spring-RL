@@ -357,7 +357,9 @@ def train(
     
     for i_episode in range(num_episodes):
         
-        ounoise.scale = noise_scale
+        decay = 0.99 ** i_episode
+        ounoise.scale = max(0.05, noise_scale * decay)
+        # ounoise.scale = noise_scale
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])

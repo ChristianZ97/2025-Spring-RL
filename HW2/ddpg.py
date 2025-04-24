@@ -17,7 +17,6 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 env_name = 'Pendulum-v0'
-# env_name = 'HalfCheetah-v3'
 random_seed = 42
 
 
@@ -40,7 +39,6 @@ env = gym.make(env_name)
 
 # Define a tensorboard writer
 # writer = SummaryWriter("./tb_record_pendulum")
-# writer = SummaryWriter("./tb_record_cheetah")
 
 def soft_update(target, source, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
@@ -102,9 +100,7 @@ class Actor(nn.Module):
         # Construct your own actor network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
@@ -125,11 +121,9 @@ class Actor(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
 
         x = self.fc1(inputs)
-        # x = self.ln1(x)
         x = torch.relu(x)
 
         x = self.fc2(x)
-        # x = self.ln2(x)
         x = torch.relu(x)
 
         x = self.fc3(x)
@@ -154,11 +148,8 @@ class Critic(nn.Module):
         # Construct your own critic network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        # self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=(hidden_size + num_outputs), out_features=hidden_size)
-        # self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
         for layer in [self.fc1, self.fc2, self.fc3]:
@@ -179,12 +170,10 @@ class Critic(nn.Module):
         actions = actions.to(d, non_blocking=True)
 
         x = self.fc1(inputs)
-        # x = self.ln1(x)
         x = torch.relu(x)
 
         x = torch.cat([x, actions], dim=-1)
         x = self.fc2(x)
-        # x = self.ln2(x)
         x = torch.relu(x)
 
         x = self.fc3(x)
@@ -223,7 +212,7 @@ class DDPG(object):
         d = next(self.actor.parameters()).device
         state = state.to(d, non_blocking=True)
 
-        self.actor.eval()
+        # self.actor.eval()
         # mu = self.actor((Variable(state)))
         mu = self.actor(state)
         mu = mu.data
@@ -240,7 +229,7 @@ class DDPG(object):
         action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=d)
         mu = torch.clamp(mu, action_low, action_high)
 
-        self.actor.train()
+        #self.actor.train()
         return mu
 
         ########## END OF YOUR CODE ##########
@@ -336,17 +325,10 @@ def train(
     torch.autograd.set_detect_anomaly(True)
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
-        
-    #num_episodes = 500
-    #gamma = 0.99
-    #tau = 0.005
-    # hidden_size = 256
+
     hidden_size = 256
-    #noise_scale = 0.3
-    # replay_size = 1000000
     replay_size = int(5e4)
     batch_size = 512
-    #updates_per_step = 4
     print_freq = 1
     ewma_reward = 0
     rewards = []

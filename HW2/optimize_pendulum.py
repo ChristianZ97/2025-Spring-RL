@@ -42,7 +42,7 @@ search_space = [
     Real(0.1, 0.4, name='noise_scale'),                   
     Real(1e-4, 1e-3, name='lr_a', prior='log-uniform'),   
     Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),   
-    Integer(1, 4, name='updates_per_step'),              
+    Integer(1, 4, name='updates_per_step')              
 ]
 
 # Define the objective function for Bayesian Optimization

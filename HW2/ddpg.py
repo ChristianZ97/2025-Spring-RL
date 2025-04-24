@@ -16,7 +16,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v0'
+env_name = 'Pendulum-v1'
 # env_name = 'HalfCheetah-v3'
 random_seed = 42
 
@@ -335,7 +335,7 @@ def train(
     hidden_size = 256
     #noise_scale = 0.3
     # replay_size = 1000000
-    replay_size = 5e4
+    replay_size = int(5e4)
     batch_size = 64
     #updates_per_step = 4
     print_freq = 1
@@ -363,7 +363,6 @@ def train(
 
         hard_update(agent.actor_perturbed, agent.actor_target)
         agent.actor_perturbed = agent.actor_perturbed.to("cpu")
-        states, actions, masks, next_states, rewards_ep = [], [], [], [], []
         while True:
             
             ########## YOUR CODE HERE (15~25 lines) ##########

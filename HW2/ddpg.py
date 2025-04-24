@@ -16,10 +16,16 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v1'
+env_name = 'Pendulum-v0'
 # env_name = 'HalfCheetah-v3'
 random_seed = 42
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+if torch.cuda.is_available(): device = torch.device("cuda")
+elif torch.backends.mps.is_available(): device = torch.device("mps")
+else: device = torch.device("cpu")
+print(f"\n Using device {device}\n")
+
 env = gym.make(env_name)
 
     

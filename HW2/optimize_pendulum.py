@@ -35,7 +35,7 @@ from itertools import count
 counter = count(start=0)
 
 # Define the hyperparameter search space
-pendulum_space = [
+search_space = [
     Real(0.98, 0.995, name='gamma'),  # 縮小範圍加速收斂
     Real(0.001, 0.005, name='tau'),  # 更保守的目標網絡更新
     Real(0.05, 0.2, name='noise_scale'),  # 降低初始噪音

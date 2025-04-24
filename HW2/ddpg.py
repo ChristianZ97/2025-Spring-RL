@@ -405,8 +405,8 @@ def train(
                 writer.add_scalar('Update/Critic_Loss', value_loss, total_numsteps)
                 writer.add_scalar('Update/Actor_Loss', policy_loss, total_numsteps)
 
-                actor_grad_norm = sum(p.grad.norm() for p in actor.parameters())
-                critic_grad_norm = sum(p.grad.norm() for p in critic.parameters())
+                actor_grad_norm = sum(p.grad.norm() for p in agent.actor.parameters())
+                critic_grad_norm = sum(p.grad.norm() for p in agent.critic.parameters())
                 writer.add_scalar('Debug/AC_Grad_Ratio', actor_grad_norm / critic_grad_norm, total_numsteps)
 
                 writer.add_scalar('Update/Q_Eval', q, total_numsteps)

@@ -366,10 +366,11 @@ def train(
     memory = ReplayMemory(replay_size)
     
     for i_episode in range(num_episodes):
-        
-        progress = i_episode / 500
-        decay = np.exp(-4 * progress)  # 從1衰減到~0.1
-        ounoise.scale = max(0.05, noise_scale * decay)
+
+        progress = i_episode / num_episodes
+        decay = max(0.05, 1.0 - progress)
+        ounoise.scale = noise_scale * decay
+        param_stddev = max(0.05, 0.25 * decay)
         # ounoise.scale = noise_scale
         ounoise.reset()
         
@@ -382,10 +383,10 @@ def train(
         agent.actor_perturbed = agent.actor_perturbed.to("cpu")
         with torch.no_grad():
             for param in agent.actor_perturbed.parameters():
-                noise = torch.normal(mean=0.0, std=0.05, size=param.data.size())
+                noise = torch.normal(mean=0.0, std=param_stddev, size=param.data.size())
                 param.add_(noise)
         while True:
-            
+
             ########## YOUR CODE HERE (15~25 lines) ##########
             # 1. Interact with the env to get new (s,a,r,s') samples 
             # 2. Push the sample to the replay buffer
@@ -398,7 +399,6 @@ def train(
             else:
                 with torch.no_grad():
                     mu = agent.actor_perturbed(state_tensor).numpy()
-                mu = mu + ounoise.noise()
                 action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
 
             next_state_np, reward_np, done_np, _ = env.step(action_np)

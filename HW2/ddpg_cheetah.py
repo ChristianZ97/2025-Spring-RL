@@ -16,6 +16,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
+from torch.optim.lr_scheduler import StepLR
+
 env_name = 'HalfCheetah-v3'
 random_seed = 42
 
@@ -220,6 +222,9 @@ class DDPG(object):
         self.action_low = torch.tensor(self.action_space.low).to(device)
         self.action_high = torch.tensor(self.action_space.low).to(device)
 
+        self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.5).to(device)
+        self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.5).to(device)
+
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
@@ -290,6 +295,9 @@ class DDPG(object):
         policy_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
+
+        self.actor_scheduler.step()
+        self.critic_scheduler.step()
 
 
         ########## END OF YOUR CODE ########## 

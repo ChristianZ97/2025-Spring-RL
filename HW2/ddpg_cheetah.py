@@ -328,7 +328,7 @@ def train(
     hidden_size = 512
     # hidden_size = 128
     #noise_scale = 0.3
-    replay_size = 1000000
+    replay_size = 1e6
     # replay_size = 10000
     batch_size = 256
     #updates_per_step = 4

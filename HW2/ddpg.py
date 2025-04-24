@@ -323,6 +323,7 @@ def train(
     updates_per_step=1,
     hidden_size=256,
     batch_size=64,
+    warn_up=3000,
     render=True,
     save_model=True,
     writer=None
@@ -374,7 +375,7 @@ def train(
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
             
-            if total_numsteps < 3000:
+            if total_numsteps < warn_up:
                 action_np = env.action_space.sample()
             else:
                 with torch.no_grad():
@@ -394,7 +395,7 @@ def train(
             if done_np: break
         # End of one interacted episode
 
-        if len(memory) >= 3000:
+        if len(memory) >= warn_up:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

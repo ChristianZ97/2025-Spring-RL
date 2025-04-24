@@ -366,10 +366,15 @@ def train(
             # 3. Update the actor and the critic
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
-            with torch.no_grad():
-                mu = agent.actor_perturbed(state_tensor).numpy()
-            mu = mu + ounoise.noise()
-            action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
+            
+            if total_numsteps < 10000:
+                action_np = env.action_space.sample()
+            else:
+                with torch.no_grad():
+                    mu = agent.actor_perturbed(state_tensor).numpy()
+                mu = mu + ounoise.noise()
+                action_np = np.clip(mu, agent.action_space.low, agent.action_space.high)
+
             next_state_np, reward_np, done_np, _ = env.step(action_np)
             total_numsteps += 1
             mask_np = 1.0 - done_np

@@ -16,7 +16,6 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-# env_name = 'Pendulum-v0'
 env_name = 'HalfCheetah-v3'
 random_seed = 42
 
@@ -101,9 +100,9 @@ class Actor(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own actor network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=(hidden_size * 2))
+        self.ln1 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
+        self.fc2 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
         self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
@@ -155,9 +154,9 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc2 = nn.Linear(in_features=(hidden_size + num_outputs), out_features=hidden_size)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=(hidden_size * 2))
+        self.ln1 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
+        self.fc2 = nn.Linear(in_features=((hidden_size * 2) + num_outputs), out_features=hidden_size)
         self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
@@ -217,7 +216,10 @@ class DDPG(object):
 
         self.gamma = gamma
         self.tau = tau
-        
+
+        self.action_low = torch.tensor(self.action_space.low).to(device)
+        self.action_high = torch.tensor(self.action_space.low).to(device)
+
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
 
@@ -227,7 +229,7 @@ class DDPG(object):
         d = next(self.actor.parameters()).device
         state = state.to(d, non_blocking=True)
 
-        self.actor.eval()
+        # self.actor.eval()
         # mu = self.actor((Variable(state)))
         mu = self.actor(state)
         mu = mu.data
@@ -236,16 +238,12 @@ class DDPG(object):
         # Add noise to your action for exploration
         # Clipping might be needed
 
-        if action_noise is not None:
-            ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=d)
-            mu += ounoise
-        
-        action_low = torch.tensor(self.action_space.low, dtype=torch.float32, device=d)
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=d)
-        mu = torch.clamp(mu, action_low, action_high)
-
-        self.actor.train()
-        return mu
+        with torch.no_grad():
+            if action_noise is not None:
+                ounoise = torch.tensor(action_noise.noise(), dtype=torch.float32, device=d)
+                mu += ounoise
+            mu = torch.clamp(mu, self.action_low, self.action_high)
+            return mu
 
         ########## END OF YOUR CODE ##########
 
@@ -341,17 +339,10 @@ def train(
     if writer is None:
         writer = SummaryWriter("./tb_record_cheetah")
 
-    #num_episodes = 500
-    #gamma = 0.99
-    #tau = 0.005
     hidden_size = 256
-    # hidden_size = 128
-    #noise_scale = 0.3
     replay_size = int(1e6)
-    # replay_size = 10000
-    batch_size = 512
-    #updates_per_step = 4
-    print_freq = 1
+    batch_size = 128
+    print_freq = 2
     ewma_reward = 0
     rewards = []
     ewma_reward_history = []

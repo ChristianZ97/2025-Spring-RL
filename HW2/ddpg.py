@@ -147,8 +147,8 @@ class Critic(nn.Module):
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own critic network
 
-        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=(hidden_size * 2))
-        self.fc2 = nn.Linear(in_features=(hidden_size * 2), out_features=(hidden_size * 2))
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=(hidden_size * 2))
+        self.fc2 = nn.Linear(in_features=(hidden_size * 2 + num_outputs), out_features=(hidden_size * 2))
         self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=(hidden_size * 2))
         self.fc_out = nn.Linear(in_features=(hidden_size * 2), out_features=1)
 
@@ -169,10 +169,11 @@ class Critic(nn.Module):
         inputs = inputs.to(d, non_blocking=True)
         actions = actions.to(d, non_blocking=True)
 
-        x = torch.cat([inputs, actions], dim=-1)
-        x = self.fc1(x)
+        #x = torch.cat([inputs, actions], dim=-1)
+        x = self.fc1(inputs)
         x = torch.relu(x)
 
+        x = torch.cat([x, actions], dim=-1)
         x = self.fc2(x)
         x = torch.relu(x)
 
@@ -198,7 +199,7 @@ class DDPG(object):
 
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-2)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
 
         self.gamma = gamma
         self.tau = tau

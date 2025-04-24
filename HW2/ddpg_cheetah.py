@@ -357,7 +357,8 @@ def train(
     
     for i_episode in range(num_episodes):
         
-        decay = 0.99 ** i_episode
+        progress = i_episode / 500
+        decay = np.exp(-4 * progress)  # 從1衰減到~0.1
         ounoise.scale = max(0.05, noise_scale * decay)
         # ounoise.scale = noise_scale
         ounoise.reset()
@@ -452,8 +453,8 @@ def train(
             ewma_reward_history.append(ewma_reward)           
             print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, rewards[-1], ewma_reward))
 
-            writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
-            writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
+        writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
+        writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
             
             if i_episode > 30:
                 # if ewma_reward > -120: SOLVED = True

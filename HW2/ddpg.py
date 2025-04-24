@@ -329,7 +329,7 @@ def train(
     hidden_size = 256
     #noise_scale = 0.3
     # replay_size = 1000000
-    replay_size = 50000
+    replay_size = 5e4
     batch_size = 64
     #updates_per_step = 4
     print_freq = 1
@@ -367,7 +367,7 @@ def train(
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
             
-            if total_numsteps < 10000:
+            if total_numsteps < 2000:
                 action_np = env.action_space.sample()
             else:
                 with torch.no_grad():
@@ -387,7 +387,7 @@ def train(
             if done_np: break
         # End of one interacted episode
 
-        if len(memory) >= 10000:
+        if len(memory) >= 2000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

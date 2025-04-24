@@ -359,6 +359,7 @@ def train(
         
         decay = 0.99 ** i_episode
         ounoise.scale = max(0.05, noise_scale * decay)
+        
         # ounoise.scale = noise_scale
         ounoise.reset()
         

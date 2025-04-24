@@ -67,9 +67,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, updates_per_step, hidden_size
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, \
-        lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, \
-        updates_per_step={updates_per_step}, hidden_size={hidden_size}, batch_size={batch_size}")
+    print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, updates_per_step={updates_per_step}, hidden_size={hidden_size}, batch_size={batch_size}")
     env = gym.make(env_name)
     
     # Set random seeds for reproducibility

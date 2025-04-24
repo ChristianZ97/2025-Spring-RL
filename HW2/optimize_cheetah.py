@@ -21,7 +21,6 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 # Import the DDPG training function
-# from ddpg_pendulum import train, env_name, random_seed, device
 from ddpg_cheetah import train, env_name, random_seed, device
 
 import matplotlib.pyplot as plt
@@ -36,18 +35,6 @@ from itertools import count
 counter = count(start=0)
 
 # Define the hyperparameter search space
-search_space = [
-    Real(0.98, 0.999, name='gamma'),
-    Real(0.005, 0.01, name='tau'),
-    Real(0.01, 0.05, name='noise_scale'),
-    Real(1e-4, 5e-4, name='lr_a', prior='log-uniform'),
-    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
-    Integer(2, 6, name='updates_per_step')
-]
-
-
-from skopt.space import Real, Integer, Categorical
-
 search_space = [
     Real(0.98, 0.999, name='gamma'),
     Real(0.005, 0.01, name='tau'),

@@ -16,7 +16,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-env_name = 'Pendulum-v0'
+env_name = 'Pendulum-v1'
 # env_name = 'HalfCheetah-v3'
 random_seed = 42
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -435,15 +435,16 @@ def train(
             writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)
             writer.add_scalar('Train/EWMA_Reward', ewma_reward, i_episode)
 
-            if total_numsteps > 200 and ewma_reward > -120: SOLVED = True
-            # if total_numsteps > 500 and ewma_reward > 5000: SOLVED = True
-        # End one testing epoch
+            if i_episode 30:
+                if ewma_reward > -120: SOLVED = True
+                if ewma_reward > 5000: SOLVED = True
+            # End one testing epoch
 
         if SOLVED:
             if save_model: agent.save_model(env_name, '.pth')
             print("\nSolved! Running reward is now {} and "
               "the last episode runs to {} time steps!\n".format(ewma_reward, t))
-            env.render()
+            if render: env.render()
             env.close()
             writer.close()
             break

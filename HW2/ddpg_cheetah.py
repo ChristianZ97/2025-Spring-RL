@@ -99,21 +99,23 @@ class Actor(nn.Module):
         self.action_space = action_space
         num_outputs = action_space.shape[0]
 
+        self.action_high = torch.tensor(self.action_space.high)
+
         ########## YOUR CODE HERE (5~10 lines) ##########
         # Construct your own actor network
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        #self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=(hidden_size * 2))
         self.ln2 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
         self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
-        self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
+        #self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
-        nn.init.uniform_(self.fc_out.weight, -1e-4, 1e-4)
+        nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
         nn.init.constant_(self.fc_out.bias, 0)
         
         ########## END OF YOUR CODE ##########
@@ -125,6 +127,7 @@ class Actor(nn.Module):
 
         d = next(self.parameters()).device
         inputs = inputs.to(d)
+        action_high = self.action_high.to(d)
 
         x = self.fc1(inputs)
         x = self.ln1(x)
@@ -141,9 +144,7 @@ class Actor(nn.Module):
         x = self.fc_out(x)
         action = torch.tanh(x)
 
-        action_high = torch.tensor(self.action_space.high, dtype=torch.float32, device=d)
-        scaled_action = action * action_high
-        return scaled_action
+        return action * action_high
 
         ########## END OF YOUR CODE ##########
 
@@ -158,9 +159,9 @@ class Critic(nn.Module):
 
         self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
         self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=(hidden_size * 2))
-        self.ln2 = nn.LayerNorm(normalized_shape=(hidden_size * 2))
-        self.fc3 = nn.Linear(in_features=(hidden_size * 2), out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
         
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
@@ -196,7 +197,6 @@ class Critic(nn.Module):
         x = torch.relu(x)
 
         q_value = self.fc_out(x)
-        q_value = torch.clamp(q_value, min=-1000.0, max=1000.0)
         return q_value
         
         ########## END OF YOUR CODE ##########       

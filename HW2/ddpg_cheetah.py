@@ -331,7 +331,7 @@ def train(
     noise_scale=0.3,
     lr_a=3e-4,
     lr_c=1e-3,
-    updates_per_step=2,
+    updates_per_step=1,
     render=True,
     save_model=True,
     writer=None
@@ -344,12 +344,12 @@ def train(
     #num_episodes = 500
     #gamma = 0.99
     #tau = 0.005
-    hidden_size = 512
+    hidden_size = 256
     # hidden_size = 128
     #noise_scale = 0.3
     replay_size = int(1e6)
     # replay_size = 10000
-    batch_size = 256
+    batch_size = 512
     #updates_per_step = 4
     print_freq = 1
     ewma_reward = 0

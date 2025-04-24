@@ -126,10 +126,10 @@ class Actor(nn.Module):
         action_high = self.action_high.to(d)
 
         x = self.fc1(inputs)
-        x = torch.tanh(x)
+        x = F.gelu(x)
 
         x = self.fc2(x)
-        x = torch.tanh(x)
+        x = F.gelu(x)
 
         x = self.fc_out(x)
         action = torch.tanh(x)

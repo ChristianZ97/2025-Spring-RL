@@ -44,7 +44,7 @@ search_space = [
     Integer(1, 2, name='updates_per_step'),                  # 減少更新次數
     Categorical([128, 256], name='hidden_size'),             # 保持適中網路
     Categorical([64, 128], name='batch_size'),
-    Categorical([2000, 2500, 3000], name='warn_up')
+    Categorical([3000], name='warn_up')
 ]
 
 # Define the objective function for Bayesian Optimization

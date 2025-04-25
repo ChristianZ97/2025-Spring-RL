@@ -367,11 +367,12 @@ def train(
     
     for i_episode in range(num_episodes):
 
-        progress = i_episode / num_episodes
-        decay = max(0.05, 1.0 - progress)
-        ounoise.scale = noise_scale * decay
-        param_stddev = max(0.5, 0.25 * decay)
-        # ounoise.scale = noise_scale
+        #progress = i_episode / num_episodes
+        #decay = max(0.05, 1.0 - progress)
+        #ounoise.scale = noise_scale * decay
+        #param_stddev = max(0.5, 0.25 * decay)
+        param_stddev = 0.2
+        ounoise.scale = noise_scale
         ounoise.reset()
         
         # state = torch.Tensor([env.reset()])
@@ -394,7 +395,7 @@ def train(
 
             state_tensor = torch.tensor(state_np, dtype=torch.float32)
             
-            if total_numsteps < 50000:
+            if total_numsteps < 20000:
                 action_np = env.action_space.sample()
             else:
                 with torch.no_grad():
@@ -413,7 +414,7 @@ def train(
             if done_np: break
         # End of one interacted episode
 
-        if len(memory) > 50000:
+        if len(memory) > 20000:
             for _ in range(updates_per_step):
 
                 batch = memory.sample(batch_size)

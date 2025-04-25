@@ -127,13 +127,13 @@ class Actor(nn.Module):
         action_high = self.action_high.to(d)
 
         x = self.fc1(inputs)
-        x = F.gelu(x)
+        x = F.relu(x)
 
         x = self.fc2(x)
-        x = F.gelu(x)
+        x = F.relu(x)
 
         x = self.fc3(x)
-        x = F.gelu(x)
+        x = F.relu(x)
 
         x = self.fc_out(x)
         action = torch.tanh(x)
@@ -175,13 +175,13 @@ class Critic(nn.Module):
 
         x = torch.cat([inputs, actions], dim=-1)
         x = self.fc1(x)
-        x = torch.relu(x)
+        x = F.relu(x)
 
         x = self.fc2(x)
-        x = torch.relu(x)
+        x = F.relu(x)
 
         x = self.fc3(x)
-        x = torch.relu(x)
+        x = F.relu(x)
 
         q_value = self.fc_out(x)
         return q_value
@@ -202,16 +202,13 @@ class DDPG(object):
 
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=5e-3)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
 
         self.gamma = gamma
         self.tau = tau
 
         self.action_low = torch.tensor(self.action_space.low).to(device)
         self.action_high = torch.tensor(self.action_space.high).to(device)
-
-        #self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.5)
-        #self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.5)
 
         
         hard_update(self.actor_target, self.actor)
@@ -258,8 +255,6 @@ class DDPG(object):
         reward_batch = torch.tensor(np.array(batch.reward), dtype=torch.float32, device=d).unsqueeze(1)
         mask_batch = torch.tensor(np.array(batch.mask), dtype=torch.float32, device=d).unsqueeze(1)
         next_state_batch = torch.tensor(np.array(batch.next_state), dtype=torch.float32, device=d)
-
-        reward_batch = reward_batch * 5.0
             
         ########## YOUR CODE HERE (10~20 lines) ##########
         # Calculate policy loss and value loss
@@ -268,7 +263,7 @@ class DDPG(object):
         with torch.no_grad():
             next_action = self.actor_target.forward(inputs=next_state_batch)
             target_q = self.critic_target.forward(inputs=next_state_batch, actions=next_action)
-            target_q = torch.clamp(target_q, min=-100.0, max=100.0)
+            #target_q = torch.clamp(target_q, min=-100.0, max=100.0)
             td_target = reward_batch + self.gamma * mask_batch * target_q
 
         q = self.critic.forward(inputs=state_batch, actions=action_batch)
@@ -287,9 +282,6 @@ class DDPG(object):
         policy_loss.backward()
         #torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
-
-        #self.actor_scheduler.step()
-        #self.critic_scheduler.step()
 
 
         ########## END OF YOUR CODE ##########
@@ -332,7 +324,7 @@ def train(
     updates_per_step=1,
     hidden_size=256,
     batch_size=64,
-    warn_up=3000,
+    warn_up=2000,
     render=True,
     save_model=True,
     writer=None
@@ -358,10 +350,6 @@ def train(
     
     for i_episode in range(num_episodes):
 
-        #progress = i_episode / num_episodes
-        #decay = max(0.1, 1.0 - progress)
-        #ounoise.scale = noise_scale * decay
-        #param_stddev = max(0.1, 0.15 * decay)
         param_stddev = 0.05
         ounoise.scale = noise_scale
         ounoise.reset()
@@ -466,7 +454,6 @@ def train(
 
             if i_episode > 30:
                 if ewma_reward > -120: SOLVED = True
-                # if ewma_reward > 5000: SOLVED = True
             # End one testing epoch
 
         writer.add_scalar('Train/Episode_Reward', rewards[-1], i_episode)

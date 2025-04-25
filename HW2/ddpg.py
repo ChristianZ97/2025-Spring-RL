@@ -105,9 +105,10 @@ class Actor(nn.Module):
 
         self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
-        for layer in [self.fc1, self.fc2]:
+        for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
         nn.init.uniform_(self.fc_out.weight, -1e-2, 1e-2)
@@ -131,6 +132,9 @@ class Actor(nn.Module):
         x = self.fc2(x)
         x = F.gelu(x)
 
+        x = self.fc3(x)
+        x = F.gelu(x)
+
         x = self.fc_out(x)
         action = torch.tanh(x)
 
@@ -149,9 +153,10 @@ class Critic(nn.Module):
 
         self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
-        for layer in [self.fc1, self.fc2]:
+        for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.orthogonal_(layer.weight, gain=np.sqrt(2))
             nn.init.constant_(layer.bias, 0)
         nn.init.uniform_(self.fc_out.weight, -1e-3, 1e-3)
@@ -173,6 +178,9 @@ class Critic(nn.Module):
         x = torch.relu(x)
 
         x = self.fc2(x)
+        x = torch.relu(x)
+
+        x = self.fc3(x)
         x = torch.relu(x)
 
         q_value = self.fc_out(x)
@@ -202,8 +210,8 @@ class DDPG(object):
         self.action_low = torch.tensor(self.action_space.low).to(device)
         self.action_high = torch.tensor(self.action_space.high).to(device)
 
-        self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.5)
-        self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.5)
+        #self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.5)
+        #self.critic_scheduler = StepLR(self.critic_optim, step_size=100, gamma=0.5)
 
         
         hard_update(self.actor_target, self.actor)
@@ -269,7 +277,7 @@ class DDPG(object):
         value_loss = F.mse_loss(input=q, target=td_target)
         self.critic_optim.zero_grad()
         value_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
+        #torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
         self.critic_optim.step()
 
 
@@ -277,11 +285,11 @@ class DDPG(object):
         policy_loss = -(self.critic.forward(inputs=state_batch, actions=action)).mean()
         self.actor_optim.zero_grad()
         policy_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
+        #torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=1.0)
         self.actor_optim.step()
 
-        self.actor_scheduler.step()
-        self.critic_scheduler.step()
+        #self.actor_scheduler.step()
+        #self.critic_scheduler.step()
 
 
         ########## END OF YOUR CODE ##########

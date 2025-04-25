@@ -224,7 +224,7 @@ class DDPG(object):
         self.action_high = torch.tensor(self.action_space.low).to(device)
 
         #self.actor_scheduler = StepLR(self.actor_optim, step_size=100, gamma=0.95)
-        self.critic_scheduler = StepLR(self.critic_optim, step_size=1000, gamma=0.99)
+        #self.critic_scheduler = StepLR(self.critic_optim, step_size=1000, gamma=0.99)
 
         hard_update(self.actor_target, self.actor)
         hard_update(self.critic_target, self.critic)
@@ -287,7 +287,7 @@ class DDPG(object):
         value_loss = F.mse_loss(input=q, target=td_target)
         self.critic_optim.zero_grad()
         value_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optim.step()
 
 
@@ -299,7 +299,7 @@ class DDPG(object):
         self.actor_optim.step()
 
         #self.actor_scheduler.step()
-        self.critic_scheduler.step()
+        #self.critic_scheduler.step()
 
 
         ########## END OF YOUR CODE ########## 

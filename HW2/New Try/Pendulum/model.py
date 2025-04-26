@@ -45,15 +45,18 @@ class Actor(nn.Module):
         action_high = self.action_high
 
         x = self.fc1(inputs)
-        x = torch.tanh(x)
+        # x = torch.tanh(x)
+        x = F.relu(x)
         x = self.fc2(x)
-        x = torch.tanh(x)
+        # x = torch.tanh(x)
+        x = F.relu(x)
         x = self.fc3(x)
-        x = torch.tanh(x)
+        # x = torch.tanh(x)
+        x = F.relu(x)
         x = self.fc_out(x)
         action = torch.tanh(x)
 
-        return action * action_high * 2.0
+        return action * action_high * 3.0
 
 
 class Critic(nn.Module):
@@ -68,6 +71,7 @@ class Critic(nn.Module):
         self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
         self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
+        self.dropout = nn.Dropout(0.2)
 
         # Network Initialization
 
@@ -82,10 +86,13 @@ class Critic(nn.Module):
         x = torch.cat([inputs, actions], dim=-1)
         x = self.fc1(x)
         x = torch.relu(x)
+        x = self.dropout(x)
         x = self.fc2(x)
         x = torch.relu(x)
+        x = self.dropout(x)
         x = self.fc3(x)
         x = torch.relu(x)
+        x = self.dropout(x)
         q_value = self.fc_out(x)
 
         return q_value

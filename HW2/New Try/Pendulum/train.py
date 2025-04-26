@@ -14,7 +14,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up):
+def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale):
 
 		# Initialize state
         state_np, _ = env.reset()
@@ -43,7 +43,7 @@ def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up)
             total_numsteps += 1
 
             # Update replay buffer
-            # reward_np = reward_np / 1000.0 # testing this one
+            reward_np = reward_np * reward_scale
             memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
             state_np = next_state_np
 
@@ -86,7 +86,7 @@ def agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_
 
         return updates
 
-def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history):
+def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, reward_scale):
 
     state_np, _ = env.reset()
     t, episode_reward = 0, 0
@@ -122,7 +122,7 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history):
     ewma_reward_history.append(ewma_reward)           
     print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, episode_reward, ewma_reward))
 
-    if i_episode > 30 and ewma_reward > -120:
+    if i_episode > 30 and (ewma_reward / reward_scale) > -120:
         SOLVED = True
 
     writer.add_scalar('Eval/Episode_Reward', episode_reward, i_episode)

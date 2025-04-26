@@ -27,7 +27,7 @@ def main(
     env,
     gamma=0.9998,
     tau=0.005,
-    noise_scale=2.5,
+    noise_scale=1.2,
     lr_a=1e-3,
     lr_c=1e-4,
     batch_size=64,
@@ -43,7 +43,9 @@ def main(
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
     replay_size =  int(1e6)
-    warm_up = int(2e3) # 100 episodes for exploration
+    warm_up = int(2e4) # 100 episodes for exploration
+    reward_scale = 1e-2 # 1% of original reward
+
 
     hidden_size = 256
     updates_per_step = 1
@@ -63,10 +65,10 @@ def main(
         # ounoise.scale = noise_scale
         ounoise.reset()
 
-        total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up)
+        total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale)
         if len(memory) >= warm_up:
             updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
-        SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history)
+        SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, reward_scale)
 
     if SOLVED:
         if save_model: agent.save_model(env_name, '.pth')

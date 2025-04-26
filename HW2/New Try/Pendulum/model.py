@@ -35,7 +35,7 @@ class Actor(nn.Module):
         # Network Initialization
 
         for layer in [self.fc1, self.fc2, self.fc3]:
-            nn.init.xavier_uniform_(layer.weight)
+            nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
             nn.init.zeros_(layer.bias)
         nn.init.uniform_(self.fc_out.weight, -5e-2, 5e-2)
         nn.init.uniform_(self.fc_out.bias, -5e-2, 5e-2)
@@ -56,7 +56,7 @@ class Actor(nn.Module):
         x = self.fc_out(x)
         action = torch.tanh(x)
 
-        return action * action_high * 3.0
+        return action * action_high
 
 
 class Critic(nn.Module):

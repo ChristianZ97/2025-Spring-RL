@@ -43,7 +43,7 @@ def main(
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
     replay_size =  int(1e6)
-    warm_up = int(2e3) # 10 episodes for exploration
+    warm_up = int(1e3) # 5 episodes for exploration
     reward_scale = 1e-1 # 10% of original reward
 
 

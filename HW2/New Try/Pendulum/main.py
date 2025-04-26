@@ -42,12 +42,13 @@ def main(
 	# Adjust for different environment    
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
+    
+
     replay_size =  int(1e6)
-    warm_up = int(1e3) # 5 episodes for exploration
+    warm_up = int(0) # 0 episodes for exploration
     reward_scale = 1e-1 # 10% of original reward
 
-
-    hidden_size = 256
+    hidden_size = 256 # We use [400, 300] for hidden dimensions
     updates_per_step = 1
 
     ewma_reward = 0
@@ -62,8 +63,7 @@ def main(
 
     try:
         for i_episode in range(num_episodes):
-            ounoise.scale = noise_scale * (1 - i_episode / num_episodes)
-            # ounoise.scale = noise_scale
+            ounoise.scale = noise_scale * (1 - i_episode / num_episodes) # Noise decay
             ounoise.reset()
 
             total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale)

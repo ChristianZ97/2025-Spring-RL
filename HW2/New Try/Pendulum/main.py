@@ -29,7 +29,7 @@ def main(
     tau=0.005,
     noise_scale=0.3,
     lr_a=1e-4,
-    lr_c=1e-5,
+    lr_c=5e-6,
     batch_size=128,
     num_episodes=4000,
     render=True,
@@ -55,8 +55,8 @@ def main(
     updates = 0
 
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a=lr_a, lr_c=lr_c)
-    # ounoise = OUNoise(env.action_space.shape[0])
-    ounoise = OUNoise(env.action_space.shape[0], scale=1.5, mu=0, theta=0.3, sigma=0.7)
+    ounoise = OUNoise(env.action_space.shape[0])
+    # ounoise = OUNoise(env.action_space.shape[0], scale=1.5, mu=0, theta=0.3, sigma=0.7)
     memory = ReplayMemory(replay_size)
     
     for i_episode in range(num_episodes):

@@ -27,36 +27,30 @@ class Actor(nn.Module):
 
         # Network Structure
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
+        self.fc2 = nn.Linear(in_features=400, out_features=300)
+        self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
 
         # Network Initialization
 
-        for layer in [self.fc1, self.fc2, self.fc3]:
-            nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
+        for layer in [self.fc1, self.fc2]:
+            nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu'))
             nn.init.zeros_(layer.bias)
-        nn.init.uniform_(self.fc_out.weight, -5e-2, 5e-2)
-        nn.init.uniform_(self.fc_out.bias, -5e-2, 5e-2)
+        nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
+        nn.init.uniform_(self.fc_out.bias, -3e-3, 3e-3)
         
     def forward(self, inputs):
 
         action_high = self.action_high
 
         x = self.fc1(inputs)
-        # x = torch.tanh(x)
         x = F.relu(x)
         x = self.fc2(x)
-        # x = torch.tanh(x)
-        x = F.relu(x)
-        x = self.fc3(x)
-        # x = torch.tanh(x)
         x = F.relu(x)
         x = self.fc_out(x)
-        action = torch.tanh(x)
+        action = torch.tanh(x) * action_high
 
-        return action * action_high
+        return action
 
 
 class Critic(nn.Module):
@@ -67,32 +61,25 @@ class Critic(nn.Module):
 
         # Network Structure
 
-        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
-        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
-        self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
-        self.dropout = nn.Dropout(0.2)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=400)
+        self.fc2 = nn.Linear(in_features=400, out_features=300)
+        self.fc_out = nn.Linear(in_features=300, out_features=1)
 
         # Network Initialization
 
-        for layer in [self.fc1, self.fc2, self.fc3]:
-            nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
+        for layer in [self.fc1, self.fc2]:
+            nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu'))
             nn.init.zeros_(layer.bias)
-        nn.init.uniform_(self.fc_out.weight, -1e-2, 1e-2)
-        nn.init.uniform_(self.fc_out.bias, -1e-2, 1e-2)
+        nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
+        nn.init.uniform_(self.fc_out.bias, -3e-3, 3e-3)
 
     def forward(self, inputs, actions):
 
         x = torch.cat([inputs, actions], dim=-1)
         x = self.fc1(x)
         x = torch.relu(x)
-        x = self.dropout(x)
         x = self.fc2(x)
         x = torch.relu(x)
-        x = self.dropout(x)
-        x = self.fc3(x)
-        x = torch.relu(x)
-        x = self.dropout(x)
         q_value = self.fc_out(x)
 
         return q_value

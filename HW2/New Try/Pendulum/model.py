@@ -62,7 +62,9 @@ class Critic(nn.Module):
         # Network Structure
 
         self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=400)
+        self.ln1 = nn.LayerNorm(normalized_shape=400)
         self.fc2 = nn.Linear(in_features=400, out_features=300)
+        self.ln2 = nn.LayerNorm(normalized_shape=300)
         self.fc_out = nn.Linear(in_features=300, out_features=1)
 
         # Network Initialization
@@ -77,8 +79,10 @@ class Critic(nn.Module):
 
         x = torch.cat([inputs, actions], dim=-1)
         x = self.fc1(x)
+        x = self.ln1(x)
         x = torch.relu(x)
         x = self.fc2(x)
+        x = self.ln2(x)
         x = torch.relu(x)
         q_value = self.fc_out(x)
 

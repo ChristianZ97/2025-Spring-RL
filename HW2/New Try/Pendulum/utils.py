@@ -32,7 +32,7 @@ def set_seed_and_env(random_seed=42, env_name='Pendulum-v1'):
 
     set_seed(random_seed)
     
-    env = gym.make(env_name)
+    env = gym.make(env_name, render_mode='human')
     env.reset(seed=random_seed)
     env.action_space.seed(random_seed)
     env.observation_space.seed(random_seed)

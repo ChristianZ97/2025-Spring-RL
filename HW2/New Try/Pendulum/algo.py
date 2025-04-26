@@ -40,6 +40,7 @@ class DDPG(object):
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
+        # self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-3)
 
         # Network Initialization
         hard_update(self.actor_target, self.actor) 
@@ -79,7 +80,7 @@ class DDPG(object):
         value_loss = F.mse_loss(q, td_target)
         self.critic_optim.zero_grad()
         value_loss.backward()
-        # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=1.0)
         self.critic_optim.step()
 
 

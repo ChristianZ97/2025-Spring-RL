@@ -85,7 +85,7 @@ def agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_
 
         return updates
 
-def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, render):
+def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history):
 
     state_np, _ = env.reset()
     t, episode_reward = 0, 0
@@ -104,9 +104,6 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
         next_state_np, reward_np, terminated, truncated, _ = env.step(action_np)
         done_np = terminated or truncated
         t += 1
-
-        if render and i_episode % 100 == 0: env.render()
-        
 
         episode_reward += reward_np
         state_np = next_state_np

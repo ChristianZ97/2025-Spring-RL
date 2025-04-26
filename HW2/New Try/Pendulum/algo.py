@@ -39,7 +39,7 @@ class DDPG(object):
 
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-3)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
 
         # Network Initialization
         hard_update(self.actor_target, self.actor) 
@@ -50,9 +50,7 @@ class DDPG(object):
         state = state.to(self.device)
         mu = self.actor(state)
         if action_noise:
-            noise = torch.tensor(action_noise.noise(), dtype=torch.float32).to(self.device)
-            mu = mu + noise
-        mu = torch.clamp(mu, self.action_low, self.action_high)
+            mu += torch.tensor(action_noise.noise(), dtype=torch.float32).to(self.device)
         return mu
 
     def update_parameters(self, batch):

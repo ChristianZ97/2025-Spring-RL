@@ -53,7 +53,7 @@ class Actor(nn.Module):
         x = self.fc_out(x)
         action = torch.tanh(x)
 
-        return action * action_high
+        return action * action_high * 2.0
 
 
 class Critic(nn.Module):

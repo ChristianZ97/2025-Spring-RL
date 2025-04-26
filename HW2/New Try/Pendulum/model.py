@@ -37,8 +37,8 @@ class Actor(nn.Module):
         for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.xavier_uniform_(layer.weight)
             nn.init.zeros_(layer.bias)
-        nn.init.uniform_(self.fc_out.weight, -3e-3, 3e-3)
-        nn.init.uniform_(self.fc_out.bias, -3e-3, 3e-3)
+        nn.init.uniform_(self.fc_out.weight, -1e-2, 1e-2)
+        nn.init.uniform_(self.fc_out.bias, -1e-2, 1e-2)
         
     def forward(self, inputs):
 
@@ -74,8 +74,8 @@ class Critic(nn.Module):
         for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
             nn.init.zeros_(layer.bias)
-        nn.init.uniform_(self.fc_out.weight, -3e-4, 3e-4)
-        nn.init.uniform_(self.fc_out.bias, -3e-4, 3e-4)
+        nn.init.uniform_(self.fc_out.weight, -1e-2, 1e-2)
+        nn.init.uniform_(self.fc_out.bias, -1e-2, 1e-2)
 
     def forward(self, inputs, actions):
 

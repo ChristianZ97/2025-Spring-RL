@@ -14,7 +14,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-def agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up, writer):
+def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up):
 
 		# Initialize state
         state_np, _ = env.reset()

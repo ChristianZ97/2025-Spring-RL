@@ -25,8 +25,8 @@ env_name = 'Pendulum-v1'
 
 def main(
     env,
-    gamma=0.999,
-    tau=0.005,
+    gamma=0.9995,
+    tau=0.01,
     noise_scale=0.3,
     lr_a=1e-4,
     lr_c=5e-6,
@@ -72,7 +72,7 @@ def main(
         if save_model: agent.save_model(env_name, '.pth')
         print("\nSolved! Running reward is now {}.\n".format(ewma_reward_history[-1], t))
 
-    if render: env.render()
+    # if render: env.render()
 
     env.close()
     writer.close()

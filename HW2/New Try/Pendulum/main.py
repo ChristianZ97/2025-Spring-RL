@@ -25,11 +25,11 @@ env_name = 'Pendulum-v1'
 
 def main(
     env,
-    gamma=0.99,
+    gamma=0.999,
     tau=0.005,
     noise_scale=0.3,
-    lr_a=5e-7,
-    lr_c=1e-6,
+    lr_a=1e-6,
+    lr_c=5e-7,
     batch_size=128,
     num_episodes=4000,
     render=True,
@@ -42,7 +42,7 @@ def main(
 	# Adjust for different environment    
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
-    replay_size =  int(1e5)
+    replay_size =  int(5e5)
     warm_up = 2000
 
     hidden_size = 256

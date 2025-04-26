@@ -26,8 +26,8 @@ env_name = 'Pendulum-v1'
 def main(
     env,
     gamma=0.9998,
-    tau=0.05,
-    noise_scale=0.5,
+    tau=0.01,
+    noise_scale=2.5,
     lr_a=1e-3,
     lr_c=1e-4,
     batch_size=64,
@@ -56,11 +56,11 @@ def main(
 
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a=lr_a, lr_c=lr_c)
     ounoise = OUNoise(env.action_space.shape[0])
-    # ounoise = OUNoise(env.action_space.shape[0], scale=1.5, mu=0, theta=0.3, sigma=0.7)
     memory = ReplayMemory(replay_size)
     
     for i_episode in range(num_episodes):
-        ounoise.scale = noise_scale
+        ounoise.scale = noise_scale * (1 - i_episode / num_episodes)
+        # ounoise.scale = noise_scale
         ounoise.reset()
 
         total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up)

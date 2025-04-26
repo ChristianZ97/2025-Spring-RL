@@ -18,7 +18,7 @@ def agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up):
 
 		# Initialize state
         state_np, _ = env.reset()
-
+        episode_actions = [0]  # 記錄每個 episode 的動作
         # Interaction Loop
         while True:
 

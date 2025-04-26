@@ -45,8 +45,24 @@ def agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up):
             state_np = next_state_np
 
             # Break if episode end
-            if done_np:
-            	return total_numsteps
+            #if done_np:
+            	#return total_numsteps
+
+
+        # 每 1000 步記錄一次狀態和動作分佈
+        if total_numsteps % 1000 == 0 and len(memory) > 0:
+            # 提取狀態和動作，確保轉為 NumPy 數組
+            states = np.array([t.state for t in memory], dtype=np.float32)
+            actions = np.array([t.action for t in memory], dtype=np.float32)
+            writer.add_histogram('Train/State_Distribution', states, total_numsteps)
+            writer.add_histogram('Train/Action_Distribution', actions, total_numsteps)
+
+        if done_np:
+            # 記錄每個 episode 的動作分佈
+            episode_actions = np.array(episode_actions, dtype=np.float32)
+            writer.add_histogram('Train/Episode_Action_Distribution', episode_actions, total_numsteps)
+            return total_numsteps
+
 
 def agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates):
 
@@ -75,12 +91,16 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
     t, episode_reward = 0, 0
     SOLVED = False
 
+    episode_actions = [] ##################
     while True:
         state_tensor = torch.tensor(state_np, dtype=torch.float32)
         with torch.no_grad():
             action = agent.select_action(state_tensor)
 
         action_np = action.cpu().numpy()
+
+        episode_actions.append(action_np) ############
+
         next_state_np, reward_np, terminated, truncated, _ = env.step(action_np)
         done_np = terminated or truncated
         t += 1
@@ -92,6 +112,10 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
         state_np = next_state_np
         
         if done_np: break
+
+    # 記錄評估時的動作分佈
+    episode_actions = np.array(episode_actions, dtype=np.float32)
+    writer.add_histogram('Eval/Episode_Action_Distribution', episode_actions, i_episode)
 
     # Update rewards and EWMA history
     rewards.append(episode_reward)

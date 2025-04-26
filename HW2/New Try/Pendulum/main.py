@@ -31,7 +31,7 @@ def main(
     lr_a=1e-3,
     lr_c=1e-4,
     batch_size=64,
-    num_episodes=4000,
+    num_episodes=40000,
     render=False,
     save_model=True,
     writer=None

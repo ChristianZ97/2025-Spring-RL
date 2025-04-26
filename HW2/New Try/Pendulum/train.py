@@ -40,6 +40,7 @@ def agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up):
             total_numsteps += 1
 
             # Update replay buffer
+            reward_np = reward_np / 1000.0 # testing this one
             memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
             state_np = next_state_np
 

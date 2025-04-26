@@ -28,9 +28,9 @@ def main(
     gamma=0.9998,
     tau=0.05,
     noise_scale=0.5,
-    lr_a=1e-4,
-    lr_c=1e-6,
-    batch_size=32,
+    lr_a=1e-3,
+    lr_c=1e-4,
+    batch_size=64,
     num_episodes=4000,
     render=False,
     save_model=True,
@@ -43,7 +43,7 @@ def main(
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
     replay_size =  int(1e6)
-    warm_up = 5000
+    warm_up = int(2e3) # 100 episodes for exploration
 
     hidden_size = 256
     updates_per_step = 1

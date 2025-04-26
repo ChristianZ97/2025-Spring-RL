@@ -68,8 +68,6 @@ def main(
             updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
         SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history)
 
-        if i_episode 
-
     if SOLVED:
         if save_model: agent.save_model(env_name, '.pth')
         print("\nSolved! Running reward is now {}.\n".format(ewma_reward_history[-1], t))

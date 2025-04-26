@@ -55,7 +55,6 @@ def main(
     updates = 0
 
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a=lr_a, lr_c=lr_c)
-    # ounoise = OUNoise(env.action_space.shape[0])
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
     

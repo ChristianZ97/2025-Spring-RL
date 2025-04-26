@@ -49,19 +49,19 @@ def agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up):
             	#return total_numsteps
 
 
-        # 每 1000 步記錄一次狀態和動作分佈
-        if total_numsteps % 1000 == 0 and len(memory) > 0:
-            # 提取狀態和動作，確保轉為 NumPy 數組
-            states = np.array([t.state for t in memory], dtype=np.float32)
-            actions = np.array([t.action for t in memory], dtype=np.float32)
-            writer.add_histogram('Train/State_Distribution', states, total_numsteps)
-            writer.add_histogram('Train/Action_Distribution', actions, total_numsteps)
+            # 每 1000 步記錄一次狀態和動作分佈
+            if total_numsteps % 1000 == 0 and len(memory) > 0:
+                # 提取狀態和動作，確保轉為 NumPy 數組
+                states = np.array([t.state for t in memory], dtype=np.float32)
+                actions = np.array([t.action for t in memory], dtype=np.float32)
+                writer.add_histogram('Train/State_Distribution', states, total_numsteps)
+                writer.add_histogram('Train/Action_Distribution', actions, total_numsteps)
 
-        if done_np:
-            # 記錄每個 episode 的動作分佈
-            episode_actions = np.array(episode_actions, dtype=np.float32)
-            writer.add_histogram('Train/Episode_Action_Distribution', episode_actions, total_numsteps)
-            return total_numsteps
+            if done_np:
+                # 記錄每個 episode 的動作分佈
+                episode_actions = np.array(episode_actions, dtype=np.float32)
+                writer.add_histogram('Train/Episode_Action_Distribution', episode_actions, total_numsteps)
+                return total_numsteps
 
 
 def agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates):

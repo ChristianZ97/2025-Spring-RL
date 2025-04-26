@@ -45,11 +45,14 @@ class Actor(nn.Module):
 
         x = self.fc1(inputs)
         x = F.relu(x)
+
         x = self.fc2(x)
         x = F.relu(x)
-        x = self.fc_out(x)
-        action = torch.tanh(x) * action_high
 
+        x = self.fc_out(x)
+        x = torch.tanh(x)
+
+        action = x * action_high
         return action
 
 
@@ -81,10 +84,11 @@ class Critic(nn.Module):
         x = self.fc1(x)
         x = self.ln1(x)
         x = torch.relu(x)
+
         x = self.fc2(x)
         x = self.ln2(x)
         x = torch.relu(x)
-        q_value = self.fc_out(x)
 
+        q_value = self.fc_out(x)
         return q_value
         

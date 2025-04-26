@@ -54,13 +54,13 @@ def agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up, writer)
                 # 提取狀態和動作，確保轉為 NumPy 數組
                 states = np.array([t.state for t in memory.memory], dtype=np.float32)
                 actions = np.array([t.action for t in memory.memory], dtype=np.float32)
-                writer.add_histogram('Dist/State_Distribution', states, total_numsteps)
-                writer.add_histogram('Dist/Action_Distribution', actions, total_numsteps)
+                writer.add_histogram('Interact/State_Distribution', states, total_numsteps)
+                writer.add_histogram('Interact/Action_Distribution', actions, total_numsteps)
 
             if done_np:
                 # 記錄每個 episode 的動作分佈
                 episode_actions = np.array(episode_actions, dtype=np.float32)
-                writer.add_histogram('Dist/Episode_Action_Distribution', episode_actions, total_numsteps)
+                writer.add_histogram('Interact/Episode_Action_Distribution', episode_actions, total_numsteps)
                 return total_numsteps
 
 
@@ -115,7 +115,7 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
 
     # 記錄評估時的動作分佈
     episode_actions = np.array(episode_actions, dtype=np.float32)
-    writer.add_histogram('Dist/Episode_Action_Distribution', episode_actions, i_episode)
+    writer.add_histogram('Eval/Episode_Action_Distribution', episode_actions, i_episode)
 
     # Update rewards and EWMA history
     rewards.append(episode_reward)

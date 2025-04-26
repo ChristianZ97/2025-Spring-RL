@@ -31,7 +31,7 @@ def main(
     lr_a=1e-3,
     lr_c=1e-4,
     batch_size=64,
-    num_episodes=4000,
+    num_episodes=40000,
     render=False,
     save_model=True,
     writer=None
@@ -59,25 +59,30 @@ def main(
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a=lr_a, lr_c=lr_c)
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
-    
-    for i_episode in range(num_episodes):
-        ounoise.scale = noise_scale * (1 - i_episode / num_episodes)
-        # ounoise.scale = noise_scale
-        ounoise.reset()
 
-        total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale)
-        if len(memory) >= warm_up:
-            updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
-        SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, reward_scale)
+    try:
+        for i_episode in range(num_episodes):
+            ounoise.scale = noise_scale * (1 - i_episode / num_episodes)
+            # ounoise.scale = noise_scale
+            ounoise.reset()
 
-    if SOLVED:
-        if save_model: agent.save_model(env_name, '.pth')
-        print("\nSolved! Running reward is now {}.\n".format(ewma_reward_history[-1], t))
+            total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale)
+            if len(memory) >= warm_up:
+                updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
+            SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, reward_scale)
 
-    # if render: env.render()
+            if SOLVED:
+                print(f"\nSolved at episode {i_episode} with Running reward {ewma_reward_history[-1]}!!\n")
+                if save_model: agent.save_model(env_name, '.pth')
+                break
 
-    env.close()
-    writer.close()
+    except KeyboardInterrupt:
+        print(f"\nKeyboardInterrupt detected. Saving model...\n")
+        if save_model: agent.save_model(env_name + "_interrupt", '.pth')
+
+    finally:
+        env.close()
+        writer.close()
 
     return {
         'last_rewards': rewards[-10:],

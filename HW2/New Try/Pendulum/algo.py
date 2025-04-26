@@ -39,8 +39,8 @@ class DDPG(object):
 
         self.critic = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
         self.critic_target = Critic(hidden_size, self.num_inputs, self.action_space).to(self.device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
-        # self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-2)
+        # self.critic_optim = Adam(self.critic.parameters(), lr=lr_c)
+        self.critic_optim = Adam(self.critic.parameters(), lr=lr_c, weight_decay=1e-3)
 
         # Network Initialization
         hard_update(self.actor_target, self.actor) 

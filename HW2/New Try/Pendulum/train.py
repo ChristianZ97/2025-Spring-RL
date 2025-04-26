@@ -32,7 +32,7 @@ def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up)
                 with torch.no_grad():
                     action = agent.select_action(state_tensor, ounoise)
                 action_np = action.cpu().numpy()
-                action_np = np.clip(action_np, env.action_space.low, env.action_space.high)
+                # action_np = np.clip(action_np, env.action_space.low, env.action_space.high)
 
             # Interact with the environment
             next_state_np, reward_np, terminated, truncated, _ = env.step(action_np)
@@ -98,7 +98,7 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history):
         with torch.no_grad():
             action = agent.select_action(state_tensor)
         action_np = action.cpu().numpy()
-        action_np = np.clip(action_np, env.action_space.low, env.action_space.high)
+        # action_np = np.clip(action_np, env.action_space.low, env.action_space.high)
 
         episode_actions.append(action_np) ############
 

@@ -43,7 +43,7 @@ def main(
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
     replay_size =  int(1e6)
-    warm_up = int(5e3) # 25 episodes for exploration
+    warm_up = int(2e3) # 10 episodes for exploration
     reward_scale = 1e-1 # 10% of original reward
 
 
@@ -67,7 +67,7 @@ def main(
             ounoise.reset()
 
             total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale)
-            if len(memory) >= warm_up:
+            if len(memory) >= max(warm_up, batch_size):
                 updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
             SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, reward_scale)
 

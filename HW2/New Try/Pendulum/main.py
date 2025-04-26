@@ -26,7 +26,7 @@ env_name = 'Pendulum-v1'
 def main(
     env,
     gamma=0.9998,
-    tau=0.01,
+    tau=0.005,
     noise_scale=2.5,
     lr_a=1e-3,
     lr_c=1e-4,

@@ -62,7 +62,7 @@ def main(
         ounoise.scale = noise_scale
         ounoise.reset()
 
-        total_numsteps = agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up)
+        total_numsteps = agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up, writer)
         if len(memory) >= warm_up:
             updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
         SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, render)

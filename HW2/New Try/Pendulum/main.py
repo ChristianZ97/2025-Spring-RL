@@ -42,8 +42,8 @@ def main(
 	# Adjust for different environment    
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
-    replay_size =  int(5e5)
-    warm_up = 2000
+    replay_size =  int(1e6)
+    warm_up = 5000
 
     hidden_size = 256
     updates_per_step = 1

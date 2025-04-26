@@ -18,18 +18,20 @@ from train import agent_interact, agent_update, agent_evaluate
 from algo import DDPG
 from utils import ReplayMemory, OUNoise, get_device, set_seed_and_env
 
+device = get_device()
+print(f"\n Using device {device}\n")
+random_seed = 42
+env_name = 'Pendulum-v1'
+
 def main(
     env,
-    num_episodes=200,
     gamma=0.995,
     tau=0.002,
     noise_scale=0.3,
     lr_a=1e-4,
     lr_c=1e-3,
-    updates_per_step=1,
-    hidden_size=128,
     batch_size=64,
-    warn_up=2000,
+    num_episodes=200,
     render=True,
     save_model=True,
     writer=None
@@ -43,6 +45,9 @@ def main(
     hidden_size = 128
     replay_size =  int(1e5)
     warm_up = 2000
+
+    updates_per_step = 1
+    hidden_size = 128
 
     ewma_reward = 0
     rewards = [0]
@@ -59,7 +64,8 @@ def main(
         ounoise.reset()
 
         total_numsteps = agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up)
-        updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
+        if len(memory) >= warm_up:
+            updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
         SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, render)
 
 
@@ -80,12 +86,6 @@ def main(
     }
 
 if __name__ == '__main__':
-
-    device = get_device()
-    print(f"\n Using device {device}\n")
-
-    random_seed=42
-    env_name='Pendulum-v1'
 
     env = set_seed_and_env(random_seed, env_name)
     main(env)

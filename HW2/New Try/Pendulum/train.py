@@ -105,7 +105,7 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
         done_np = terminated or truncated
         t += 1
 
-        if render: env.render()
+        if render and i_episode % 100 == 0: env.render()
         
 
         episode_reward += reward_np

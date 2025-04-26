@@ -81,6 +81,8 @@ def main(
         if save_model: agent.save_model(env_name + "_interrupt", '.pth')
 
     finally:
+        print(f"\nCould NOT Solve!!!\n")
+        if save_model: agent.save_model(env_name + "_timeout", '.pth')
         env.close()
         writer.close()
 

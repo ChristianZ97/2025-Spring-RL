@@ -38,9 +38,9 @@ from utils import set_seed_and_env, set_seed
 search_space = [
     Real(0.98, 0.995, name='gamma'),
     Real(0.001, 0.005, name='tau'),
-    Real(0.05, 0.2, name='noise_scale'),
-    Real(1e-4, 3e-4, name='lr_a', prior='log-uniform'),
-    Real(2e-4, 6e-4, name='lr_c', prior='log-uniform'),
+    Real(0.1, 0.5, name='noise_scale'),
+    Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
+    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
     Categorical([64, 128, 256, 512, 1024], name='batch_size'),
 ]
 
@@ -70,7 +70,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
         lr_a=lr_a,
         lr_c=lr_c,
         batch_size=batch_size,
-        num_episodes=500, # Use fewer episodes for optimization to save time
+        num_episodes=200, # Use fewer episodes for optimization to save time
         render=False,   # No rendering during optimization
         save_model=False,  # Don't save models during optimization
         writer=writer

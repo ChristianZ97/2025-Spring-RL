@@ -23,14 +23,19 @@ def get_device():
 		device = torch.device("cpu")
 	return device
 
+def set_seed(random_seed=42):
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+
 def set_seed_and_env(random_seed=42, env_name='Pendulum-v1'):
+
+    set_seed(random_seed)
     
     env = gym.make(env_name)
     env.reset(seed=random_seed)
     env.action_space.seed(random_seed)
     env.observation_space.seed(random_seed)
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
 
     return env
 

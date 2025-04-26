@@ -66,7 +66,11 @@ def main(
         total_numsteps = agent_interact(env, agent, memory, ounoise, total_numsteps, warm_up, writer)
         if len(memory) >= warm_up:
             updates = agent_update(writer, agent, memory, batch_size, total_numsteps, updates_per_step, updates)
-        SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, render)
+        SOLVED = agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history)
+
+        if i_episode % 1000 == 0:
+            env.render()
+
 
 
     if SOLVED:

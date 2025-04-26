@@ -37,8 +37,8 @@ class Actor(nn.Module):
         for layer in [self.fc1, self.fc2, self.fc3]:
             nn.init.xavier_uniform_(layer.weight)
             nn.init.zeros_(layer.bias)
-        nn.init.uniform_(self.fc_out.weight, -1e-2, 1e-2)
-        nn.init.uniform_(self.fc_out.bias, -1e-2, 1e-2)
+        nn.init.uniform_(self.fc_out.weight, -5e-2, 5e-2)
+        nn.init.uniform_(self.fc_out.bias, -5e-2, 5e-2)
         
     def forward(self, inputs):
 

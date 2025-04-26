@@ -26,13 +26,13 @@ env_name = 'Pendulum-v1'
 def main(
     env,
     gamma=0.9998,
-    tau=0.01,
-    noise_scale=0.3,
+    tau=0.05,
+    noise_scale=0.5,
     lr_a=1e-4,
     lr_c=1e-6,
-    batch_size=128,
+    batch_size=32,
     num_episodes=4000,
-    render=True,
+    render=False,
     save_model=True,
     writer=None
     ):

@@ -36,18 +36,18 @@ from utils import set_seed_and_env, set_seed
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.99, 0.9999, name='gamma'),
-    Categorical([64, 128, 256], name='batch_size'),
+    Real(9.5e-4, 1.5e-3, name='lr_a'),
+    Real(2.5e-3, 3.5e-3, name='lr_c')
 ]
 
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
-def objective(gamma, batch_size):
+def objective(lr_a, lr_c):
     """
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    print(f"\nTrying parameters: gamma={gamma:.3e}, batch_size={batch_size}")
+    print(f"\nTrying parameters: lr_a={lr_a:.3e},  lr_c={lr_c:.3e}")
     
     global counter
     bo_step = next(counter)
@@ -56,13 +56,13 @@ def objective(gamma, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/batch_size={batch_size}/gamma={gamma:.3e}")
+    writer = SummaryWriter(f"./tb_record_pendulum/lr_a={lr_a:.3e}_lr_c={lr_c:.3e}")
 
     results = main(
         env=env,
-        gamma=gamma,
-        batch_size=batch_size,
-        num_episodes=1000, # Use fewer episodes for optimization to save time
+        lr_a=lr_a,
+        lr_c=lr_c,
+        num_episodes=600, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )
@@ -107,11 +107,11 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     )
     
     # Extract best hyperparameters
-    best_gamma, best_lr_c, best_batch_size = result.x
+    best_lr_a, best_lr_c = result.x
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
-    for name, value in zip(['gamma', 'lr_c', 'batch_size'], result.x):
+    for name, value in zip(['lr_a', 'lr_c'], result.x):
         print(f"{name}: {value}")
     
     print(f"Best reward: {-result.fun:.2f}")
@@ -121,7 +121,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['gamma', 'lr_c', 'batch_size'], params)])
+                                  zip(['lr_c', 'lr_c'], params)])
             seed = random_seed + i
             f.write(f"{i}, {-value:.4f}, {param_str}, seed={seed}\n")
     
@@ -139,8 +139,8 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     final_env = set_seed_and_env(best_seed, env_name)
     final_results = main(
         env=final_env,
-        gamma=gamma,
-        batch_size=best_batch_size,
+        lr_a=best_lr_a,
+        lr_c=best_lr_c,
         num_episodes=4000,
         render=True,
         save_model=True
@@ -148,9 +148,8 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     
     # Save best hyperparameters to file
     with open(f"{output_dir}/best_hyperparameters.txt", "w") as f:
-        f.write(f"gamma = {best_gamma}\n")
+        f.write(f"lr_c = {best_lr_a}\n")
         f.write(f"lr_c = {best_lr_c}\n")
-        f.write(f"batch_size = {best_batch_size}\n")
         f.write(f"random_seed = {best_seed}\n")
         f.write(f"Best reward: {-result.fun:.2f}\n")
     

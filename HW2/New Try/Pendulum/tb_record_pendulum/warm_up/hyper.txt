@@ -1,0 +1,4 @@
+reward_sacle = 0.1
+critic.weight_decay=0
+
+tune warm_up

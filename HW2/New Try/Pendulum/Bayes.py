@@ -44,7 +44,7 @@ search_space = [
     Categorical([1.2], name='noise_scale'),
     # Real(1e-5, 5e-4, name='lr_a', prior='log-uniform'),
     Categorical([1e-3], name='lr_a'),
-    Real(5e-4, 8e-4, name='lr_c', prior='log-uniform'),
+    Real(5e-4, 1e-2, name='lr_c', prior='log-uniform'), # 7e-4, 8e-3
     # Categorical([1e-4], name='lr_c'),
     Categorical([64], name='batch_size'),
 ]

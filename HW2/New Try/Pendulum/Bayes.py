@@ -56,8 +56,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-
-    print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, batch_size={batch_size}")
+    print(f"\nTrying parameters: gamma={gamma:.3e}, tau={tau:.3e}, noise_scale={noise_scale:.3e}, lr_a={lr_a:.3e}, lr_c={lr_c:.3e}, batch_size={batch_size}")
     
     global counter
     bo_step = next(counter)
@@ -66,7 +65,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/lr_c={lr_c}")
+    writer = SummaryWriter(f"./tb_record_pendulum/lr_c={lr_c:.3e}")
 
     results = main(
         env=env,

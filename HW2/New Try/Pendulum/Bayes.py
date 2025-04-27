@@ -38,9 +38,10 @@ from utils import set_seed_and_env, set_seed
 search_space = [
     Categorical([0.9998], name='gamma'),
     # Real(0.995, 0.998, name='gamma'),
-    Categorical([0.005], name='tau'),
-    # Real(0.001, 0.005, name='tau'),
-    Real(1.2, 2.5, name='noise_scale'),
+    # Categorical([0.005], name='tau'),
+    Real(0.001, 0.01, name='tau'),
+    # Real(1.2, 2.5, name='noise_scale'),
+    Categorical([2.5], name='noise_scale'),
     # Real(1e-5, 5e-4, name='lr_a', prior='log-uniform'),
     Categorical([1e-3], name='lr_a'),
     # Real(5e-5, 1e-3, name='lr_c', prior='log-uniform'),

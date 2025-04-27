@@ -31,7 +31,7 @@ def main(
     lr_a=1e-3,
     lr_c=1e-4,
     batch_size=64,
-    num_episodes=40000,
+    num_episodes=4000,
     render=False,
     save_model=True,
     writer=None
@@ -45,8 +45,8 @@ def main(
     
 
     replay_size =  int(1e6)
-    warm_up = int(0) # 0 episodes for exploration
-    reward_scale = 1e-1 # 10% of original reward
+    warm_up = int(1e4) # 50 episodes for exploration
+    reward_scale = 5e-2 # 5% of original reward
 
     hidden_size = 256 # We use [400, 300] for hidden dimensions
     updates_per_step = 1

@@ -42,8 +42,10 @@ search_space = [
     # Real(0.001, 0.005, name='tau'),
     Categorical([1.2], name='noise_scale'),
     # Real(0.5, 1.2, name='noise_scale'),
-    # Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
-    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
+    Real(1e-5, 5e-4, name='lr_a', prior='log-uniform'),
+    # Categorical([1e-4], name='lr_a'),
+    # Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
+    Categorical([1e-4], name='lr_c'),
     Categorical([64], name='batch_size'),
 ]
 
@@ -55,7 +57,6 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
 
-    lr_a = lr_c / 10.0
     print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, batch_size={batch_size}")
     
     global counter
@@ -121,14 +122,12 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     )
     
     # Extract best hyperparameters
-    best_gamma, best_tau, best_noise_scale, best_lr_c, best_batch_size = result.x
-    best_lr_a = best_lr_c / 10.0
+    best_gamma, best_tau, best_noise_scale, best_lr_a, best_lr_c, best_batch_size = result.x
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
-    for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_c', 'batch_size'], result.x):
+    for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'batch_size'], result.x):
         print(f"{name}: {value}")
-    print(f"lr_a: {best_lr_a}")
     
     print(f"Best reward: {-result.fun:.2f}")
     
@@ -137,7 +136,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['gamma', 'tau', 'noise_scale', 'lr_c', 'batch_size'], params)])
+                                  zip(['gamma', 'tau', 'noise_scale', ,'lr_a', 'lr_c', 'batch_size'], params)])
             seed = random_seed + i
             f.write(f"{i}, {-value:.4f}, {param_str}, seed={seed}\n")
     

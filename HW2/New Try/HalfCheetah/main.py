@@ -28,7 +28,7 @@ def main(
     gamma=0.995,
     tau=0.0005,
     noise_scale=2.5,
-    lr_a=1e-3,
+    lr_a=1e-4,
     lr_c=1e-3,
     batch_size=64,
     num_episodes=40000,
@@ -44,9 +44,9 @@ def main(
         writer = SummaryWriter("./tb_record_halfcheetah")
     
 
-    replay_size =  int(1e6)
-    warm_up = int(5e3) # 5 episodes for exploration
-    reward_scale = 1e-3 # 0.1% of original reward
+    replay_size =  int(1e7)
+    warm_up = int(5e4) # 50 episodes for exploration
+    reward_scale = 1e-4 # 0.01% of original reward
 
     hidden_size = 256 # We use [400, 300] for hidden dimensions
     updates_per_step = 1

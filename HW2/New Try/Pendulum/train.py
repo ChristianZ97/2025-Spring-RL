@@ -19,6 +19,8 @@ def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up,
 		# Initialize state
         state_np, _ = env.reset()
         episode_actions = []
+        action_low = env.action_space.low
+        action_high = env.action_space.high
 
         # Interaction Loop
         while True:
@@ -33,6 +35,7 @@ def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up,
                 with torch.no_grad():
                     action = agent.select_action(state_tensor, ounoise)
                 action_np = action.cpu().numpy()
+                action_np = np.clip(action_np, action_low, action_high) # Clip only when adding noise
             
             episode_actions.append(action_np)
 
@@ -47,21 +50,17 @@ def agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up,
             memory.push(state_np, action_np, mask_np, next_state_np, reward_np)
             state_np = next_state_np
 
-
-            # 每 1000 步記錄一次狀態和動作分佈
             if total_numsteps % 1000 == 0 and len(memory) > 0:
-                # 提取狀態和動作，確保轉為 NumPy 數組
                 states = np.array([t.state for t in memory.memory], dtype=np.float32)
                 actions = np.array([t.action for t in memory.memory], dtype=np.float32)
-                writer.add_histogram('Interact/State_Distribution', states, total_numsteps)
-                writer.add_histogram('Interact/Action_Distribution', actions, total_numsteps)
+                writer.add_histogram('Interact/Buffer_State_Distribution', states, total_numsteps)
+                writer.add_histogram('Interact/Buffer_Action_Distribution', actions, total_numsteps)
 
             # Break if episode end
             if done_np: break
 
-        # 記錄每個 episode 的動作分佈
         episode_actions = np.array(episode_actions, dtype=np.float32)
-        writer.add_histogram('Interact/Episode_Action_Distribution', episode_actions, total_numsteps)
+        writer.add_histogram('Interact/Noised_Action_Distribution', episode_actions, total_numsteps)
         return total_numsteps
 
 
@@ -110,9 +109,8 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
         
         if done_np: break
 
-    # 記錄評估時的動作分佈
     episode_actions = np.array(episode_actions, dtype=np.float32)
-    writer.add_histogram('Eval/Episode_Action_Distribution', episode_actions, i_episode)
+    writer.add_histogram('Eval/Action_Distribution', episode_actions, i_episode)
 
     # Update rewards and EWMA history
     rewards.append(episode_reward)
@@ -121,7 +119,7 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
     ewma_reward_history.append(ewma_reward)           
     print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, episode_reward, ewma_reward))
 
-    if i_episode > 30 and ewma_reward > -120:
+    if i_episode > 200 and ewma_reward > 10000:
         SOLVED = True
 
     writer.add_scalar('Eval/Episode_Reward', episode_reward, i_episode)

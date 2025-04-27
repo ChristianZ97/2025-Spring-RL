@@ -36,12 +36,15 @@ from utils import set_seed_and_env, set_seed
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.98, 0.995, name='gamma'),
-    Real(0.001, 0.005, name='tau'),
-    Real(0.1, 0.5, name='noise_scale'),
-    Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
+    Categorical([0.9998], name='gamma'),
+    # Real(0.995, 0.998, name='gamma'),
+    Categorical([0.005], name='tau'),
+    # Real(0.001, 0.005, name='tau'),
+    Categorical([1.2], name='noise_scale'),
+    # Real(0.5, 1.2, name='noise_scale'),
+    # Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
     Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
-    Categorical([64, 128, 256, 512, 1024], name='batch_size'),
+    Categorical([64], name='batch_size'),
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -51,6 +54,8 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
+
+    lr_a = lr_c / 10.0
     print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, batch_size={batch_size}")
     
     global counter
@@ -60,7 +65,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/{bo_step}")
+    writer = SummaryWriter(f"./tb_record_pendulum/lr_c={lr_c}")
 
     results = main(
         env=env,
@@ -70,7 +75,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
         lr_a=lr_a,
         lr_c=lr_c,
         batch_size=batch_size,
-        num_episodes=200, # Use fewer episodes for optimization to save time
+        num_episodes=2000, # Use fewer episodes for optimization to save time
         render=False,   # No rendering during optimization
         save_model=False,  # Don't save models during optimization
         writer=writer
@@ -79,8 +84,8 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     duration = time.time() - start_time
     final_rewards = results['last_rewards']
     
-    final_mean = np.mean(final_rewards[-10:])
-    stability = -np.std(final_rewards[-10:]) 
+    final_mean = np.mean(final_rewards[-100:])
+    stability = -np.std(final_rewards[-100:]) 
     score = final_mean + 0.1 * stability
 
     print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Std: {-stability:.2f} | Score: {score:.2f}")
@@ -116,12 +121,14 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     )
     
     # Extract best hyperparameters
-    best_gamma, best_tau, best_noise_scale, best_lr_a, best_lr_c, best_batch_size = result.x
+    best_gamma, best_tau, best_noise_scale, best_lr_c, best_batch_size = result.x
+    best_lr_a = best_lr_c / 10.0
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
-    for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'batch_size'], result.x):
+    for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_c', 'batch_size'], result.x):
         print(f"{name}: {value}")
+    print(f"lr_a: {best_lr_a}")
     
     print(f"Best reward: {-result.fun:.2f}")
     
@@ -130,7 +137,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'batch_size'], params)])
+                                  zip(['gamma', 'tau', 'noise_scale', 'lr_c', 'batch_size'], params)])
             seed = random_seed + i
             f.write(f"{i}, {-value:.4f}, {param_str}, seed={seed}\n")
     
@@ -148,7 +155,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     final_env = set_seed_and_env(best_seed, env_name)
     final_results = main(
         env=final_env,
-        num_episodes=1000,
+        num_episodes=4000,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,
@@ -174,5 +181,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=100, n_random_starts=20)
+    result, final_model = run_optimization(n_calls=20, n_random_starts=5)
     print("Optimization and visualization completed!\n")

@@ -40,12 +40,12 @@ search_space = [
     Categorical([0.995], name='gamma'),
     # Real(0.001, 0.005, name='tau'),
     Categorical([0.0005], name='tau'),
-    Real(0.3, 1.2, name='noise_scale'),
+    Real(1.2, 2.5, name='noise_scale'),
     # Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
-    Categorical([1e-4], name='lr_a'),
+    Categorical([1e-3], name='lr_a'),
     # Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
-    Categorical([1e-3], name='lr_c'),
-    Categorical([64], name='batch_size'),
+    Categorical([1e-4], name='lr_c'),
+    Categorical([256], name='batch_size'),
 ]
 
 # Define the objective function for Bayesian Optimization

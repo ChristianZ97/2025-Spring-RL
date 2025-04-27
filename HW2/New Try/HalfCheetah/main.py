@@ -23,6 +23,28 @@ print(f"\n Using device {device}\n")
 random_seed = 42
 env_name = 'HalfCheetah-v5'
 
+'''
+Main Hyperparameters for DDPG
+
+gamma:        Discount factor determining the importance of future rewards.
+Higher values emphasize long-term rewards, while lower values make the agent favor immediate rewards.
+
+tau:          Soft update rate for synchronizing the target networks.
+Smaller values make updates more stable but slower; larger values speed up updates but can destabilize training.
+
+noise_scale:  Scaling factor for the Ornstein-Uhlenbeck noise applied to actions.
+Higher noise encourages exploration, but too much noise may prevent convergence.
+
+lr_a:         Learning rate for the Actor network.
+Higher values speed up learning but may cause instability; lower values make learning slower but more stable.
+
+lr_c:         Learning rate for the Critic network.
+Same as lr_a, but for the Critic; improper values can cause divergence or slow learning.
+
+batch_size:   Number of transition samples drawn from the replay buffer for each network update.
+Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
+'''
+
 def main(
     env,
     gamma=0.995,
@@ -42,13 +64,13 @@ def main(
 	# Adjust for different environment    
     if writer is None:
         writer = SummaryWriter("./tb_record_halfcheetah")
-    
+    replay_size = int(1e6)
+    warm_up = int(1e4) # 10 episodes for exploration
+    reward_scale = 1e-2 # 1% of original reward
 
-    replay_size =  int(1e7)
-    warm_up = int(5e4) # 50 episodes for exploration
-    reward_scale = 1e-4 # 0.01% of original reward
-
-    hidden_size = 256 # We use [400, 300] for hidden dimensions
+    #######
+    # We use [400, 300] for hidden dimensions, keep the same network structure for both environment.
+    hidden_size = 256
     updates_per_step = 1
 
     ewma_reward = 0
@@ -57,7 +79,7 @@ def main(
     total_numsteps = 0
     updates = 0
 
-    agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a=lr_a, lr_c=lr_c)
+    agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a, lr_c)
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
 

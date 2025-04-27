@@ -56,7 +56,7 @@ def objective(gamma, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/lr_c={lr_c:.3e}")
+    writer = SummaryWriter(f"./tb_record_pendulum/batch_size={batch_size}/gamma={gamma:.3e}")
 
     results = main(
         env=env,

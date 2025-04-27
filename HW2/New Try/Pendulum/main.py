@@ -46,7 +46,7 @@ def main(
 
     replay_size =  int(1e6)
     warm_up = int(1e4) # 50 episodes for exploration
-    reward_scale = 5e-2 # 5% of original reward
+    reward_scale = 1e-2 # 1% of original reward
 
     hidden_size = 256 # We use [400, 300] for hidden dimensions
     updates_per_step = 1

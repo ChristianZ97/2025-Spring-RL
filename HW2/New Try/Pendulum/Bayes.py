@@ -136,7 +136,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['gamma', 'tau', 'noise_scale', ,'lr_a', 'lr_c', 'batch_size'], params)])
+                                  zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'batch_size'], params)])
             seed = random_seed + i
             f.write(f"{i}, {-value:.4f}, {param_str}, seed={seed}\n")
     

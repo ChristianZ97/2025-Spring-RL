@@ -36,12 +36,16 @@ from utils import set_seed_and_env, set_seed
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.98, 0.995, name='gamma'),
-    Real(0.001, 0.005, name='tau'),
-    Real(0.1, 0.5, name='noise_scale'),
-    Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
-    Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
-    Categorical([64, 128, 256, 512, 1024], name='batch_size'),
+    # Real(0.98, 0.995, name='gamma'),
+    Categorical([0.995], name='gamma'),
+    # Real(0.001, 0.005, name='tau'),
+    Categorical([0.0005], name='tau'),
+    Real(0.3, 1.2, name='noise_scale'),
+    # Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
+    Categorical([1e-4], name='lr_a'),
+    # Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
+    Categorical([1e-3], name='lr_c'),
+    Categorical([64], name='batch_size'),
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -60,7 +64,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/{bo_step}")
+    writer = SummaryWriter(f"./tb_record_pendulum/noise_scale={noise_scale}")
 
     results = main(
         env=env,
@@ -70,7 +74,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
         lr_a=lr_a,
         lr_c=lr_c,
         batch_size=batch_size,
-        num_episodes=200, # Use fewer episodes for optimization to save time
+        num_episodes=2000, # Use fewer episodes for optimization to save time
         render=False,   # No rendering during optimization
         save_model=False,  # Don't save models during optimization
         writer=writer
@@ -148,7 +152,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     final_env = set_seed_and_env(best_seed, env_name)
     final_results = main(
         env=final_env,
-        num_episodes=1000,
+        num_episodes=10000,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,
@@ -174,5 +178,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=100, n_random_starts=20)
+    result, final_model = run_optimization(n_calls=20, n_random_starts=5)
     print("Optimization and visualization completed!\n")

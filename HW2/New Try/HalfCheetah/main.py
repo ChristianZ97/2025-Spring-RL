@@ -27,7 +27,7 @@ def main(
     env,
     gamma=0.995,
     tau=0.0005,
-    noise_scale=2.5,
+    noise_scale=1.2,
     lr_a=1e-3,
     lr_c=1e-3,
     batch_size=64,

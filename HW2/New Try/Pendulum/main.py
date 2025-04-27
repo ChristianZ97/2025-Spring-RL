@@ -23,13 +23,35 @@ print(f"\n Using device {device}\n")
 random_seed = 42
 env_name = 'Pendulum-v1'
 
+'''
+Main Hyperparameters for DDPG
+
+gamma:        Discount factor determining the importance of future rewards.
+Higher values emphasize long-term rewards, while lower values make the agent favor immediate rewards.
+
+tau:          Soft update rate for synchronizing the target networks.
+Smaller values make updates more stable but slower; larger values speed up updates but can destabilize training.
+
+noise_scale:  Scaling factor for the Ornstein-Uhlenbeck noise applied to actions.
+Higher noise encourages exploration, but too much noise may prevent convergence.
+
+lr_a:         Learning rate for the Actor network.
+Higher values speed up learning but may cause instability; lower values make learning slower but more stable.
+
+lr_c:         Learning rate for the Critic network.
+Same as lr_a, but for the Critic; improper values can cause divergence or slow learning.
+
+batch_size:   Number of transition samples drawn from the replay buffer for each network update.
+Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
+'''
+
 def main(
     env,
     gamma=0.9998,
     tau=0.005,
     noise_scale=1.2,
-    lr_a=1e-3,
-    lr_c=1e-4,
+    lr_a=1e-4,
+    lr_c=1e-3,
     batch_size=64,
     num_episodes=4000,
     render=False,
@@ -44,9 +66,9 @@ def main(
         writer = SummaryWriter("./tb_record_pendulum")
     
 
-    replay_size =  int(1e6)
-    warm_up = int(1e4) # 50 episodes for exploration
-    reward_scale = 1e-3 # 0.1% of original reward
+    replay_size =  int(1e5)
+    warm_up = int(5e3) # 25 episodes for exploration
+    reward_scale = 1.0 # 100% of original reward
 
     hidden_size = 256 # We use [400, 300] for hidden dimensions
     updates_per_step = 1

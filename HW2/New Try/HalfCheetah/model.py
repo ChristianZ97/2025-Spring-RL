@@ -33,11 +33,11 @@ class Actor(nn.Module):
 
         # Network Initialization
 
-        for layer in [self.fc1, self.fc2]:
+        for layer in [self.fc1, self.fc2, self.fc_out]:
             nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu'))
             nn.init.zeros_(layer.bias)
-        nn.init.uniform_(self.fc_out.weight, -3e-2, 3e-2)
-        nn.init.uniform_(self.fc_out.bias, -3e-2, 3e-2)
+        #nn.init.uniform_(self.fc_out.weight, -3e-2, 3e-2)
+        #nn.init.uniform_(self.fc_out.bias, -3e-2, 3e-2)
         
     def forward(self, inputs):
 
@@ -72,11 +72,11 @@ class Critic(nn.Module):
 
         # Network Initialization
 
-        for layer in [self.fc1, self.fc2]:
+        for layer in [self.fc1, self.fc2, self.fc_out]:
             nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu'))
             nn.init.zeros_(layer.bias)
-        nn.init.uniform_(self.fc_out.weight, -3e-2, 3e-2)
-        nn.init.uniform_(self.fc_out.bias, -3e-2, 3e-2)
+        #nn.init.uniform_(self.fc_out.weight, -3e-2, 3e-2)
+        #nn.init.uniform_(self.fc_out.bias, -3e-2, 3e-2)
 
     def forward(self, inputs, actions):
 

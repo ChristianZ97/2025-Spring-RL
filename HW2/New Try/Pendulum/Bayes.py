@@ -44,7 +44,7 @@ search_space = [
     Categorical([1.2], name='noise_scale'),
     # Real(1e-5, 5e-4, name='lr_a', prior='log-uniform'),
     Categorical([1e-3], name='lr_a'),
-    Real(1e-3, 1e-2, name='lr_c', prior='log-uniform'),
+    Real(2.5e-3, 3e-3, name='lr_c', prior='log-uniform'),
     # Categorical([1e-4], name='lr_c'),
     Categorical([64], name='batch_size'),
 ]
@@ -75,7 +75,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
         lr_a=lr_a,
         lr_c=lr_c,
         batch_size=batch_size,
-        num_episodes=600, # Use fewer episodes for optimization to save time
+        num_episodes=300, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )

@@ -48,12 +48,12 @@ Larger batches provide more stable gradients but require more memory and computa
 def main(
     env,
     gamma=0.9998,
-    tau=0.005,
-    noise_scale=1.2,
-    lr_a=1e-4,
-    lr_c=1e-3,
+    tau=0.025, # fix
+    noise_scale=1.2, # fix
+    lr_a=1e-3, # fix
+    lr_c=3e-3, # fix
     batch_size=64,
-    num_episodes=4000,
+    num_episodes=2000, # goal
     render=False,
     save_model=True,
     writer=None

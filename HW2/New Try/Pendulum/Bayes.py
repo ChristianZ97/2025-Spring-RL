@@ -66,7 +66,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/noise_scale={noise_scale}")
+    writer = SummaryWriter(f"./tb_record_pendulum/tau={tau}")
 
     results = main(
         env=env,

@@ -38,14 +38,14 @@ from utils import set_seed_and_env, set_seed
 search_space = [
     Categorical([0.9998], name='gamma'),
     # Real(0.995, 0.998, name='gamma'),
-    # Categorical([0.005], name='tau'),
-    Real(0.002, 0.05, name='tau'),
+    Categorical([0.025], name='tau'),
+    # Real(0.002, 0.05, name='tau'),
     # Real(1.2, 2.5, name='noise_scale'),
     Categorical([1.2], name='noise_scale'),
     # Real(1e-5, 5e-4, name='lr_a', prior='log-uniform'),
     Categorical([1e-3], name='lr_a'),
-    # Real(5e-5, 1e-3, name='lr_c', prior='log-uniform'),
-    Categorical([1e-4], name='lr_c'),
+    Real(1e-5, 1e-2, name='lr_c', prior='log-uniform'),
+    # Categorical([1e-4], name='lr_c'),
     Categorical([64], name='batch_size'),
 ]
 
@@ -66,7 +66,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/tau={tau}")
+    writer = SummaryWriter(f"./tb_record_pendulum/lr_c={lr_c}")
 
     results = main(
         env=env,

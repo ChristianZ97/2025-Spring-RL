@@ -112,9 +112,9 @@ def main(
         writer.close()
 
     return {
-        'last_rewards': np.mean(rewards[-100:]),
+        'last_rewards': rewards[-10:],
         'best_reward': max(rewards),
-        'ewma_reward': np.mean(ewma_reward_history[-100]),
+        'ewma_reward': ewma_reward_history[-1],
         'rewards': rewards
     }
 

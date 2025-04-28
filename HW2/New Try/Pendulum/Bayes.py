@@ -36,7 +36,7 @@ from utils import set_seed_and_env, set_seed
 
 # Define the hyperparameter search space
 search_space = [
-    Real(2.5e-3, 3e-3, name='lr_c')
+    Real(2.5e-3, 3.2e-3, name='lr_c')
 ]
 
 # Define the objective function for Bayesian Optimization

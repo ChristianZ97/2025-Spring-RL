@@ -35,7 +35,7 @@ def main(
     torch.autograd.set_detect_anomaly(True)
 
     # Tuned hyper
-    lr_a=1.2e-3
+    lr_a=1e-3
     gamma=0.9998
     tau=0.025
     noise_scale=1.2

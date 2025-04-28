@@ -27,9 +27,9 @@ class Actor(nn.Module):
 
         # Network Structure
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         # Network Initialization
 
@@ -64,11 +64,11 @@ class Critic(nn.Module):
 
         # Network Structure
 
-        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=1)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
+        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
         # Network Initialization
 

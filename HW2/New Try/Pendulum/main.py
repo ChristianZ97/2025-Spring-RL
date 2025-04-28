@@ -59,7 +59,8 @@ def main(
     tau = 0.025
     noise_scale = 1.2
     lr_a = 1e-3
-    lr_c = 0.0030564286681792193
+    # lr_c = 0.0030564286681792193
+    lr_c = 3e-3
     batch_size = 64
 
 	# Adjust for different environment    
@@ -70,7 +71,7 @@ def main(
     reward_scale = 1.0 # 100% of original reward
 
 
-    hidden_size = 256 # We use [400, 300] for hidden dimensions
+    hidden_size = 128 # We use [400, 300] for hidden dimensions
     updates_per_step = 1
 
     ewma_reward = 0
@@ -117,7 +118,7 @@ def main(
 
 if __name__ == '__main__':
 
-    for i in range(20):
+    for i in range(30):
         random_seed += i
         print(f"\n\nUsing random_seed={random_seed}!!!\n\n")
         writer = SummaryWriter(f"./tb_record_pendulum/random_seed={random_seed}")

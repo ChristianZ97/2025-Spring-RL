@@ -61,7 +61,7 @@ def main(
     lr_a = 1e-3
     # lr_c = 0.0030564286681792193
     lr_c = 3e-3
-    batch_size = 64
+    batch_size = 128
 
 	# Adjust for different environment    
     if writer is None:

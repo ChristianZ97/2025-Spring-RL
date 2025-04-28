@@ -23,37 +23,10 @@ print(f"\n Using device {device}\n")
 random_seed = 42
 env_name = 'Pendulum-v1'
 
-'''
-Main Hyperparameters for DDPG
-
-gamma:        Discount factor determining the importance of future rewards.
-Higher values emphasize long-term rewards, while lower values make the agent favor immediate rewards.
-
-tau:          Soft update rate for synchronizing the target networks.
-Smaller values make updates more stable but slower; larger values speed up updates but can destabilize training.
-
-noise_scale:  Scaling factor for the Ornstein-Uhlenbeck noise applied to actions.
-Higher noise encourages exploration, but too much noise may prevent convergence.
-
-lr_a:         Learning rate for the Actor network.
-Higher values speed up learning but may cause instability; lower values make learning slower but more stable.
-
-lr_c:         Learning rate for the Critic network.
-Same as lr_a, but for the Critic; improper values can cause divergence or slow learning.
-
-batch_size:   Number of transition samples drawn from the replay buffer for each network update.
-Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
-'''
-
 def main(
     env,
-    gamma=0.9998, # fix
-    tau=0.025, # fix
-    noise_scale=1.2, # fix
-    lr_a=1e-3, # fix
-    lr_c=3e-3, # fix
-    batch_size=64, # fix
-    num_episodes=2000, # goal
+    lr_c=3e-3, # tuned via BO
+    num_episodes=2000,
     render=False,
     save_model=True,
     writer=None
@@ -61,14 +34,42 @@ def main(
 
     torch.autograd.set_detect_anomaly(True)
 
+    # Tuned hyper
+    lr_a=1.2e-3
+    gamma=0.9998
+    tau=0.025
+    noise_scale=1.2
+    batch_size=64
+
+    '''
+    Main Hyperparameters for DDPG
+
+    gamma:        Discount factor determining the importance of future rewards.
+    Higher values emphasize long-term rewards, while lower values make the agent favor immediate rewards.
+
+    tau:          Soft update rate for synchronizing the target networks.
+    Smaller values make updates more stable but slower; larger values speed up updates but can destabilize training.
+
+    noise_scale:  Scaling factor for the Ornstein-Uhlenbeck noise applied to actions.
+    Higher noise encourages exploration, but too much noise may prevent convergence.
+
+    lr_a:         Learning rate for the Actor network.
+    Higher values speed up learning but may cause instability; lower values make learning slower but more stable.
+
+    lr_c:         Learning rate for the Critic network.
+    Same as lr_a, but for the Critic; improper values can cause divergence or slow learning.
+
+    batch_size:   Number of transition samples drawn from the replay buffer for each network update.
+    Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
+    '''
+
 	# Adjust for different environment    
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
-    
-
     replay_size =  int(1e5)
     warm_up = int(5e3) # 25 episodes for exploration
     reward_scale = 1.0 # 100% of original reward
+
 
     hidden_size = 256 # We use [400, 300] for hidden dimensions
     updates_per_step = 1
@@ -79,6 +80,8 @@ def main(
     total_numsteps = 0
     updates = 0
 
+
+    # Create main components
     agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a=lr_a, lr_c=lr_c)
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
@@ -109,9 +112,9 @@ def main(
         writer.close()
 
     return {
-        'last_rewards': rewards[-10:],
+        'last_rewards': np.mean(rewards[-100:]),
         'best_reward': max(rewards),
-        'ewma_reward': ewma_reward_history[-1],
+        'ewma_reward': np.mean(ewma_reward_history[-100]),
         'rewards': rewards
     }
 

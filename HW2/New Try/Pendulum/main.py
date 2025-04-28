@@ -25,7 +25,12 @@ env_name = 'Pendulum-v1'
 
 def main(
     env,
-    noise_scale,
+    gamma=0.9998,
+    tau=0.025,
+    noise_scale=1.5,
+    lr_a=1e-3,
+    lr_c=3e-3,
+    batch_size=64,
     num_episodes=600,
     render=False,
     save_model=True,
@@ -56,13 +61,12 @@ def main(
     Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
     '''
 
-    gamma = 0.9998
-    tau = 0.025
+    # gamma = 0.9998
+    # tau = 0.025
     # noise_scale = 1.5
-    lr_a = 1e-3
-    # lr_c = 0.0030564286681792193
-    lr_c = 3e-3
-    batch_size = 64
+    # lr_a = 1e-3
+    # lr_c = 3e-3
+    # batch_size = 64
 
 	# Adjust for different environment    
     if writer is None:
@@ -89,8 +93,8 @@ def main(
 
     try:
         for i_episode in range(num_episodes):
-            # ounoise.scale = noise_scale * (1 - i_episode / num_episodes) # Noise decay
-            ounoise.scale = noise_scale
+            ounoise.scale = noise_scale * (1 - i_episode / num_episodes) # Noise decay
+            # ounoise.scale = noise_scale
             ounoise.reset()
 
             total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale)

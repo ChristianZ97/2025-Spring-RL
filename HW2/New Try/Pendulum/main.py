@@ -76,7 +76,7 @@ def main(
 
     ewma_reward = 0
     rewards = [0]
-    ewma_reward_history = np.array([0.0], dtype=np.float64)
+    ewma_reward_history = [0]
     total_numsteps = 0
     updates = 0
 
@@ -112,7 +112,7 @@ def main(
         writer.close()
 
     return {
-        'ewma_reward': ewma_reward_history,
+        'ewma_reward': ewma_reward_history[1:],
         'rewards': rewards
         }
 

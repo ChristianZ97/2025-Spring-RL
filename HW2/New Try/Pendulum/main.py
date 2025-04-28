@@ -97,7 +97,7 @@ def main(
 
             if SOLVED:
                 print(f"\nSolved at episode {i_episode} with Running reward {ewma_reward_history[-1]}!!\n")
-                if save_model: agent.save_model(env_name, '.pth')
+                if save_model: agent.save_model(env_name + f'_seed={random_seed}', '.pth')
                 break
 
     except KeyboardInterrupt:

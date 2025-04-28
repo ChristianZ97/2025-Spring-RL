@@ -25,7 +25,7 @@ env_name = 'Pendulum-v1'
 
 def main(
     env,
-    num_episodes=1000,
+    num_episodes=600,
     render=False,
     save_model=True,
     writer=None
@@ -59,7 +59,7 @@ def main(
     tau = 0.025
     noise_scale = 1.2
     lr_a = 1e-3
-    lr_c = 3.06e-3
+    lr_c = 3.056e-3
     batch_size = 64
 
 	# Adjust for different environment    

@@ -68,7 +68,7 @@ def main(
         writer = SummaryWriter("./tb_record_pendulum")
     replay_size =  int(1e5)
     warm_up = int(5e3) # 25 episodes for exploration
-    reward_scale = 1.0 # 100% of original reward
+    reward_scale = 0.1 # 10% of original reward
 
 
     hidden_size = 128 # We use [400, 300] for hidden dimensions

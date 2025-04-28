@@ -68,7 +68,7 @@ def objective(lr_c):
     duration = time.time() - start_time
 
     final_rewards = results['ewma_reward']
-    recent_rewards = final_rewards[-30:]
+    recent_rewards = final_rewards[-100:]
 
     x = np.arange(len(recent_rewards))
     momentum, _ = np.polyfit(x, recent_rewards, 1)

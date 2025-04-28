@@ -112,11 +112,9 @@ def main(
         writer.close()
 
     return {
-        'last_rewards': rewards[-10:],
-        'best_reward': max(rewards),
-        'ewma_reward': ewma_reward_history[-1],
+        'ewma_reward': ewma_reward_history,
         'rewards': rewards
-    }
+        }
 
 if __name__ == '__main__':
 

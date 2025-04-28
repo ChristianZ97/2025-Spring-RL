@@ -60,7 +60,7 @@ def objective(lr_c):
     results = main(
         env=env,
         lr_c=lr_c,
-        num_episodes=120, # Use fewer episodes for optimization to save time
+        num_episodes=400, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )

@@ -36,7 +36,7 @@ from utils import set_seed_and_env, set_seed
 
 # Define the hyperparameter search space
 search_space = [
-    Real(2.5e-3, 3.2e-3, name='lr_c')
+    Real(3.055e-3, 3.065e-3, name='lr_c')
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -68,13 +68,13 @@ def objective(lr_c):
     duration = time.time() - start_time
 
     final_rewards = results['ewma_reward']
-    recent_rewards = final_rewards[-100:]
+    recent_rewards = final_rewards[-30:]
 
     x = np.arange(len(recent_rewards))
     momentum, _ = np.polyfit(x, recent_rewards, 1)
 
     final_mean = np.mean(recent_rewards)
-    score = final_mean + 0.1 * momentum
+    score = final_mean + 0.3 * momentum
 
     print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Momentum: {momentum:.2f} | Score: {score:.2f}")
 
@@ -142,7 +142,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     final_results = main(
         env=final_env,
         lr_c=best_lr_c,
-        num_episodes=4000,
+        num_episodes=600,
         render=True,
         save_model=True
     )
@@ -157,5 +157,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=30, n_random_starts=10)
+    result, final_model = run_optimization(n_calls=50, n_random_starts=20)
     print("Optimization and visualization completed!\n")

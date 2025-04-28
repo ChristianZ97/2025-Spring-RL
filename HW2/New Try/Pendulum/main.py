@@ -25,21 +25,13 @@ env_name = 'Pendulum-v1'
 
 def main(
     env,
-    lr_c=3e-3, # tuned via BO
-    num_episodes=2000,
+    num_episodes=1000,
     render=False,
     save_model=True,
     writer=None
     ):
 
     torch.autograd.set_detect_anomaly(True)
-
-    # Tuned hyper
-    lr_a=1e-3
-    gamma=0.9998
-    tau=0.025
-    noise_scale=1.2
-    batch_size=64
 
     '''
     Main Hyperparameters for DDPG
@@ -63,6 +55,13 @@ def main(
     Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
     '''
 
+    gamma = 0.9998
+    tau = 0.025
+    noise_scale = 1.2
+    lr_a = 1e-3
+    lr_c = 3.06e-3
+    batch_size = 64
+
 	# Adjust for different environment    
     if writer is None:
         writer = SummaryWriter("./tb_record_pendulum")
@@ -80,9 +79,9 @@ def main(
     total_numsteps = 0
     updates = 0
 
-
     # Create main components
-    agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a=lr_a, lr_c=lr_c)
+    agent = DDPG(num_inputs=env.observation_space.shape[0], action_space=env.action_space, 
+        gamma=gamma, tau=tau, hidden_size=hidden_size, lr_a=lr_a, lr_c=lr_c)
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
 
@@ -118,5 +117,9 @@ def main(
 
 if __name__ == '__main__':
 
-    env = set_seed_and_env(random_seed, env_name)
-    main(env)
+    for i in range(20):
+        random_seed += i
+        print(f"\n\nUsing random_seed={random_seed}!!!\n\n")
+        writer = SummaryWriter(f"./tb_record_pendulum/random_seed={random_seed}")
+        env = set_seed_and_env(random_seed, env_name)
+        main(env=env, writer=writer)

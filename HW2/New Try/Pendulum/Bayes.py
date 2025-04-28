@@ -36,17 +36,17 @@ from utils import set_seed_and_env, set_seed
 
 # Define the hyperparameter search space
 search_space = [
-    Real(3.055e-3, 3.065e-3, name='lr_c')
+    Real(0.5, 2.5, name='noise_scale')
 ]
 
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
-def objective(lr_c):
+def objective(noise_scale):
     """
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    print(f"\nTrying parameters: lr_c={lr_c:.3e}")
+    print(f"\nTrying parameters: noise_scale={noise_scale:.3e}")
     
     global counter
     bo_step = next(counter)
@@ -55,12 +55,12 @@ def objective(lr_c):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_pendulum/lr_c={lr_c:.3e}")
+    writer = SummaryWriter(f"./tb_record_pendulum/noise_scale={noise_scale:.3e}")
 
     results = main(
         env=env,
-        lr_c=lr_c,
-        num_episodes=400, # Use fewer episodes for optimization to save time
+        noise_scale=noise_scale,
+        num_episodes=600, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )
@@ -109,11 +109,11 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     )
     
     # Extract best hyperparameters
-    best_lr_c = result.x
+    noise_scale = result.x
     
     print("\nOptimization completed!")
     print("Best hyperparameters:")
-    for name, value in zip(['lr_c'], result.x):
+    for name, value in zip(['noise_scale'], result.x):
         print(f"{name}: {value}")
     
     print(f"Best reward: {-result.fun:.2f}")
@@ -123,7 +123,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
         f.write("Iteration, Objective Value, Parameters\n")
         for i, (value, params) in enumerate(zip(result.func_vals, result.x_iters)):
             param_str = ", ".join([f"{name}={value}" for name, value in 
-                                  zip(['lr_c'], params)])
+                                  zip(['noise_scale'], params)])
             seed = random_seed + i
             f.write(f"{i}, {-value:.4f}, {param_str}, seed={seed}\n")
     
@@ -141,7 +141,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     final_env = set_seed_and_env(best_seed, env_name)
     final_results = main(
         env=final_env,
-        lr_c=best_lr_c,
+        noise_scale=noise_scale,
         num_episodes=600,
         render=True,
         save_model=True
@@ -149,7 +149,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     
     # Save best hyperparameters to file
     with open(f"{output_dir}/best_hyperparameters.txt", "w") as f:
-        f.write(f"lr_c = {best_lr_c}\n")
+        f.write(f"noise_scale = {noise_scale}\n")
         f.write(f"random_seed = {best_seed}\n")
         f.write(f"Best reward: {-result.fun:.2f}\n")
     
@@ -157,5 +157,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=50, n_random_starts=20)
+    result, final_model = run_optimization(n_calls=100, n_random_starts=50)
     print("Optimization and visualization completed!\n")

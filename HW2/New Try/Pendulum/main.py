@@ -76,7 +76,7 @@ def main(
 
     ewma_reward = 0
     rewards = [0]
-    ewma_reward_history = np.array([0])
+    ewma_reward_history = np.array(0)
     total_numsteps = 0
     updates = 0
 

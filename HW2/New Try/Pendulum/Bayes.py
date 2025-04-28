@@ -68,8 +68,8 @@ def objective(lr_c):
     duration = time.time() - start_time
     final_rewards = results['ewma_reward']
     
-    final_mean = np.mean(final_rewards[-1000:])
-    stability = -np.std(final_rewards[-1000:]) 
+    final_mean = np.mean(final_rewards[-100:])
+    stability = -np.std(final_rewards[-100:]) 
     score = final_mean + 0.1 * stability
 
     print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Std: {-stability:.2f} | Score: {score:.2f}")

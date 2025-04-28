@@ -76,7 +76,7 @@ def objective(lr_c):
     final_mean = np.mean(recent_rewards)
     score = final_mean + 0.1 * momentum
 
-    print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Std: {-stability:.2f} | Score: {score:.2f}")
+    print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Momentum: {momentum:.2f} | Score: {score:.2f}")
 
     gc.collect()
     if torch.cuda.is_available():

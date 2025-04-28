@@ -60,13 +60,14 @@ def objective(lr_c):
     results = main(
         env=env,
         lr_c=lr_c,
-        num_episodes=400, # Use fewer episodes for optimization to save time
+        num_episodes=120, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )
     
     duration = time.time() - start_time
     final_rewards = results['ewma_reward']
+    print(type(results['ewma_reward']), results['ewma_reward']) # debug line
     
     final_mean = np.mean(final_rewards[-100:])
     stability = -np.std(final_rewards[-100:]) 

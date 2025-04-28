@@ -66,7 +66,7 @@ def objective(lr_c):
     )
     
     duration = time.time() - start_time
-    final_rewards = results['last_rewards']
+    final_rewards = results['ewma_reward']
     
     final_mean = np.mean(final_rewards[-1000:])
     stability = -np.std(final_rewards[-1000:]) 

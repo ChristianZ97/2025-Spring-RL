@@ -71,7 +71,7 @@ def main(
     reward_scale = 0.1 # 10% of original reward
 
 
-    hidden_size = 128 # We use [400, 300] for hidden dimensions
+    hidden_size = 64 # We use [400, 300] for hidden dimensions
     updates_per_step = 1
 
     ewma_reward = 0

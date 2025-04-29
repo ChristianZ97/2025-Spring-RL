@@ -21,7 +21,7 @@ from utils import ReplayMemory, OUNoise, get_device, set_seed_and_env
 device = get_device()
 print(f"\n Using device {device}\n")
 # random_seed = 111
-random_seed = random.seed()
+random_seed = time.time()
 env_name = 'Pendulum-v1'
 
 def main(

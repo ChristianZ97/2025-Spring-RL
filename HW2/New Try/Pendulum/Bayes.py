@@ -70,7 +70,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
         lr_a=lr_a,
         lr_c=lr_c,
         batch_size=batch_size,
-        num_episodes=1000, # Use fewer episodes for optimization to save time
+        num_episodes=500, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )

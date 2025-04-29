@@ -124,8 +124,8 @@ def main(
 
 if __name__ == '__main__':
 
-    for i in range(50):
-        random_seed += i
+    for i in range(100):
+        random_seed += (i + 42)
         print(f"\n\nUsing random_seed={random_seed}!!!\n\n")
         writer = SummaryWriter(f"./tb_record_pendulum/random_seed={random_seed}")
         env = set_seed_and_env(random_seed, env_name)

@@ -20,7 +20,8 @@ from utils import ReplayMemory, OUNoise, get_device, set_seed_and_env
 
 device = get_device()
 print(f"\n Using device {device}\n")
-random_seed = 111
+# random_seed = 111
+random_seed = random.seed()
 env_name = 'Pendulum-v1'
 
 def main(
@@ -113,7 +114,7 @@ def main(
 
     finally:
         print(f"\nCould NOT Solve!!!\n")
-        if save_model: agent.save_model(env_name + "_timeout", '.pth')
+        # if save_model: agent.save_model(env_name + "_timeout", '.pth')
         env.close()
         writer.close()
 
@@ -125,7 +126,7 @@ def main(
 if __name__ == '__main__':
 
     for i in range(100):
-        random_seed += (i + 42)
+        random_seed += i
         print(f"\n\nUsing random_seed={random_seed}!!!\n\n")
         writer = SummaryWriter(f"./tb_record_pendulum/random_seed={random_seed}")
         env = set_seed_and_env(random_seed, env_name)

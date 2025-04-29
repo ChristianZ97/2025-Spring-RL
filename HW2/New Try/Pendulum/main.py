@@ -20,17 +20,17 @@ from utils import ReplayMemory, OUNoise, get_device, set_seed_and_env
 
 device = get_device()
 print(f"\n Using device {device}\n")
-random_seed = 42
+random_seed = 111
 env_name = 'Pendulum-v1'
 
 def main(
     env,
-    gamma=0.9998,
-    tau=0.025,
-    noise_scale=1.5,
-    lr_a=1e-3,
-    lr_c=3e-3,
-    batch_size=64,
+    gamma=0.999855778577656,
+    tau=0.02988295604632515,
+    noise_scale=1.4068608877080406,
+    lr_a=0.0011115818565635618,
+    lr_c=0.0026822139156196297,
+    batch_size=512,
     num_episodes=600,
     render=False,
     save_model=True,
@@ -124,7 +124,7 @@ def main(
 
 if __name__ == '__main__':
 
-    for i in range(30):
+    for i in range(50):
         random_seed += i
         print(f"\n\nUsing random_seed={random_seed}!!!\n\n")
         writer = SummaryWriter(f"./tb_record_pendulum/random_seed={random_seed}")

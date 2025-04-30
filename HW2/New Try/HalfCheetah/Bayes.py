@@ -38,7 +38,7 @@ counter = count(start=0)
 from main import random_seed, env_name, main
 from utils import set_seed_and_env, set_seed
 
-
+import logging
 from datetime import datetime
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 log_filename = f"bo_debug_{timestamp}.log"

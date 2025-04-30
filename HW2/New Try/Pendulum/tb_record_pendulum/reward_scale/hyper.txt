@@ -1,4 +1,0 @@
-warm_up = 10000
-critic.weight_decay=0
-
-tune reward_sacle

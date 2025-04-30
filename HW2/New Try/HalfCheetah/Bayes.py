@@ -5,7 +5,7 @@ This script uses scikit-optimize to perform Bayesian Optimization on the DDPG
 algorithm's hyperparameters to maximize performance on reinforcement learning tasks.
 
 run 
-python train.py | tee bo_log.txt
+python Bayes.py | tee bo_log.txt
 to record every print informations
 """
 

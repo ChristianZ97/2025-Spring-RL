@@ -119,7 +119,7 @@ def agent_evaluate(writer, env, agent, i_episode, rewards, ewma_reward_history, 
     ewma_reward_history.append(ewma_reward)           
     print("Episode: {}, length: {}, reward: {:.2f}, ewma reward: {:.2f}".format(i_episode, t, episode_reward, ewma_reward))
 
-    if i_episode > 200 and ewma_reward > 10000:
+    if i_episode > 20 and ewma_reward > 5000: # or -120, -150
         SOLVED = True
 
     writer.add_scalar('Eval/Episode_Reward', episode_reward, i_episode)

@@ -20,40 +20,19 @@ from utils import ReplayMemory, OUNoise, get_device, set_seed_and_env
 
 device = get_device()
 print(f"\n Using device {device}\n")
-random_seed = 42
-env_name = 'HalfCheetah-v5'
-
-'''
-Main Hyperparameters for DDPG
-
-gamma:        Discount factor determining the importance of future rewards.
-Higher values emphasize long-term rewards, while lower values make the agent favor immediate rewards.
-
-tau:          Soft update rate for synchronizing the target networks.
-Smaller values make updates more stable but slower; larger values speed up updates but can destabilize training.
-
-noise_scale:  Scaling factor for the Ornstein-Uhlenbeck noise applied to actions.
-Higher noise encourages exploration, but too much noise may prevent convergence.
-
-lr_a:         Learning rate for the Actor network.
-Higher values speed up learning but may cause instability; lower values make learning slower but more stable.
-
-lr_c:         Learning rate for the Critic network.
-Same as lr_a, but for the Critic; improper values can cause divergence or slow learning.
-
-batch_size:   Number of transition samples drawn from the replay buffer for each network update.
-Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
-'''
+# random_seed = 111
+random_seed = int(time.time())
+env_name = 'Pendulum-v1'
 
 def main(
     env,
-    gamma=0.995,
-    tau=0.0005,
-    noise_scale=2.5,
-    lr_a=1e-4,
-    lr_c=1e-3,
-    batch_size=64,
-    num_episodes=40000,
+    gamma=0.999855778577656,
+    tau=0.02988295604632515,
+    noise_scale=1.4068608877080406,
+    lr_a=0.0011115818565635618,
+    lr_c=0.0026822139156196297,
+    batch_size=512,
+    num_episodes=1000,
     render=False,
     save_model=True,
     writer=None
@@ -61,16 +40,44 @@ def main(
 
     torch.autograd.set_detect_anomaly(True)
 
+    '''
+    Main Hyperparameters for DDPG
+
+    gamma:        Discount factor determining the importance of future rewards.
+    Higher values emphasize long-term rewards, while lower values make the agent favor immediate rewards.
+
+    tau:          Soft update rate for synchronizing the target networks.
+    Smaller values make updates more stable but slower; larger values speed up updates but can destabilize training.
+
+    noise_scale:  Scaling factor for the Ornstein-Uhlenbeck noise applied to actions.
+    Higher noise encourages exploration, but too much noise may prevent convergence.
+
+    lr_a:         Learning rate for the Actor network.
+    Higher values speed up learning but may cause instability; lower values make learning slower but more stable.
+
+    lr_c:         Learning rate for the Critic network.
+    Same as lr_a, but for the Critic; improper values can cause divergence or slow learning.
+
+    batch_size:   Number of transition samples drawn from the replay buffer for each network update.
+    Larger batches provide more stable gradients but require more memory and computation; smaller batches increase updates' variance.
+    '''
+
+    # gamma = 0.9998
+    # tau = 0.025
+    # noise_scale = 1.5
+    # lr_a = 1e-3
+    # lr_c = 3e-3
+    # batch_size = 64
+
 	# Adjust for different environment    
     if writer is None:
         writer = SummaryWriter("./tb_record_halfcheetah")
-    replay_size = int(1e6)
-    warm_up = int(1e4) # 10 episodes for exploration
-    reward_scale = 1e-2 # 1% of original reward
+    replay_size =  int(1e6)
+    warm_up = int(1e4) # 25 episodes for exploration
+    reward_scale = 0.01 # 1% of original reward
 
-    #######
-    # We use [400, 300] for hidden dimensions, keep the same network structure for both environment.
-    hidden_size = 256
+
+    hidden_size = 128 # We use [400, 300] for hidden dimensions
     updates_per_step = 1
 
     ewma_reward = 0
@@ -79,13 +86,16 @@ def main(
     total_numsteps = 0
     updates = 0
 
-    agent = DDPG(env.observation_space.shape[0], env.action_space, gamma, tau, hidden_size, lr_a, lr_c)
+    # Create main components
+    agent = DDPG(num_inputs=env.observation_space.shape[0], action_space=env.action_space, 
+        gamma=gamma, tau=tau, hidden_size=hidden_size, lr_a=lr_a, lr_c=lr_c)
     ounoise = OUNoise(env.action_space.shape[0])
     memory = ReplayMemory(replay_size)
 
     try:
         for i_episode in range(num_episodes):
             ounoise.scale = noise_scale * (1 - i_episode / num_episodes) # Noise decay
+            # ounoise.scale = noise_scale
             ounoise.reset()
 
             total_numsteps = agent_interact(writer, env, agent, memory, ounoise, total_numsteps, warm_up, reward_scale)
@@ -95,7 +105,7 @@ def main(
 
             if SOLVED:
                 print(f"\nSolved at episode {i_episode} with Running reward {ewma_reward_history[-1]}!!\n")
-                if save_model: agent.save_model(env_name, '.pth')
+                if save_model: agent.save_model(env_name + f'_seed={random_seed}', '.pth')
                 break
 
     except KeyboardInterrupt:
@@ -109,13 +119,15 @@ def main(
         writer.close()
 
     return {
-        'last_rewards': rewards[-10:],
-        'best_reward': max(rewards),
-        'ewma_reward': ewma_reward_history[-1],
+        'ewma_reward': ewma_reward_history[1:],
         'rewards': rewards
-    }
+        }
 
 if __name__ == '__main__':
 
-    env = set_seed_and_env(random_seed, env_name)
-    main(env)
+    for i in range(300):
+        random_seed += i
+        print(f"\n\nUsing random_seed={random_seed}!!!\n\n")
+        writer = SummaryWriter(f"./tb_record_halfcheetah/random_seed={random_seed}")
+        env = set_seed_and_env(random_seed, env_name)
+        main(env=env, writer=writer)

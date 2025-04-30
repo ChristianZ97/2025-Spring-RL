@@ -36,17 +36,12 @@ from utils import set_seed_and_env, set_seed
 
 # Define the hyperparameter search space
 search_space = [
-    # Real(0.98, 0.995, name='gamma'),
-    Categorical([0.995], name='gamma'),
-    Real(0.001, 0.01, name='tau'),
-    # Categorical([0.0005], name='tau'),
-    # Real(1.2, 2.5, name='noise_scale'),
-    Categorical([2.5], name='noise_scale'),
-    # Real(1e-5, 1e-4, name='lr_a', prior='log-uniform'),
-    Categorical([1e-3], name='lr_a'),
-    # Real(1e-4, 1e-3, name='lr_c', prior='log-uniform'),
-    Categorical([1e-4], name='lr_c'),
-    Categorical([256], name='batch_size'),
+    Real(0.99, 0.99999, name='gamma'),
+    Real(0.005, 0.1, name='tau'),
+    Real(0.75, 2.0, name='noise_scale'),
+    Real(1e-6, 1e-2, name='lr_a'),
+    Real(1e-6, 1e-2, name='lr_c'),
+    Categorical([32, 64, 128, 256, 512], name='batch_size')
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -56,7 +51,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    print(f"\nTrying parameters: gamma={gamma:.6f}, tau={tau:.6f}, noise_scale={noise_scale:.6f}, lr_a={lr_a:.6f}, lr_c={lr_c:.6f}, batch_size={batch_size}")
+    print(f"\nTrying parameters: gamma={gamma:.3e} tau={tau:.3e} noise_scale={noise_scale:.3e} lr_a={lr_a:.3e} lr_c={lr_c:.3e} batch_size={batch_size}")
     
     global counter
     bo_step = next(counter)
@@ -65,7 +60,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     env = set_seed_and_env(bo_seed, env_name)
 
     start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_halfcheetah/tau={tau}")
+    writer = SummaryWriter(f"./tb_record_halfcheetah/seed={bo_seed}")
 
     results = main(
         env=env,
@@ -75,20 +70,23 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
         lr_a=lr_a,
         lr_c=lr_c,
         batch_size=batch_size,
-        num_episodes=2000, # Use fewer episodes for optimization to save time
-        render=False,   # No rendering during optimization
+        num_episodes=1000, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )
     
     duration = time.time() - start_time
-    final_rewards = results['last_rewards']
-    
-    final_mean = np.mean(final_rewards[-10:])
-    stability = -np.std(final_rewards[-10:]) 
-    score = final_mean + 0.1 * stability
 
-    print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Std: {-stability:.2f} | Score: {score:.2f}")
+    final_rewards = results['ewma_reward']
+    recent_rewards = final_rewards[-100:]
+
+    x = np.arange(len(recent_rewards))
+    momentum, _ = np.polyfit(x, recent_rewards, 1)
+
+    final_mean = np.mean(recent_rewards)
+    score = final_mean + 0.3 * momentum
+
+    print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Momentum: {momentum:.2f} | Score: {score:.2f}")
 
     gc.collect()
     if torch.cuda.is_available():
@@ -153,14 +151,14 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     final_env = set_seed_and_env(best_seed, env_name)
     final_results = main(
         env=final_env,
-        num_episodes=10000,
         gamma=best_gamma,
         tau=best_tau,
         noise_scale=best_noise_scale,
         lr_a=best_lr_a,
         lr_c=best_lr_c,
         batch_size=best_batch_size,
-        render=True,
+        num_episodes=4000,
+        render=False,
         save_model=True
     )
     
@@ -179,5 +177,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=20, n_random_starts=5)
+    result, final_model = run_optimization(n_calls=500, n_random_starts=100)
     print("Optimization and visualization completed!\n")

@@ -27,17 +27,16 @@ class Actor(nn.Module):
 
         # Network Structure
 
-        self.fc1 = nn.Linear(in_features=num_inputs, out_features=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=num_outputs)
+        self.fc1 = nn.Linear(in_features=num_inputs, out_features=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.fc_out = nn.Linear(in_features=hidden_size, out_features=num_outputs)
 
         # Network Initialization
 
-        for layer in [self.fc1, self.fc2, self.fc_out]:
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
             nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu'))
             nn.init.zeros_(layer.bias)
-        #nn.init.uniform_(self.fc_out.weight, -3e-2, 3e-2)
-        #nn.init.uniform_(self.fc_out.bias, -3e-2, 3e-2)
         
     def forward(self, inputs):
 
@@ -47,6 +46,9 @@ class Actor(nn.Module):
         x = F.relu(x)
 
         x = self.fc2(x)
+        x = F.relu(x)
+
+        x = self.fc3(x)
         x = F.relu(x)
 
         x = self.fc_out(x)
@@ -64,19 +66,19 @@ class Critic(nn.Module):
 
         # Network Structure
 
-        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=400)
-        self.ln1 = nn.LayerNorm(normalized_shape=400)
-        self.fc2 = nn.Linear(in_features=400, out_features=300)
-        self.ln2 = nn.LayerNorm(normalized_shape=300)
-        self.fc_out = nn.Linear(in_features=300, out_features=1)
+        self.fc1 = nn.Linear(in_features=(num_inputs + num_outputs), out_features=hidden_size)
+        self.ln1 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc2 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.ln2 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc3 = nn.Linear(in_features=hidden_size, out_features=hidden_size)
+        self.ln3 = nn.LayerNorm(normalized_shape=hidden_size)
+        self.fc_out = nn.Linear(in_features=hidden_size, out_features=1)
 
         # Network Initialization
 
-        for layer in [self.fc1, self.fc2, self.fc_out]:
+        for layer in [self.fc1, self.fc2, self.fc3, self.fc_out]:
             nn.init.xavier_uniform_(layer.weight, gain=nn.init.calculate_gain('relu'))
             nn.init.zeros_(layer.bias)
-        #nn.init.uniform_(self.fc_out.weight, -3e-2, 3e-2)
-        #nn.init.uniform_(self.fc_out.bias, -3e-2, 3e-2)
 
     def forward(self, inputs, actions):
 
@@ -87,6 +89,10 @@ class Critic(nn.Module):
 
         x = self.fc2(x)
         x = self.ln2(x)
+        x = torch.relu(x)
+
+        x = self.fc3(x)
+        x = self.ln3(x)
         x = torch.relu(x)
 
         q_value = self.fc_out(x)

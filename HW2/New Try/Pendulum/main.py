@@ -125,7 +125,7 @@ def main(
 
 if __name__ == '__main__':
 
-    for i in range(100):
+    for i in range(200):
         random_seed += i
         print(f"\n\nUsing random_seed={random_seed}!!!\n\n")
         writer = SummaryWriter(f"./tb_record_pendulum/random_seed={random_seed}")

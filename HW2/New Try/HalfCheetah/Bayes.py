@@ -38,6 +38,20 @@ counter = count(start=0)
 from main import random_seed, env_name, main
 from utils import set_seed_and_env, set_seed
 
+
+from datetime import datetime
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+log_filename = f"bo_debug_{timestamp}.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_filename),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
 # Define the hyperparameter search space
 search_space = [
     Real(0.99, 0.99999, name='gamma'),
@@ -55,7 +69,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    print(f"\nTrying parameters: gamma={gamma:.3e} tau={tau:.3e} noise_scale={noise_scale:.3e} lr_a={lr_a:.3e} lr_c={lr_c:.3e} batch_size={batch_size}")
+    logging.info(f"\nTrying parameters: gamma={gamma:.3e} tau={tau:.3e} noise_scale={noise_scale:.3e} lr_a={lr_a:.3e} lr_c={lr_c:.3e} batch_size={batch_size}")
     
     global counter
     bo_step = next(counter)
@@ -90,7 +104,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
     final_mean = np.mean(recent_rewards)
     score = final_mean + 0.3 * momentum
 
-    print(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Momentum: {momentum:.2f} | Score: {score:.2f}")
+    logging.info(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Momentum: {momentum:.2f} | Score: {score:.2f}")
 
     gc.collect()
     if torch.cuda.is_available():
@@ -103,7 +117,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     """
     Run the Bayesian Optimization process to find optimal DDPG hyperparameters.
     """
-    print("\nStarting Bayesian Optimization process...")
+    logging.info("\nStarting Bayesian Optimization process...")
     
     # Create output directory if it doesn't exist
     if not os.path.exists(output_dir):
@@ -125,12 +139,12 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     # Extract best hyperparameters
     best_gamma, best_tau, best_noise_scale, best_lr_a, best_lr_c, best_batch_size = result.x
     
-    print("\nOptimization completed!")
-    print("Best hyperparameters:")
+    logging.info("\nOptimization completed!")
+    logging.info("Best hyperparameters:")
     for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'batch_size'], result.x):
-        print(f"{name}: {value}")
+        logging.info(f"{name}: {value}")
     
-    print(f"Best reward: {-result.fun:.2f}")
+    logging.info(f"Best reward: {-result.fun:.2f}")
     
     # Save optimization history
     with open(f"{output_dir}/optimization_history.txt", "w") as f:
@@ -148,7 +162,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     plt.close()
     
     # Train final model with best parameters
-    print("\nTraining final model with best parameters...")
+    logging.info("\nTraining final model with best parameters...")
     best_idx = int(np.argmin(result.func_vals))
     best_seed = random_seed + best_idx
     
@@ -182,4 +196,4 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
     result, final_model = run_optimization(n_calls=500, n_random_starts=200)
-    print("Optimization and visualization completed!\n")
+    logging.info("Optimization and visualization completed!\n")

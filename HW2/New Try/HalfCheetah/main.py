@@ -114,7 +114,8 @@ def main(
         print(f"\nCould NOT Solve!!!\n")
         if save_model: agent.save_model(env_name + "_timeout", '.pth')
         env.close()
-        writer.close()
+        if writer is not None:
+            writer.close()
 
     return {
         'ewma_reward': ewma_reward_history[1:],

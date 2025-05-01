@@ -50,11 +50,11 @@ logging.basicConfig(
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.999, 0.9999, name='gamma'),
-    Real(0.095, 0.15, name='tau'),
-    Real(1.4, 1.6, name='noise_scale'),
-    Real(1e-3, 2e-3, name='lr_a'),
-    Real(8e-3, 1e-2, name='lr_c'),
+    Real(0.9995, 0.9996, name='gamma'),
+    Real(0.14, 0.15, name='tau'),
+    Real(1.54, 1.55, name='noise_scale'),
+    Real(1.8e-3, 2e-3, name='lr_a'),
+    Real(9e-3, 1e-2, name='lr_c'),
     Categorical([512], name='batch_size')
 ]
 
@@ -84,7 +84,7 @@ def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
         lr_a=lr_a,
         lr_c=lr_c,
         batch_size=batch_size,
-        num_episodes=300, # Use fewer episodes for optimization to save time
+        num_episodes=1000, # Use fewer episodes for optimization to save time
         save_model=False,  # Don't save models during optimization
         writer=writer
     )
@@ -191,5 +191,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=300, n_random_starts=100)
+    result, final_model = run_optimization(n_calls=100, n_random_starts=20)
     logging.info("Optimization and visualization completed!\n")

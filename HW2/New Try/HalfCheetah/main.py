@@ -69,9 +69,7 @@ def main(
     # lr_c = 3e-3
     # batch_size = 64
 
-	# Adjust for different environment    
-    if writer is None:
-        writer = SummaryWriter("./tb_record_halfcheetah")
+	# Adjust for different environment
     replay_size =  int(1e6)
     warm_up = int(1e4) # 25 episodes for exploration
     reward_scale = 0.01 # 1% of original reward

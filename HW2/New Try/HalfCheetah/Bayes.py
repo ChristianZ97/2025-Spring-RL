@@ -65,7 +65,6 @@ def objective(**params):
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
-    env_name     = params['env_name']
     gamma        = params['gamma']
     tau          = params['tau']
     noise_scale  = params['noise_scale']

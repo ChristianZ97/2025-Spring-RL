@@ -78,7 +78,7 @@ def objective(**params):
 
     for k in range(10):
 
-        bo_seed = random_seed + next(counter) * N_SEEDS + k
+        bo_seed = random_seed + next(counter) + k
         env = set_seed_and_env(bo_seed, env_name)
 
         result = main(

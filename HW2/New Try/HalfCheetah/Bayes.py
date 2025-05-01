@@ -3,10 +3,6 @@ optimize_ddpg.py - Script for optimizing DDPG hyperparameters using Bayesian Opt
 
 This script uses scikit-optimize to perform Bayesian Optimization on the DDPG
 algorithm's hyperparameters to maximize performance on reinforcement learning tasks.
-
-run 
-python Bayes.py | tee bo_log.txt
-to record every print informations
 """
 
 import sys
@@ -54,12 +50,12 @@ logging.basicConfig(
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.99, 0.99999, name='gamma'),
-    Real(0.005, 0.1, name='tau'),
-    Real(0.75, 2.0, name='noise_scale'),
-    Real(1e-6, 1e-2, name='lr_a'),
-    Real(1e-6, 1e-2, name='lr_c'),
-    Categorical([32, 64, 128, 256, 512], name='batch_size')
+    Real(0.999, 0.9999, name='gamma'),
+    Real(0.095, 0.15, name='tau'),
+    Real(1.4, 1.6, name='noise_scale'),
+    Real(1e-3, 2e-3, name='lr_a'),
+    Real(8e-3, 1e-2, name='lr_c'),
+    Categorical([512], name='batch_size')
 ]
 
 # Define the objective function for Bayesian Optimization
@@ -195,5 +191,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=500, n_random_starts=200)
+    result, final_model = run_optimization(n_calls=300, n_random_starts=100)
     logging.info("Optimization and visualization completed!\n")

@@ -94,7 +94,7 @@ def objective(**params):
             writer=None 
         )
 
-        scores.append(np.mean(results['ewma_reward'][-100:]))
+        scores.append(np.mean(result['ewma_reward'][-100:]))
 
     gc.collect()
 

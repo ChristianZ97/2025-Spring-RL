@@ -50,70 +50,67 @@ logging.basicConfig(
 
 # Define the hyperparameter search space
 search_space = [
-    Real(0.9995, 0.9996, name='gamma'),
-    Real(0.14, 0.15, name='tau'),
-    Real(1.54, 1.55, name='noise_scale'),
-    Real(1.8e-3, 2e-3, name='lr_a'),
-    Real(9e-3, 1e-2, name='lr_c'),
-    Categorical([512], name='batch_size')
+    Real(0.99, 0.9999, name='gamma'),
+    Real(0.01, 0.2, name='tau'),
+    Real(0.8, 1.8, name='noise_scale'),
+    Real(1e-5, 1e-3, name='lr_a'),
+    Real(1e-4, 1e-2, name='lr_c'),
+    Categorical([64, 128, 256, 512, 1024], name='batch_size')
 ]
 
 # Define the objective function for Bayesian Optimization
 @use_named_args(search_space)
-def objective(gamma, tau, noise_scale, lr_a, lr_c, batch_size):
+def objective(**params):
     """
     Objective function for Bayesian Optimization.
     Runs DDPG with given hyperparameters and returns negative reward for minimization.
     """
+    env_name     = params['env_name']
+    gamma        = params['gamma']
+    tau          = params['tau']
+    noise_scale  = params['noise_scale']
+    lr_a         = params['lr_a']
+    lr_c         = params['lr_c']
+    batch_size   = params['batch_size']
+
     logging.info(f"\nTrying parameters: gamma={gamma:.3e} tau={tau:.3e} noise_scale={noise_scale:.3e} lr_a={lr_a:.3e} lr_c={lr_c:.3e} batch_size={batch_size}")
-    
     global counter
-    bo_step = next(counter)
-    bo_seed = random_seed + bo_step
+    scores = []
 
-    env = set_seed_and_env(bo_seed, env_name)
+    for k in range(10):
 
-    start_time = time.time()
-    writer = SummaryWriter(f"./tb_record_halfcheetah/seed={bo_seed}")
+        bo_seed = random_seed + next(counter) * N_SEEDS + k
+        env = set_seed_and_env(bo_seed, env_name)
 
-    results = main(
-        env=env,
-        gamma=gamma,
-        tau=tau,
-        noise_scale=noise_scale,
-        lr_a=lr_a,
-        lr_c=lr_c,
-        batch_size=batch_size,
-        num_episodes=1000, # Use fewer episodes for optimization to save time
-        save_model=False,  # Don't save models during optimization
-        writer=writer
-    )
-    
-    duration = time.time() - start_time
+        result = main(
+            env=env,
+            gamma=gamma,
+            tau=tau,
+            noise_scale=noise_scale,
+            lr_a=lr_a,
+            lr_c=lr_c,
+            batch_size=batch_size,  
+            num_episodes=300,
+            save_model=False,
+            writer=None 
+        )
 
-    final_rewards = results['ewma_reward']
-    recent_rewards = final_rewards[-100:]
-
-    x = np.arange(len(recent_rewards))
-    momentum, _ = np.polyfit(x, recent_rewards, 1)
-
-    final_mean = np.mean(recent_rewards)
-    score = final_mean + 0.3 * momentum
-
-    logging.info(f"Training done in {duration:.1f}s | Mean reward: {final_mean:.2f} | Momentum: {momentum:.2f} | Score: {score:.2f}")
+        scores.append(np.mean(results['ewma_reward'][-100:]))
 
     gc.collect()
+
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+
     env.close()
     
-    return -score
+    return -np.mean(scores)
 
 def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_results'):
     """
     Run the Bayesian Optimization process to find optimal DDPG hyperparameters.
     """
-    logging.info("\nStarting Bayesian Optimization process...")
+    print("\nStarting Bayesian Optimization process...")
     
     # Create output directory if it doesn't exist
     if not os.path.exists(output_dir):
@@ -135,7 +132,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     # Extract best hyperparameters
     best_gamma, best_tau, best_noise_scale, best_lr_a, best_lr_c, best_batch_size = result.x
     
-    logging.info("\nOptimization completed!")
+    print("\nOptimization completed!")
     logging.info("Best hyperparameters:")
     for name, value in zip(['gamma', 'tau', 'noise_scale', 'lr_a', 'lr_c', 'batch_size'], result.x):
         logging.info(f"{name}: {value}")
@@ -158,7 +155,7 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
     plt.close()
     
     # Train final model with best parameters
-    logging.info("\nTraining final model with best parameters...")
+    print("\nTraining final model with best parameters...")
     best_idx = int(np.argmin(result.func_vals))
     best_seed = random_seed + best_idx
     
@@ -191,5 +188,5 @@ def run_optimization(n_calls=20, n_random_starts=5, output_dir='optimization_res
 
 if __name__ == '__main__':
     # Run optimization with 30 total evaluations, 10 random
-    result, final_model = run_optimization(n_calls=100, n_random_starts=20)
-    logging.info("Optimization and visualization completed!\n")
+    result, final_model = run_optimization(n_calls=300, n_random_starts=100)
+    print("Optimization and visualization completed!\n")

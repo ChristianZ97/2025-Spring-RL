@@ -267,7 +267,7 @@ class SACAgent:
 
         with torch.no_grad():
             v_target = self.vf_target(next_state)
-            y = reward + mask * gamma * v_target
+            y = reward + mask * self.gamma * v_target
 
         q_1 = self.qf_1(state, action)
         q_2 = self.qf_2(state, action)

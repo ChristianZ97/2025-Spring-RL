@@ -271,8 +271,8 @@ class SACAgent:
 
         q_1 = self.qf_1(state, action)
         q_2 = self.qf_2(state, action)
-        qf_1_loss = f.mse_loss(q_1, y)
-        qf_2_loss = f.mse_loss(q_2, y)
+        qf_1_loss = F.mse_loss(q_1, y)
+        qf_2_loss = F.mse_loss(q_2, y)
 
         ########## End of Your Code ##########
         
@@ -285,7 +285,7 @@ class SACAgent:
         q_hat = torch.min(new_q_1, new_q_2)
 
         v = self.vf(state)
-        vf_loss = f.mse_loss(v, (q_hat - alpha * log_prob).detach())
+        vf_loss = F.mse_loss(v, (q_hat - alpha * log_prob).detach())
 
         ########## End of Your Code ##########
 

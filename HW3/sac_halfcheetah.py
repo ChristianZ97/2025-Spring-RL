@@ -469,6 +469,11 @@ if __name__ == "__main__":
     
     # W&B init
     wandb.init(project="RL-HW3-SAC-HalfCheetah", name=args.wandb_run_name, save_code=True)
+
+    # Add below
+    for key in vars(args):
+        if key in wandb.config:
+            setattr(args, key, wandb.config[key])
     
     # environment
     env = gym.make("HalfCheetah-v5", render_mode="rgb_array")

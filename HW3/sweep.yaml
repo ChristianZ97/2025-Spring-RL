@@ -1,0 +1,30 @@
+program: sac_halfcheetah.py
+method: bayes  # "random" or "bayes"
+name: halfcheetah-sac-sweep
+metric:
+  name: return
+  goal: maximize
+
+parameters:
+  lr:
+    distribution: uniform
+    min: 0.0001
+    max: 0.001
+  batch_size:
+    values: [256, 512]
+  tau:
+    distribution: uniform
+    min: 0.001
+    max: 0.01
+  discount_factor:
+    values: [0.98, 0.99, 0.995]
+  initial_random_steps:
+    values: [1000, 5000, 10000]
+  memory_size:
+    value: 1000000
+  policy_update_freq:
+    value: 1
+  num_steps:
+    value: 1000000
+  seed:
+    values: [77]

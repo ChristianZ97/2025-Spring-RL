@@ -1,7 +1,8 @@
 #!/bin/bash
-# Get the number of GPUs
+SWEEP_ID=$(wandb sweep --project RL-HW3-SAC-HalfCheetah sweep.yaml | grep 'wandb agent' | awk '{print $4}')
+echo "Sweep ID: $SWEEP_ID"
+
 GPU_COUNT=$(nvidia-smi --list-gpus | wc -l)
-SWEEP_ID="your_sweep_id_here"
 
 for i in $(seq 0 $((GPU_COUNT-1)))
 do

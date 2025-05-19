@@ -10,19 +10,19 @@ parameters:
     distribution: uniform
     min: 0.0001
     max: 0.001
-  batch_size:
-    values: [256, 512]
+  batch-size:
+    values: [512]
   tau:
     distribution: uniform
     min: 0.001
     max: 0.01
-  discount_factor:
+  discount-factor:
     values: [0.98, 0.99, 0.995]
-  initial_random_steps:
+  initial-random-steps:
     values: [1000, 5000, 10000]
-  memory_size:
+  memory-size:
     value: 1000000
-  policy_update_freq:
+  policy-update-freq:
     value: 1
   num_steps:
     value: 1000000

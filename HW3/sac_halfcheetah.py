@@ -455,7 +455,7 @@ if __name__ == "__main__":
     parser.add_argument("--discount-factor", type=float, default=0.99)
     parser.add_argument("--tau", type=float, default=5e-3)
     parser.add_argument("--batch-size", type=int, default=512) # 128 -> 512
-    parser.add_argument("--initial-random-steps", type=int, default=1000)
+    parser.add_argument("--initial-random-steps", type=int, default=10000) # 1000 -> 10000
     parser.add_argument("--memory-size", type=int, default=1000000) # 100000 -> 1000000
     parser.add_argument("--num-steps", type=float, default=1000000) # 100000 -> 1000000
     parser.add_argument("--policy-update-freq", type=int, default=1) # 2 -> 1

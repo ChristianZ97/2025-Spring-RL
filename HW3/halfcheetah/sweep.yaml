@@ -2,7 +2,7 @@ program: sac_halfcheetah.py
 method: bayes  # "random" or "bayes"
 name: halfcheetah-sac-sweep
 metric:
-  name: return
+  name: combined_score
   goal: maximize
 
 parameters:

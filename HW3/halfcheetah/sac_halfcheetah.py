@@ -352,10 +352,22 @@ class SACAgent:
                 scores.append(score)
                 ep += 1
                 print(f"Episode {ep} (Total step = {self.total_step}): Total Reward = {score}")
+
+                """
+                Add below
+                """
+                N = 10
+                early_avg = np.mean(scores[:N])
+                late_avg = np.mean(scores[-N:])
+                slope = (late_avg - early_avg) / (len(scores) - N)
+                combined_score = 0.75 * score + 0.25 * slope
+
                 # W&B logging
                 wandb.log({
                     "episode": ep,
-                    "return": score
+                    "return": score,
+                    "return_slope": slope, # Add this line
+                    "combined_score": combined_score # Add this line
                     }) 
                 score = 0
                 
@@ -457,7 +469,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=512) # 128 -> 512
     parser.add_argument("--initial-random-steps", type=int, default=10000) # 1000 -> 10000
     parser.add_argument("--memory-size", type=int, default=1000000) # 100000 -> 1000000
-    parser.add_argument("--num-steps", type=float, default=100000)
+    parser.add_argument("--num-steps", type=float, default=100000) # 100000 -> 300000
     parser.add_argument("--policy-update-freq", type=int, default=1) # 2 -> 1
     parser.add_argument("--seed", type=int, default=77)
     args = parser.parse_args()

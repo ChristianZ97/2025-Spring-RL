@@ -1,6 +1,5 @@
 #!/bin/bash
 # SWEEP_ID=$(wandb sweep --project RL-HW3-SAC-HalfCheetah sweep.yaml | grep 'wandb agent' | awk '{print $4}')
-SWEEP_ID=christianz97-national-tsing-hua-university/RL-HW3-SAC-HalfCheetah/fo9qf4bs
 echo "Sweep ID: $SWEEP_ID"
 
 GPU_COUNT=$(nvidia-smi --list-gpus | wc -l)

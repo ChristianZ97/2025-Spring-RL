@@ -356,11 +356,11 @@ class SACAgent:
                 """
                 Add below
                 """
-                N = 10
+                N = 10000
                 early_avg = np.mean(scores[:N])
                 late_avg = np.mean(scores[-N:])
                 slope = (late_avg - early_avg) / (len(scores) - N)
-                combined_score = 0.75 * score + 0.25 * slope
+                combined_score = 0.7 * score + 0.3 * slope
 
                 # W&B logging
                 wandb.log({

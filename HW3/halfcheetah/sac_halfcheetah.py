@@ -359,7 +359,7 @@ class SACAgent:
                 N = 100
                 early_avg = np.mean(scores[:N])
                 late_avg = np.mean(scores[-N:])
-                slope = (late_avg - early_avg) / (len(scores) - N)
+                slope = ((late_avg - early_avg) / (len(scores) - N)) * 100
                 combined_score = 0.7 * score + 0.3 * slope
 
                 # W&B logging
